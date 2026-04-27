@@ -892,6 +892,35 @@
             }
         };
 
+        // Banco de Dados Interno de Produtos (Array)
+        const FLV_DATABASE = [
+            { codigo: "101", nome: "BATATA MONALISA", unidade: "KG" },
+            { codigo: "102", nome: "CEBOLA NACIONAL", unidade: "KG" },
+            { codigo: "103", nome: "TOMATE ITALIANO", unidade: "KG" },
+            { codigo: "104", nome: "ALFACE CRESPA", unidade: "UND" },
+            { codigo: "105", nome: "BANANA NANICA", unidade: "KG" },
+            { codigo: "106", nome: "MACA GALA", unidade: "KG" },
+            { codigo: "107", nome: "MAMAO PAPAYA", unidade: "KG" },
+            { codigo: "108", nome: "OVOS BRANCOS G", unidade: "UND" },
+            { codigo: "109", nome: "CENOURA", unidade: "KG" },
+            { codigo: "110", nome: "LARANJA PERA", unidade: "KG" },
+            { codigo: "111", nome: "UVA ITALIA", unidade: "KG" },
+            { codigo: "112", nome: "MACA ARGENTINA", unidade: "KG" },
+            { codigo: "113", nome: "PIMENTAO VERDE", unidade: "KG" },
+            { codigo: "114", nome: "ABOBRINHA ITALIANA", unidade: "KG" },
+            { codigo: "115", nome: "BROCOLIS NINJA", unidade: "UND" },
+            { codigo: "116", nome: "ALHO NACIONAL", unidade: "KG" },
+            { codigo: "117", nome: "ABACAXI PEROLA", unidade: "UND" },
+            { codigo: "118", nome: "MELANCIA", unidade: "KG" },
+            { codigo: "119", nome: "MANGA PALMER", unidade: "KG" },
+            { codigo: "120", nome: "CHUCHU", unidade: "KG" },
+            { codigo: "121", nome: "PEPINO JAPONES", unidade: "KG" },
+            { codigo: "122", nome: "BERINJELA", unidade: "KG" },
+            { codigo: "123", nome: "LIMAO TAITI", unidade: "KG" },
+            { codigo: "124", nome: "MELAO AMARELO", unidade: "KG" },
+            { codigo: "125", nome: "COUVE MANTEIGA", unidade: "UND" }
+        ];
+
         // Auto-completar dinâmico com banco de dados
         function initAutocomplete() {
             const listCodigos = document.getElementById('lista-codigos');
@@ -901,6 +930,18 @@
             listCodigos.innerHTML = '';
             listNomes.innerHTML = '';
 
+            // Adicionar produtos do array interno (FLV_DATABASE)
+            FLV_DATABASE.forEach(p => {
+                const optCod = document.createElement('option');
+                optCod.value = p.codigo;
+                listCodigos.appendChild(optCod);
+
+                const optNome = document.createElement('option');
+                optNome.value = p.nome;
+                listNomes.appendChild(optNome);
+            });
+
+            // Adicionar produtos do IndexedDB (Customizados)
             const tx = db.transaction(productStore, "readonly");
             const store = tx.objectStore(productStore);
             const request = store.getAll();
@@ -908,35 +949,70 @@
             request.onsuccess = () => {
                 const produtos = request.result;
                 produtos.forEach(p => {
-                    const optCod = document.createElement('option');
-                    optCod.value = p.codigo;
-                    listCodigos.appendChild(optCod);
+                    // Evita duplicatas se o código já existir no array interno
+                    if (!FLV_DATABASE.find(item => item.codigo === p.codigo)) {
+                        const optCod = document.createElement('option');
+                        optCod.value = p.codigo;
+                        listCodigos.appendChild(optCod);
 
-                    const optNome = document.createElement('option');
-                    optNome.value = p.nome;
-                    listNomes.appendChild(optNome);
+                        const optNome = document.createElement('option');
+                        optNome.value = p.nome;
+                        listNomes.appendChild(optNome);
+                    }
                 });
             };
 
             const inputCodigo = document.getElementById('codigo');
             const inputNome = document.getElementById('nome');
 
+            // Lógica de Autocompletar para TRATATIVA
             inputCodigo.addEventListener('input', (e) => {
+                const val = e.target.value;
+                if (!val) return;
+
+                // 1. Tentar no Banco Interno (Array)
+                const prodArray = FLV_DATABASE.find(p => p.codigo === val);
+                if (prodArray) {
+                    inputNome.value = prodArray.nome;
+                    window.setUnit(prodArray.unidade);
+                    return;
+                }
+
+                // 2. Tentar no IndexedDB
                 const tx = db.transaction(productStore, "readonly");
                 const store = tx.objectStore(productStore);
-                const getReq = store.get(e.target.value);
+                const getReq = store.get(val);
                 getReq.onsuccess = () => {
-                    if (getReq.result) inputNome.value = getReq.result.nome;
+                    if (getReq.result) {
+                        inputNome.value = getReq.result.nome;
+                        // Nota: Se o IndexedDB não tiver unidade, assume KG por padrão
+                        window.setUnit(getReq.result.unidade || 'KG');
+                    }
                 };
             });
 
             inputNome.addEventListener('input', (e) => {
+                const val = e.target.value.toUpperCase();
+                if (!val) return;
+
+                // 1. Tentar no Banco Interno (Array)
+                const prodArray = FLV_DATABASE.find(p => p.nome === val);
+                if (prodArray) {
+                    inputCodigo.value = prodArray.codigo;
+                    window.setUnit(prodArray.unidade);
+                    return;
+                }
+
+                // 2. Tentar no IndexedDB
                 const tx = db.transaction(productStore, "readonly");
                 const store = tx.objectStore(productStore);
                 const req = store.getAll();
                 req.onsuccess = () => {
-                    const p = req.result.find(prod => prod.nome.toLowerCase() === e.target.value.toLowerCase());
-                    if (p) inputCodigo.value = p.codigo;
+                    const p = req.result.find(prod => prod.nome.toUpperCase() === val);
+                    if (p) {
+                        inputCodigo.value = p.codigo;
+                        window.setUnit(p.unidade || 'KG');
+                    }
                 };
             });
 
@@ -1058,38 +1134,8 @@
             };
         });
 
-        // Auto-complete para Quebra Geral
-        const geralCodigo = document.getElementById('geral-codigo');
-        const geralNome = document.getElementById('geral-nome');
-
-        geralCodigo.addEventListener('input', (e) => {
-            const tx = db.transaction(productStore, "readonly");
-            const store = tx.objectStore(productStore);
-            const getReq = store.get(e.target.value);
-            getReq.onsuccess = () => {
-                if (getReq.result) {
-                    geralNome.value = getReq.result.nome;
-                    document.getElementById('geral-custo').value = formatCurrency(getReq.result.preco * 100);
-                    // Dispara evento input para recalcular total
-                    document.getElementById('geral-custo').dispatchEvent(new Event('input'));
-                }
-            };
-        });
-
-        geralNome.addEventListener('input', (e) => {
-            const tx = db.transaction(productStore, "readonly");
-            const store = tx.objectStore(productStore);
-            const req = store.getAll();
-            req.onsuccess = () => {
-                const p = req.result.find(prod => prod.nome.toLowerCase() === e.target.value.toLowerCase());
-                if (p) {
-                    geralCodigo.value = p.codigo;
-                    document.getElementById('geral-custo').value = formatCurrency(p.preco * 100);
-                    // Dispara evento input para recalcular total
-                    document.getElementById('geral-custo').dispatchEvent(new Event('input'));
-                }
-            };
-        });
+        // Auto-complete para Quebra Geral (Removido conforme solicitado para manter simples)
+        // Apenas mantemos o preenchimento manual para rapidez e flexibilidade.
 
         // Inicializa na tela de dashboard por padrão
         window.addEventListener('load', () => {
