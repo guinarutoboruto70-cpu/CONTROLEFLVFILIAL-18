@@ -244,6 +244,33 @@
             margin-top: 20px;
         }
 
+        /* Seletor de Unidade Toggle */
+        .unit-selector {
+            display: flex;
+            background: #222;
+            padding: 4px;
+            border-radius: 8px;
+            border: 1px solid #444;
+            margin-top: 5px;
+        }
+
+        .unit-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: transparent;
+            color: #888;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .unit-btn.active {
+            background: var(--btn-new-bg);
+            color: black;
+        }
+
         /* Modal de Fotos */
         .modal {
             display: none;
@@ -353,13 +380,22 @@
             </div>
 
             <div class="form-group">
+                <label>Unidade de Medida</label>
+                <div class="unit-selector">
+                    <button type="button" id="unit-kg" class="unit-btn active" onclick="setUnit('KG')">KG</button>
+                    <button type="button" id="unit-und" class="unit-btn" onclick="setUnit('UND')">UND</button>
+                </div>
+                <input type="hidden" id="unidade" value="KG">
+            </div>
+
+            <div class="form-group">
                 <label>Quantidade Chegou</label>
-                <input type="number" id="qtd_chegou" step="0.01" required placeholder="0.00">
+                <input type="text" id="qtd_chegou" inputmode="decimal" required placeholder="0,00">
             </div>
 
             <div class="form-group">
                 <label>Quantidade Quebra</label>
-                <input type="number" id="qtd_quebra" step="0.01" required placeholder="0.00">
+                <input type="text" id="qtd_quebra" inputmode="decimal" required placeholder="0,00">
             </div>
 
             <div class="form-group">
@@ -947,6 +983,34 @@
             return parseFloat(cleanValue) / 100;
         }
 
+        // Funções Globais de UI
+        window.setUnit = function(unit) {
+            document.getElementById('unidade').value = unit;
+            document.getElementById('unit-kg').classList.toggle('active', unit === 'KG');
+            document.getElementById('unit-und').classList.toggle('active', unit === 'UND');
+            saveDraft();
+        };
+
+        const setupNumericInput = (id) => {
+            const input = document.getElementById(id);
+            if (!input) return;
+
+            input.addEventListener('input', (e) => {
+                // Permite apenas números e uma vírgula
+                let value = e.target.value.replace(/[^0-9,]/g, '');
+                const parts = value.split(',');
+                if (parts.length > 2) {
+                    value = parts[0] + ',' + parts.slice(1).join('');
+                }
+                e.target.value = value;
+                saveDraft();
+            });
+        };
+
+        // Inicializar campos numéricos
+        setupNumericInput('qtd_chegou');
+        setupNumericInput('qtd_quebra');
+
         const inputVendaResults = document.getElementById('venda-dia-results');
         const dashDateFilter = document.getElementById('dash-date-filter');
 
@@ -1327,6 +1391,7 @@
                 data_ocorrencia: document.getElementById('data-ocorrencia').value,
                 codigo: document.getElementById('codigo').value,
                 nome: document.getElementById('nome').value,
+                unidade: document.getElementById('unidade').value,
                 qtd_chegou: document.getElementById('qtd_chegou').value,
                 qtd_quebra: document.getElementById('qtd_quebra').value,
                 foto_produto: document.getElementById('prev-produto').src || null,
@@ -1348,6 +1413,9 @@
                     if (data.data_ocorrencia) document.getElementById('data-ocorrencia').value = data.data_ocorrencia;
                     document.getElementById('codigo').value = data.codigo || '';
                     document.getElementById('nome').value = data.nome || '';
+                    if (data.unidade) {
+                        setUnit(data.unidade);
+                    }
                     document.getElementById('qtd_chegou').value = data.qtd_chegou || '';
                     document.getElementById('qtd_quebra').value = data.qtd_quebra || '';
                     
@@ -1407,6 +1475,7 @@
             currentData = {
                 codigo: document.getElementById('codigo').value,
                 nome: nomeLimpo,
+                unidade: document.getElementById('unidade').value,
                 qtd_chegou: document.getElementById('qtd_chegou').value,
                 qtd_quebra: document.getElementById('qtd_quebra').value,
                 foto_produto: document.getElementById('prev-produto').src || null,
@@ -1422,11 +1491,11 @@
 
             const reviewContainer = document.getElementById('review-data');
             reviewContainer.innerHTML = `
-                <p style="margin: 5px 0;"><strong>Data da Ocorrência:</strong> ${currentData.data}</p>
                 <p style="margin: 5px 0;"><strong>Cód:</strong> ${currentData.codigo}</p>
                 <p style="margin: 5px 0;"><strong>Produto:</strong> ${currentData.nome}</p>
-                <p style="margin: 5px 0;"><strong>Chegou:</strong> ${currentData.qtd_chegou}</p>
-                <p style="margin: 5px 0;"><strong>Quebra:</strong> ${currentData.qtd_quebra}</p>
+                <p style="margin: 5px 0;"><strong>Data:</strong> ${currentData.data}</p>
+                <p style="margin: 5px 0;"><strong>Chegou:</strong> ${currentData.qtd_chegou} ${currentData.unidade}</p>
+                <p style="margin: 5px 0;"><strong>Quebra:</strong> ${currentData.qtd_quebra} ${currentData.unidade}</p>
                 <p style="margin: 5px 0;"><strong>Status:</strong> <span style="color: #ffcc00; font-weight: bold;">PENDENTE</span></p>
                 <div style="display: flex; gap: 10px; margin-top: 15px; padding-top: 10px; border-top: 1px solid #333;">
                     ${currentData.foto_produto && currentData.foto_produto.length > 100 ? '<span>🖼️ <small>Produto</small></span>' : ''}
@@ -1470,7 +1539,9 @@
 
         document.getElementById('btn-send-text').addEventListener('click', function() {
             if (!currentData) return;
-            const texto = `*TRATATIVA FLV 1018*\n\nData da Ocorrência: ${currentData.data}\nCód: ${currentData.codigo}\nProduto: ${currentData.nome}\nChegou: ${currentData.qtd_chegou}\nQuebra: ${currentData.qtd_quebra}`;
+            // Limpeza da Data: remove "Data da Ocorrência:" e deixa apenas a data embaixo do nome do produto.
+            // Sequência Original: Cód, Produto, Data, Chegou, Quebra.
+            const texto = `*TRATATIVA FLV 1018*\n\nCód: ${currentData.codigo}\nProduto: ${currentData.nome}\n${currentData.data}\nChegou: ${currentData.qtd_chegou} ${currentData.unidade}\nQuebra: ${currentData.qtd_quebra} ${currentData.unidade}`;
             window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(texto)}`, '_blank');
             markAsSent(this);
         });
