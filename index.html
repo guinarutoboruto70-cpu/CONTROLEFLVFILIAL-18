@@ -363,6 +363,15 @@
         
         <form id="tratativa-form">
             <div class="form-group">
+                <label>Tipo de Quebra</label>
+                <div class="unit-selector" style="margin-bottom: 10px;">
+                    <button type="button" id="type-tratativa" class="unit-btn active" onclick="setQuebraType('TRATATIVA')">Item para Tratativa</button>
+                    <button type="button" id="type-geral" class="unit-btn" onclick="setQuebraType('GERAL')">Quebra Geral/Limpeza</button>
+                </div>
+                <input type="hidden" id="tipo_quebra" value="TRATATIVA">
+            </div>
+
+            <div class="form-group">
                 <label>Data da Ocorrência</label>
                 <input type="date" id="data-ocorrencia" required>
             </div>
@@ -398,8 +407,8 @@
                 <input type="text" id="qtd_quebra" inputmode="decimal" required placeholder="0,00">
             </div>
 
-            <div class="form-group">
-                <label>Fotos</label>
+            <div class="form-group" id="container-fotos">
+                <label>Fotos (Obrigatórias para Tratativa)</label>
                 <div class="photo-grid">
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                         <div class="photo-container">
@@ -554,24 +563,37 @@
                 <!-- Resumo Financeiro -->
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                     <div style="background: #1a1a1a; padding: 15px; border-radius: 15px; border: 1px solid #333; text-align: center;">
-                        <small style="color: #888; display: block; font-size: 0.75rem; margin-bottom: 5px;">QUEBRA BRUTA</small>
-                        <span id="val-quebra-bruta" style="color: #fff; font-weight: bold; font-size: 1.2rem;">R$ 0,00</span>
+                        <small style="color: #888; display: block; font-size: 0.75rem; margin-bottom: 5px;">QUEBRA TRATATIVA</small>
+                        <span id="val-quebra-tratativa" style="color: #ffcc00; font-weight: bold; font-size: 1.2rem;">R$ 0,00</span>
+                    </div>
+                    <div style="background: #1a1a1a; padding: 15px; border-radius: 15px; border: 1px solid #333; text-align: center;">
+                        <small style="color: #888; display: block; font-size: 0.75rem; margin-bottom: 5px;">QUEBRA GERAL</small>
+                        <span id="val-quebra-geral" style="color: #007bff; font-weight: bold; font-size: 1.2rem;">R$ 0,00</span>
+                    </div>
+                    <div style="background: #1a1a1a; padding: 15px; border-radius: 15px; border: 1px solid #333; text-align: center; grid-column: span 2;">
+                        <small style="color: #888; display: block; font-size: 0.75rem; margin-bottom: 5px;">QUEBRA BRUTA TOTAL</small>
+                        <span id="val-quebra-bruta" style="color: #fff; font-weight: bold; font-size: 1.5rem;">R$ 0,00</span>
                     </div>
                     <div style="background: #1a1a1a; padding: 15px; border-radius: 15px; border: 1px solid #333; text-align: center;">
                         <small style="color: #888; display: block; font-size: 0.75rem; margin-bottom: 5px;">VALOR SALVO</small>
                         <span id="val-economia-results" style="color: #28a745; font-weight: bold; font-size: 1.2rem;">R$ 0,00</span>
                     </div>
-                    <div style="background: #1a1a1a; padding: 15px; border-radius: 15px; border: 1px solid #333; text-align: center; grid-column: span 2;">
+                    <div style="background: #1a1a1a; padding: 15px; border-radius: 15px; border: 1px solid #333; text-align: center;">
                         <small style="color: #888; display: block; font-size: 0.75rem; margin-bottom: 5px;">QUEBRA LÍQUIDA</small>
-                        <span id="val-quebra-liquida" style="color: #ff4444; font-weight: bold; font-size: 1.5rem;">R$ 0,00</span>
+                        <span id="val-quebra-liquida" style="color: #ff4444; font-weight: bold; font-size: 1.2rem;">R$ 0,00</span>
                     </div>
                 </div>
             </div>
         </div>
 
-        <button id="btn-print-results" class="btn" style="background: #25D366; color: white; width: 100%; font-weight: bold; padding: 15px; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 10px;">
-            📸 GERAR PRINT PARA GERÊNCIA
-        </button>
+        <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;">
+            <button id="btn-relatorio-diario" class="btn" style="background: #25D366; color: white; width: 100%; font-weight: bold; padding: 15px; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                📊 ENVIAR RELATÓRIO DIÁRIO
+            </button>
+            <button id="btn-print-results" class="btn" style="background: #444; color: white; width: 100%; font-weight: bold; padding: 15px; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                📸 GERAR PRINT PARA GERÊNCIA
+            </button>
+        </div>
     </div>
 
     <!-- Modal de Aprovação/Edição -->
@@ -983,7 +1005,31 @@
             return parseFloat(cleanValue) / 100;
         }
 
+        function parseCommaFloat(value) {
+            if (!value) return 0;
+            const str = value.toString().replace(',', '.');
+            const parsed = parseFloat(str);
+            return isNaN(parsed) ? 0 : parsed;
+        }
+
         // Funções Globais de UI
+        window.setQuebraType = function(type) {
+            document.getElementById('tipo_quebra').value = type;
+            document.getElementById('type-tratativa').classList.toggle('active', type === 'TRATATIVA');
+            document.getElementById('type-geral').classList.toggle('active', type === 'GERAL');
+            
+            // Ajustar obrigatoriedade de fotos
+            const containerFotos = document.getElementById('container-fotos');
+            if (type === 'GERAL') {
+                containerFotos.style.opacity = '0.5';
+                containerFotos.style.pointerEvents = 'none';
+            } else {
+                containerFotos.style.opacity = '1';
+                containerFotos.style.pointerEvents = 'auto';
+            }
+            saveDraft();
+        };
+
         window.setUnit = function(unit) {
             document.getElementById('unidade').value = unit;
             document.getElementById('unit-kg').classList.toggle('active', unit === 'KG');
@@ -1056,13 +1102,23 @@
                 
                 document.getElementById('dash-current-date').innerText = selectedDateBR;
                 
+                let quebraTratativa = 0;
+                let quebraGeral = 0;
                 let quebraBruta = 0;
                 let valorSalvo = 0;
 
                 logs.forEach(item => {
                     if (item.data === selectedDateBR) {
-                        const valor = parseFloat(item.qtd_quebra || 0);
+                        const valor = parseCommaFloat(item.qtd_quebra || 0);
+                        
+                        if (item.tipo_quebra === 'GERAL') {
+                            quebraGeral += valor;
+                        } else {
+                            quebraTratativa += valor;
+                        }
+                        
                         quebraBruta += valor;
+                        
                         if (item.status === 'CONCLUÍDO') {
                             valorSalvo += valor;
                         }
@@ -1074,6 +1130,8 @@
                 const percentIG = vendaDia > 0 ? (quebraBruta / vendaDia) * 100 : 0;
 
                 // Atualizar Valores na Tela
+                document.getElementById('val-quebra-tratativa').innerText = `R$ ${quebraTratativa.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+                document.getElementById('val-quebra-geral').innerText = `R$ ${quebraGeral.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
                 document.getElementById('val-quebra-bruta').innerText = `R$ ${quebraBruta.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
                 document.getElementById('val-economia-results').innerText = `R$ ${valorSalvo.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
                 document.getElementById('val-quebra-liquida').innerText = `R$ ${quebraLiquida.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
@@ -1109,6 +1167,22 @@
                     cardBox.style.background = '#1a1a1a';
                 }
             };
+        }
+
+        const btnRelatorioDiario = document.getElementById('btn-relatorio-diario');
+        if (btnRelatorioDiario) {
+            btnRelatorioDiario.addEventListener('click', () => {
+                const data = document.getElementById('dash-current-date').innerText;
+                const quebraTratativa = document.getElementById('val-quebra-tratativa').innerText;
+                const quebraGeral = document.getElementById('val-quebra-geral').innerText;
+                const quebraBruta = document.getElementById('val-quebra-bruta').innerText;
+                const vendaDia = inputVendaResults.value;
+                const igPercent = document.getElementById('val-ig-percent').innerText;
+
+                const textoRelatorio = `*RELATÓRIO DIÁRIO FLV 1018*\nData: ${data}\n\n*Resumo Financeiro:*\nTotal Quebra Tratativa: ${quebraTratativa}\nTotal Quebra Geral/Limpeza: ${quebraGeral}\n*VALOR TOTAL DO DIA: ${quebraBruta}*\n\n*Indicadores:*\nVenda Diária: R$ ${vendaDia}\nÍndice de Quebra (IG): ${igPercent}`;
+                
+                window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(textoRelatorio)}`, '_blank');
+            });
         }
 
         const btnPrintResults = document.getElementById('btn-print-results');
@@ -1179,7 +1253,7 @@
                     const itemDate = item.data.split('/').reverse().join('-');
                     if (filterDate && itemDate !== filterDate) return;
                     
-                    const valorQuebra = parseFloat(item.qtd_quebra || 0);
+                    const valorQuebra = parseCommaFloat(item.qtd_quebra || 0);
                     
                     // Cálculos para o painel financeiro (independente do filtro de exibição)
                     if (item.status === 'PENDENTE') {
@@ -1225,7 +1299,7 @@
 
                 // Atualizar Painel Financeiro
                 const vendaDiaInput = document.getElementById('input-venda-dia');
-                const vendaDia = vendaDiaInput ? parseFloat(vendaDiaInput.value || 0) : 0;
+                const vendaDia = vendaDiaInput ? parseCurrency(vendaDiaInput.value) : 0;
                 const percentQuebra = vendaDia > 0 ? (totalQuebraGeral / vendaDia) * 100 : 0;
 
                 document.getElementById('stat-quebra-total').innerText = `R$ ${totalQuebraGeral.toFixed(2)}`;
@@ -1294,7 +1368,7 @@
                     const itemDate = item.data.split('/').reverse().join('-');
                     if (!filterDate || itemDate === filterDate) {
                         texto += `Item: ${item.nome} - Quebra: ${item.qtd_quebra}\n`;
-                        totalGeral += parseFloat(item.qtd_quebra);
+                        totalGeral += parseCommaFloat(item.qtd_quebra);
                     }
                 });
 
@@ -1388,6 +1462,7 @@
             if (!db) return;
             const draft = {
                 id: "current_draft",
+                tipo_quebra: document.getElementById('tipo_quebra').value,
                 data_ocorrencia: document.getElementById('data-ocorrencia').value,
                 codigo: document.getElementById('codigo').value,
                 nome: document.getElementById('nome').value,
@@ -1410,6 +1485,9 @@
             request.onsuccess = () => {
                 if (request.result) {
                     const data = request.result;
+                    if (data.tipo_quebra) {
+                        setQuebraType(data.tipo_quebra);
+                    }
                     if (data.data_ocorrencia) document.getElementById('data-ocorrencia').value = data.data_ocorrencia;
                     document.getElementById('codigo').value = data.codigo || '';
                     document.getElementById('nome').value = data.nome || '';
@@ -1465,6 +1543,7 @@
         formTratativa.addEventListener('submit', (e) => {
             e.preventDefault();
             
+            const tipoQuebra = document.getElementById('tipo_quebra').value;
             const selectedDate = document.getElementById('data-ocorrencia').value;
             const formattedDate = selectedDate.split('-').reverse().join('/'); // Converte de AAAA-MM-DD para DD/MM/AAAA
 
@@ -1473,6 +1552,7 @@
             nomeLimpo = nomeLimpo.replace(/^(produto|nome|item|tratativa)[:\s-]*/i, '').trim();
 
             currentData = {
+                tipo_quebra: tipoQuebra,
                 codigo: document.getElementById('codigo').value,
                 nome: nomeLimpo,
                 unidade: document.getElementById('unidade').value,
@@ -1491,6 +1571,7 @@
 
             const reviewContainer = document.getElementById('review-data');
             reviewContainer.innerHTML = `
+                <p style="margin: 5px 0;"><strong>Tipo:</strong> ${currentData.tipo_quebra === 'TRATATIVA' ? 'Item para Tratativa' : 'Quebra Geral/Limpeza'}</p>
                 <p style="margin: 5px 0;"><strong>Cód:</strong> ${currentData.codigo}</p>
                 <p style="margin: 5px 0;"><strong>Produto:</strong> ${currentData.nome}</p>
                 <p style="margin: 5px 0;"><strong>Data:</strong> ${currentData.data}</p>
@@ -1513,16 +1594,31 @@
                     btn.style.backgroundColor = '#25D366';
                     btn.innerHTML = '🟢 ENVIAR TEXTO';
                 } else {
-                    btn.style.backgroundColor = '#444';
-                    btn.innerHTML = btn.id === 'btn-send-photo-prod' ? '📸 ENVIAR FOTO PRODUTO' : 
-                                    btn.id === 'btn-send-photo-bal' ? '📸 ENVIAR FOTO BALANÇA' : '📸 ENVIAR FOTO ETIQUETA';
+                    // Esconder botões de foto se for Quebra Geral
+                    if (tipoQuebra === 'GERAL') {
+                        btn.style.display = 'none';
+                    } else {
+                        btn.style.display = 'block';
+                        btn.style.backgroundColor = '#444';
+                        btn.innerHTML = btn.id === 'btn-send-photo-prod' ? '📸 ENVIAR FOTO PRODUTO' : 
+                                        btn.id === 'btn-send-photo-bal' ? '📸 ENVIAR FOTO BALANÇA' : '📸 ENVIAR FOTO ETIQUETA';
+                    }
                 }
             });
+            
             const btnFinal = document.getElementById('btn-finalizar-tudo');
-            btnFinal.disabled = true;
-            btnFinal.style.backgroundColor = '#333';
-            btnFinal.style.color = '#777';
-            btnFinal.style.cursor = 'not-allowed';
+            // Se for Geral, habilita o botão de finalizar direto, pois não tem fotos
+            if (tipoQuebra === 'GERAL') {
+                btnFinal.disabled = false;
+                btnFinal.style.backgroundColor = 'var(--btn-new-bg)';
+                btnFinal.style.color = 'black';
+                btnFinal.style.cursor = 'pointer';
+            } else {
+                btnFinal.disabled = true;
+                btnFinal.style.backgroundColor = '#333';
+                btnFinal.style.color = '#777';
+                btnFinal.style.cursor = 'not-allowed';
+            }
         });
 
         function markAsSent(btn) {
@@ -1539,9 +1635,9 @@
 
         document.getElementById('btn-send-text').addEventListener('click', function() {
             if (!currentData) return;
-            // Limpeza da Data: remove "Data da Ocorrência:" e deixa apenas a data embaixo do nome do produto.
-            // Sequência Original: Cód, Produto, Data, Chegou, Quebra.
-            const texto = `*TRATATIVA FLV 1018*\n\nCód: ${currentData.codigo}\nProduto: ${currentData.nome}\n${currentData.data}\nChegou: ${currentData.qtd_chegou} ${currentData.unidade}\nQuebra: ${currentData.qtd_quebra} ${currentData.unidade}`;
+            // Remover Título: mensagem começa direto com Data e informações.
+            // Sequência: Data, Cód, Produto, Chegou, Quebra.
+            const texto = `${currentData.data}\nCód: ${currentData.codigo}\nProduto: ${currentData.nome}\nChegou: ${currentData.qtd_chegou} ${currentData.unidade}\nQuebra: ${currentData.qtd_quebra} ${currentData.unidade}`;
             window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(texto)}`, '_blank');
             markAsSent(this);
         });
