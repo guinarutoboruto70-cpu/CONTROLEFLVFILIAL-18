@@ -2,1198 +2,177 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Controle de Cache para Forçar Atualização -->
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    
-    <title>TRATAFLV - Sistema</title>
-    <!-- Ícone de Emergência para Mobile -->
-    <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/1041/1041383.png">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/1041/1041383.png">
-    
-    <!-- Manifesto Embutido (Data URI) para evitar 404 e Cache -->
-    <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiRkxWIDEwMTggUHJvIiwic2hvcnRfbmFtZSI6IkZMVSAxMDE4IiwiZGVzY3JpcHRpb24iOiJTaXN0ZW1hIGRlIEdlc3TDo28gZGUgUXVlYnJhcyBGTFYiLCJzdGFydF91cmwiOiJpbmRleC5odG1sIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiIzAwMDAwMCIsInRoZW1lX2NvbG9yIjoiIzAwMDAwMCIsImljb25zIjpbeyJzcmMiOiJodHRwczovL2Nkbi1pY29ucy1wbmcuZmxhdGljb24uY29tLzUxMi8xMDQxLzEwNDEzODMucG5nIiwic2l6ZXMiOiI1MTJ4NTEyIiwidHlwZSI6ImltYWdlL3BuZyIsInB1cnBvc2UiOiJhbnkgbWFza2FibGUifV19">
-    
-    <meta name="theme-color" content="#000000">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SISTEMA TRATAFLV 1018</title>
     <style>
-        :root {
-            --primary-bg: black;
-            --title-color: yellow;
-            --btn-new-bg: lime;
-            --btn-new-text: black;
-            --btn-secondary-bg: #333;
-            --btn-secondary-text: white;
-            --input-bg: #222;
-            --input-text: white;
-        }
+        :root { --primary: #ffcc00; --bg: #000; --card: #1a1a1a; --text: #fff; --danger: #ff4444; --success: #28a745; }
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: var(--bg); color: var(--text); margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; }
+        header { width: 100%; text-align: center; border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 15px; }
+        h1 { color: var(--primary); font-size: 1.2rem; margin: 0; }
+        
+        .nav-bar { display: flex; gap: 5px; width: 100%; max-width: 500px; margin-bottom: 15px; }
+        .nav-btn { flex: 1; padding: 10px; background: #222; border: 1px solid #444; color: #fff; border-radius: 5px; font-size: 0.7rem; cursor: pointer; }
+        .nav-btn.active { background: var(--primary); color: #000; font-weight: bold; }
 
-        body {
-            background-color: var(--primary-bg);
-            color: white;
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-        }
+        .screen { display: none; width: 100%; max-width: 450px; flex-direction: column; gap: 12px; }
+        .screen.active { display: flex; }
 
-        header {
-            padding: 20px 0;
-            width: 100%;
-            text-align: center;
-        }
-
-        h1 {
-            color: var(--title-color);
-            font-weight: bold;
-            font-size: 1.8rem;
-            margin: 0;
-            text-transform: uppercase;
-        }
-
-        .screen {
-            width: 90%;
-            max-width: 450px;
-            display: none;
-            flex-direction: column;
-            gap: 20px;
-            padding-bottom: 40px;
-        }
-
-        .screen.active {
-            display: flex;
-        }
-
-        /* Menu Principal */
-        #menu-screen {
-            justify-content: center;
-            flex-grow: 1;
-        }
-
-        /* Botões Gerais */
-        .btn {
-            padding: 15px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            text-align: center;
-            text-decoration: none;
-            transition: opacity 0.2s;
-        }
-
-        .btn:active {
-            opacity: 0.7;
-        }
-
-        .btn-new {
-            background-color: var(--btn-new-bg);
-            color: var(--btn-new-text);
-            padding: 25px;
-            font-size: 1.3rem;
-        }
-
-        .btn-history {
-            background-color: var(--btn-secondary-bg);
-            color: var(--btn-secondary-text);
-            padding: 25px;
-            font-size: 1.3rem;
-        }
-
-        .btn-save {
-            background-color: var(--btn-new-bg);
-            color: var(--btn-new-text);
-            margin-top: 10px;
-        }
-
-        .btn-back {
-            background-color: transparent;
-            color: white;
-            border: 1px solid white;
-            padding: 8px 15px;
-            font-size: 0.9rem;
-            align-self: flex-start;
-        }
-
-        /* Formulário */
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        label {
-            font-size: 0.9rem;
-            color: #ccc;
-        }
-
-        input {
-            background-color: var(--input-bg);
-            border: 1px solid #444;
-            color: var(--input-text);
-            padding: 12px;
-            font-size: 1rem;
-            border-radius: 5px;
-            transition: box-shadow 0.3s, border-color 0.3s;
-        }
-
-        input:valid:not(:placeholder-shown) {
-            border-color: var(--btn-new-bg);
-            box-shadow: 0 0 8px rgba(0, 255, 0, 0.3);
-        }
-
-        .photo-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .btn-photo {
-            background-color: #444;
-            color: white;
-            font-size: 0.8rem;
-            padding: 10px 5px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 5px;
-            height: auto;
-            min-height: 60px;
-            justify-content: center;
-        }
-
-        .photo-preview {
-            width: 100%;
-            height: 40px;
-            object-fit: cover;
-            border-radius: 4px;
-            display: none;
-            border: 1px solid var(--btn-new-bg);
-        }
-
-        /* Histórico */
-        #history-list {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .history-card {
-            background-color: #1a1a1a;
-            border: 1px solid #333;
-            border-radius: 10px;
-            padding: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .card-info {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-
-        .card-date {
-            font-size: 0.75rem;
-            color: #888;
-        }
-
-        .card-name {
-            font-weight: bold;
-            font-size: 1.1rem;
-            color: var(--title-color);
-        }
-
-        .card-qty {
-            font-size: 0.9rem;
-            color: #ccc;
-        }
-
-        .btn-delete {
-            background-color: #442222;
-            color: #ff5555;
-            border: 1px solid #663333;
-            border-radius: 5px;
-            padding: 8px;
-            cursor: pointer;
-            font-size: 0.8rem;
-        }
-
-        .btn-view {
-            background-color: #223344;
-            color: #55aaff;
-            border: 1px solid #334466;
-            border-radius: 5px;
-            padding: 8px;
-            cursor: pointer;
-            font-size: 0.8rem;
-            margin-right: 5px;
-        }
-
-        .empty-msg {
-            text-align: center;
-            color: #666;
-            margin-top: 20px;
-        }
-
-        /* Seletor de Unidade Toggle */
-        .unit-selector {
-            display: flex;
-            background: #222;
-            padding: 4px;
-            border-radius: 8px;
-            border: 1px solid #444;
-            margin-top: 5px;
-        }
-
-        .unit-btn {
-            flex: 1;
-            padding: 10px;
-            border: none;
-            background: transparent;
-            color: #888;
-            font-weight: bold;
-            cursor: pointer;
-            border-radius: 6px;
-            transition: all 0.2s;
-        }
-
-        .unit-btn.active {
-            background: var(--btn-new-bg);
-            color: black;
-        }
-
-        /* Estilo para itens pendentes no dashboard */
-        .pending-item-dash {
-            animation: slideIn 0.3s ease-out;
-        }
-
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateX(-10px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-
-        /* Responsividade para o Dashboard Unificado */
-        @media (min-width: 768px) {
-            .dashboard-grid > div:last-child {
-                grid-template-columns: 1fr 1fr !important;
-            }
-        }
-
-        /* Modal de Fotos */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.9);
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal-content {
-            width: 90%;
-            max-width: 500px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            padding: 20px;
-            background: #111;
-            border-radius: 15px;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-
-        .modal-photo-item {
-            width: 100%;
-            border-radius: 8px;
-            border: 1px solid #333;
-        }
-
-        .modal-close {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            color: white;
-            font-size: 2rem;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        /* Rodapé do Histórico */
-        .history-footer {
-            margin-top: 20px;
-            padding: 15px;
-            background-color: #111;
-            border-top: 2px solid #333;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .total-counter {
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: var(--btn-new-bg);
-            text-align: center;
-        }
-
-        .btn-whatsapp {
-            background-color: #25D366;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-        /* Estilo Compacto para Mobile */
-        * {
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        html, body {
-            font-size: 14px; /* Base menor */
-            overflow-x: hidden;
-        }
-
-        .screen {
-            width: 95%; /* Ocupa mais espaço lateral */
-            max-width: 500px;
-            gap: 10px; /* Menos espaço entre elementos */
-            padding-bottom: 20px;
-        }
-
-        .btn {
-            padding: 10px 15px; /* Botões mais finos */
-            font-size: 0.9rem;
-            border-radius: 6px;
-        }
-
-        .form-group {
-            gap: 4px; /* Menos espaço interno nos grupos */
-        }
-
-        input {
-            padding: 8px 10px; /* Inputs mais compactos */
-            font-size: 0.95rem;
-        }
-
-        h1 { font-size: 1.4rem; }
-        h2 { font-size: 1.2rem; }
-        h3 { font-size: 1rem; }
-
-        .unit-btn {
-            padding: 6px;
-            font-size: 0.8rem;
-        }
-
-        /* Ajustes específicos para o Dashboard */
-        .dashboard-grid {
-            gap: 8px;
-        }
-
-        #card-ig-box {
-            padding: 8px;
-        }
-
-        #val-ig-percent {
-            font-size: 1.6rem;
-        }
-
-        .pending-item-dash {
-            padding: 6px !important;
-        }
-
-        /* Esconder cabeçalho original em prol do novo tab bar */
-        header h1 { display: none; }
-        header { padding: 5px 0 !important; }
-
-        /* Estilo para abas ativas */
-        .nav-btn.active {
-            border-bottom: 2px solid #ffcc00 !important;
-            color: #ffcc00 !important;
-        }
+        .form-group { display: flex; flex-direction: column; gap: 5px; }
+        label { font-size: 0.8rem; color: #888; }
+        input { background: #222; border: 1px solid #444; color: #fff; padding: 12px; border-radius: 8px; font-size: 1rem; }
+        
+        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .btn-save { background: var(--primary); color: #000; border: none; padding: 15px; border-radius: 10px; font-weight: bold; font-size: 1rem; margin-top: 10px; cursor: pointer; }
+        
+        .history-card { background: var(--card); border-radius: 10px; padding: 12px; border-left: 5px solid var(--primary); margin-bottom: 10px; }
+        .card-header { display: flex; justify-content: space-between; font-weight: bold; color: var(--primary); }
+        .card-body { font-size: 0.9rem; margin-top: 5px; color: #ccc; }
     </style>
 </head>
 <body>
 
-    <header style="padding: 10px; background: #000; border-bottom: 1px solid #333;">
-        <h1 style="font-size: 1.1rem; margin: 0; color: #ffcc00; text-align: center;">SISTEMA TRATAFLV 1018</h1>
-        <div style="display: flex; gap: 5px; margin-top: 10px; justify-content: center;">
-            <button id="nav-dash" class="btn active" style="flex: 1; padding: 6px; font-size: 0.75rem; background: #1a1a1a; border: 1px solid #333; color: #fff;">📊 PAINEL</button>
-            <button id="nav-tratativa" class="btn" style="flex: 1; padding: 6px; font-size: 0.75rem; background: #1a1a1a; border: 1px solid #333; color: #fff;">🍎 TRATATIVA</button>
-            <button id="nav-geral" class="btn" style="flex: 1; padding: 6px; font-size: 0.75rem; background: #1a1a1a; border: 1px solid #333; color: #fff;">🗑️ GERAL</button>
-            <button id="nav-menu" class="btn" style="flex: 0.5; padding: 6px; font-size: 0.75rem; background: #1a1a1a; border: 1px solid #333; color: #fff;">⚙️</button>
+    <header>
+        <h1>SISTEMA TRATAFLV - FILIAL 1018</h1>
+        <div class="nav-bar">
+            <button class="nav-btn active" onclick="showScreen('cadastro-screen', this)">🍎 TRATATIVA</button>
+            <button class="nav-btn" onclick="showScreen('history-screen', this)">📜 HISTÓRICO</button>
+            <button class="nav-btn" onclick="showScreen('results-screen', this)">📊 PAINEL</button>
         </div>
     </header>
-    
-    <datalist id="lista-codigos"></datalist>
-    <datalist id="lista-nomes"></datalist>
 
-    <!-- Tela 1: Menu Principal (Configurações) -->
-    <div id="menu-screen" class="screen">
-        <div style="padding: 15px;">
-            <h3 style="color: #ffcc00; font-size: 1rem; text-align: center; margin-bottom: 15px;">CONFIGURAÇÕES</h3>
-            <button id="btn-manage-products" class="btn" style="background-color: #007bff; color: white; width: 100%; margin-bottom: 10px; padding: 12px; font-weight: bold;">[ 📦 CADASTRAR ITENS/PREÇOS ]</button>
-            <button id="btn-show-history" class="btn" style="background-color: #444; color: white; width: 100%; margin-bottom: 10px; padding: 12px; font-weight: bold;">[ 📜 CONSULTAR HISTÓRICO ]</button>
-            <p style="color: #666; font-size: 0.75rem; text-align: center; margin-top: 20px;">Versão 1.8 - Foco em Performance</p>
-        </div>
-    </div>
-
-    <!-- Tela de Quebra Geral (Nova) -->
-    <div id="geral-screen" class="screen">
-        <form id="geral-form" style="padding: 10px;">
-            <h3 style="color: #007bff; font-size: 0.95rem; text-align: center; margin: 0 0 12px 0;">NOVA QUEBRA GERAL / LIMPEZA</h3>
-            
-            <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 8px; margin-bottom: 8px;">
-                <div class="form-group" style="margin: 0;">
-                    <label style="font-size: 0.75rem;">Código</label>
-                    <input type="number" id="geral-codigo" required placeholder="0000" list="lista-codigos" style="padding: 8px; font-size: 0.9rem;">
+    <div id="cadastro-screen" class="screen active">
+        <form id="main-form">
+            <div class="row">
+                <div class="form-group">
+                    <label>Código (Ex: 7028)</label>
+                    <input type="number" id="codigo" placeholder="0000" required>
                 </div>
-                <div class="form-group" style="margin: 0;">
-                    <label style="font-size: 0.75rem;">Produto</label>
-                    <input type="text" id="geral-nome" required placeholder="Ex: Tomate" list="lista-nomes" style="padding: 8px; font-size: 0.9rem;">
+                <div class="form-group">
+                    <label>Produto</label>
+                    <input type="text" id="produto" placeholder="Nome do item" required>
                 </div>
             </div>
 
-            <div class="form-group" style="margin-bottom: 8px;">
-                <label style="font-size: 0.75rem;">Unidade de Medida</label>
-                <div class="unit-selector" style="padding: 2px;">
-                    <button type="button" id="geral-unit-kg" class="unit-btn active" style="padding: 6px; font-size: 0.8rem;">KG</button>
-                    <button type="button" id="geral-unit-und" class="unit-btn" style="padding: 6px; font-size: 0.8rem;">UND</button>
+            <div class="row">
+                <div class="form-group">
+                    <label>Qtd Quebra</label>
+                    <input type="number" id="qtd_quebra" step="0.01" placeholder="0.00" required>
                 </div>
-                <input type="hidden" id="geral-unidade" value="KG">
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;">
-                <div class="form-group" style="margin: 0;">
-                    <label style="font-size: 0.75rem;">Qtd Quebrada</label>
-                    <input type="text" id="geral-qtd" inputmode="decimal" required placeholder="0.00" style="padding: 8px; font-size: 1rem; font-weight: bold; color: #ff4444; background: #000;">
-                </div>
-                <div class="form-group" style="margin: 0;">
-                    <label style="font-size: 0.75rem;">Preço Custo (R$)</label>
-                    <input type="text" id="geral-custo" inputmode="decimal" required placeholder="0,00" style="padding: 8px; font-size: 1rem; font-weight: bold; color: #28a745; background: #000;">
+                <div class="form-group">
+                    <label>Custo (R$)</label>
+                    <input type="number" id="custo" step="0.01" placeholder="0.00" required>
                 </div>
             </div>
 
-            <div style="background: #1a1a1a; padding: 10px; border-radius: 8px; border: 1px solid #333; margin-bottom: 15px; text-align: center;">
-                <small style="color: #888; font-size: 0.65rem;">VALOR TOTAL DA QUEBRA</small>
-                <div id="geral-valor-total" style="color: #ff4444; font-size: 1.4rem; font-weight: bold;">R$ 0,00</div>
+            <div id="total-preview" style="text-align: center; padding: 10px; color: var(--primary); font-weight: bold;">
+                Total: R$ 0,00
             </div>
 
-            <button type="submit" class="btn" style="background: #007bff; color: white; width: 100%; padding: 12px; font-weight: bold; font-size: 0.95rem; border-radius: 10px;">✅ SALVAR QUEBRA GERAL</button>
+            <button type="submit" class="btn-save">✅ SALVAR REGISTRO</button>
         </form>
     </div>
 
-    <!-- Tela 2: Cadastro de Tratativa (Otimizada) -->
-    <div id="cadastro-screen" class="screen">
-        <form id="tratativa-form" style="padding: 10px;">
-            <h3 style="color: #ffcc00; font-size: 0.95rem; text-align: center; margin: 0 0 12px 0;">REGISTRAR NOVA TRATATIVA</h3>
-            
-            <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 8px; margin-bottom: 8px;">
-                <div class="form-group" style="margin: 0;">
-                    <label style="font-size: 0.75rem;">Código</label>
-                    <input type="number" id="codigo" required placeholder="0000" list="lista-codigos" style="padding: 8px;">
-                </div>
-                <div class="form-group" style="margin: 0;">
-                    <label style="font-size: 0.75rem;">Produto</label>
-                    <input type="text" id="produto" required placeholder="Produto" list="lista-nomes" style="padding: 8px;">
-                </div>
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
-                <div class="form-group" style="margin: 0;">
-                    <label style="font-size: 0.75rem;">Unidade</label>
-                    <div class="unit-selector" style="padding: 2px;">
-                        <button type="button" id="unit-kg" class="unit-btn active" style="padding: 5px; font-size: 0.75rem;">KG</button>
-                        <button type="button" id="unit-und" class="unit-btn" style="padding: 5px; font-size: 0.75rem;">UND</button>
-                    </div>
-                    <input type="hidden" id="unidade" value="KG">
-                </div>
-                <div class="form-group" style="margin: 0;">
-                    <label style="font-size: 0.75rem;">Qtd Chegou</label>
-                    <input type="text" id="qtd_chegou" inputmode="decimal" required placeholder="0.00" style="padding: 8px;">
-                </div>
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
-                <div class="form-group" style="margin: 0;">
-                    <label style="font-size: 0.75rem;">Qtd Quebra</label>
-                    <input type="text" id="quantidade" inputmode="decimal" required placeholder="0.00" style="padding: 8px;">
-                </div>
-                <div class="form-group" style="margin: 0;">
-                    <label style="font-size: 0.75rem;">Custo (R$)</label>
-                    <input type="text" id="preco_custo" inputmode="decimal" required placeholder="0,00" style="padding: 8px;">
-                </div>
-            </div>
-
-            <div class="form-group" id="container-fotos" style="margin-bottom: 12px;">
-                <label style="font-size: 0.75rem;">Fotos Obrigatórias</label>
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px;">
-                    <div class="photo-container" style="min-height: 60px;" onclick="document.getElementById('input-produto').click()">
-                        <img id="prev-produto" class="photo-preview" style="height: 40px; display: none;">
-                        <div class="photo-placeholder" style="font-size: 0.6rem;">🍎 PROD</div>
-                        <input type="file" id="input-produto" accept="image/*" style="display: none;">
-                    </div>
-                    <div class="photo-container" style="min-height: 60px;" onclick="document.getElementById('input-balanca').click()">
-                        <img id="prev-balanca" class="photo-preview" style="height: 40px; display: none;">
-                        <div class="photo-placeholder" style="font-size: 0.6rem;">⚖️ BAL</div>
-                        <input type="file" id="input-balanca" accept="image/*" style="display: none;">
-                    </div>
-                    <div class="photo-container" style="min-height: 60px;" onclick="document.getElementById('input-etiqueta-camera').click()">
-                        <img id="prev-etiqueta" class="photo-preview" style="height: 40px; display: none;">
-                        <div class="photo-placeholder" style="font-size: 0.6rem;">🏷️ ETIQ</div>
-                        <input type="file" id="input-etiqueta-camera" accept="image/*" capture="environment" style="display: none;">
-                    </div>
-                </div>
-            </div>
-
-            <input type="hidden" id="valor" value="0,00">
-            <input type="hidden" id="tipo_quebra" value="TRATATIVA">
-            <input type="hidden" id="data-ocorrencia">
-
-            <button type="submit" class="btn btn-save" style="width: 100%; padding: 12px; font-weight: bold;">[ REVISAR E ENVIAR ]</button>
-        </form>
-    </div>
-
-    <!-- Tela 4: Revisão e Envio -->
-    <div id="review-screen" class="screen">
-        <button id="btn-voltar-review" class="btn btn-back">⬅️ CORRIGIR DADOS</button>
-        <h2 style="color: var(--title-color); font-size: 1.4rem; text-align: center;">Revisão da Tratativa</h2>
-        
-        <div id="review-data" style="background: #111; padding: 15px; border-radius: 10px; border: 1px solid #333; margin-bottom: 15px;">
-            <!-- Dados preenchidos aparecerão aqui -->
-        </div>
-
-        <div style="display: flex; flex-direction: column; gap: 10px;">
-            <button id="btn-send-text" class="btn btn-send-review" style="background-color: #25D366; color: white;">🟢 ENVIAR TEXTO</button>
-            <button id="btn-send-photo-prod" class="btn btn-send-review" style="background-color: #444; color: white;">📸 ENVIAR FOTO PRODUTO</button>
-            <button id="btn-send-photo-bal" class="btn btn-send-review" style="background-color: #444; color: white;">📸 ENVIAR FOTO BALANÇA</button>
-            <button id="btn-send-photo-etiq" class="btn btn-send-review" style="background-color: #444; color: white;">📸 ENVIAR FOTO ETIQUETA</button>
-        </div>
-
-        <button id="btn-finalizar-tudo" class="btn btn-save" style="width: 100%; margin-top: 20px; background-color: #333; color: #777; cursor: not-allowed;" disabled>
-            ✅ SALVAR NO HISTÓRICO E FINALIZAR
-        </button>
-    </div>
-
-    <!-- Tela 3: Histórico de Tratativas -->
     <div id="history-screen" class="screen">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <button id="btn-voltar-history" class="btn btn-back">Voltar</button>
-            <button id="btn-clear-all" class="btn-delete" style="background-color: #662222;">Limpar Tudo</button>
-        </div>
-
-        <div class="filter-container">
-            <!-- Painel Financeiro -->
-            <div id="financial-panel" style="background: #1a1a1a; padding: 15px; border-radius: 12px; border: 1px solid #333; margin-bottom: 15px; width: 100%;">
-                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
-                    <label style="color: #ffcc00; font-weight: bold; font-size: 0.9rem; white-space: nowrap;">Venda Diária:</label>
-                    <input type="text" id="input-venda-dia" inputmode="decimal" placeholder="R$ 0,00" style="background: #000; color: #fff; border: 1px solid #444; padding: 8px; border-radius: 5px; flex: 1; font-size: 1rem;">
-                </div>
-                
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                    <div style="background: #222; padding: 10px; border-radius: 8px; border-left: 4px solid #ff4444;">
-                        <small style="color: #888; display: block; font-size: 0.7rem;">QUEBRA REAL</small>
-                        <span id="stat-quebra-total" style="color: #ff4444; font-weight: bold; font-size: 1.1rem;">R$ 0,00</span>
-                        <span id="stat-quebra-percent" style="color: #888; font-size: 0.8rem; margin-left: 5px;">(0%)</span>
-                    </div>
-                    <div style="background: #222; padding: 10px; border-radius: 8px; border-left: 4px solid #28a745;">
-                        <small style="color: #888; display: block; font-size: 0.7rem;">ECONOMIA (TRATADO)</small>
-                        <span id="stat-economia" style="color: #28a745; font-weight: bold; font-size: 1.1rem;">R$ 0,00</span>
-                    </div>
-                    <div style="background: #222; padding: 10px; border-radius: 8px; border-left: 4px solid #ffcc00; grid-column: span 2;">
-                        <small style="color: #888; display: block; font-size: 0.7rem;">EM TRATATIVA (PENDENTE)</small>
-                        <span id="stat-pendente" style="color: #ffcc00; font-weight: bold; font-size: 1.1rem;">R$ 0,00</span>
-                    </div>
-                </div>
-            </div>
-
-            <div style="display: flex; gap: 5px; flex-wrap: wrap; width: 100%;">
-                <button id="btn-filter-all" class="btn" style="background-color: #444; color: white; flex: 1; font-size: 0.75rem; padding: 8px;">Ver Todos</button>
-                <button id="btn-filter-pending" class="btn" style="background-color: #ffcc00; color: black; flex: 1; font-size: 0.75rem; padding: 8px;">Ver Pendentes</button>
-                <input type="date" id="filter-date" style="flex: 1.5; font-size: 0.75rem; padding: 5px;">
-                <button id="btn-clear-history" class="btn" style="background-color: #ff4444; color: white; flex: 0.6; font-size: 0.75rem; padding: 8px;">Limpar</button>
-            </div>
-        </div>
-
         <div id="history-list">
-            <!-- Itens do histórico serão inseridos aqui -->
-        </div>
-        <div class="history-footer">
-            <div id="total-quebra-dia" class="total-counter">Total Quebra (Hoje): 0.00</div>
-            <button id="btn-export-whatsapp" class="btn btn-whatsapp">
-                Exportar para WhatsApp
-            </button>
+            <p style="text-align: center; color: #666;">Nenhum registro encontrado.</p>
         </div>
     </div>
 
-    <!-- Modal de Visualização de Fotos -->
-    <div id="photo-modal" class="modal">
-        <span class="modal-close" onclick="closeModal()">&times;</span>
-        <div class="modal-content" id="modal-content">
-            <!-- Fotos serão inseridas aqui -->
-        </div>
-    </div>
-
-    <!-- Tela de Painel de Resultados -->
     <div id="results-screen" class="screen">
-        <button id="btn-voltar-results" class="btn btn-back">⬅️ VOLTAR AO MENU</button>
-        <h2 style="color: var(--title-color); font-size: 1.6rem; text-align: center; margin-bottom: 20px;">Painel de Resultados</h2>
-        
-        <!-- Seletor de Data Dashboard -->
-        <div style="background: #1a1a1a; padding: 15px; border-radius: 15px; border: 1px solid #333; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
-            <label style="color: #888; font-weight: bold; font-size: 0.9rem;">Filtrar Data:</label>
-            <input type="date" id="dash-date-filter" class="input-field" style="flex: 1; background: #000; color: #fff; border: 1px solid #444; padding: 8px; border-radius: 8px; text-align: center;">
-        </div>
-
-        <!-- Entrada de Venda -->
-        <div style="background: #1a1a1a; padding: 20px; border-radius: 15px; border: 1px solid #333; margin-bottom: 20px;">
-            <label style="color: #ffcc00; font-weight: bold; display: block; margin-bottom: 10px;">Venda Total do Dia (R$):</label>
-            <input type="text" id="venda-dia-results" inputmode="decimal" placeholder="R$ 0,00" class="input-field" style="width: 100%; font-size: 1.8rem; text-align: center; background: #000; color: #fff; border: 1px solid #444; font-weight: bold;">
-        </div>
-
-        <div id="capture-area" style="background: var(--bg-color); padding: 10px; border-radius: 15px;">
-            <div style="text-align: center; margin-bottom: 12px;">
-                <h3 style="color: #ffcc00; margin: 0; font-size: 1rem;">GESTÃO UNIFICADA FLV</h3>
-                <h4 style="color: #fff; margin: 3px 0; font-size: 0.85rem;">Performance - <span id="dash-current-date">--/--/----</span></h4>
-            </div>
-
-            <div class="dashboard-grid" style="display: flex; flex-direction: column; gap: 10px;">
-                <!-- Seção Superior: Indicador IG -->
-                <div id="card-ig-box" style="background: #1a1a1a; padding: 12px; border-radius: 15px; border: 2px solid #333; text-align: center;">
-                    <small style="color: #888; display: block; font-size: 0.65rem; margin-bottom: 2px;">ÍNDICE DE QUEBRA (IG %)</small>
-                    <div id="val-ig-percent" style="font-size: 2rem; font-weight: bold; color: #fff;">0,00%</div>
-                    <div id="status-ig" style="font-size: 0.7rem; font-weight: bold; margin-top: 2px; padding: 2px 10px; border-radius: 20px; display: inline-block;">-</div>
-                </div>
-
-                <div style="display: grid; grid-template-columns: 1fr; gap: 10px;">
-                    <!-- Coluna 1: Pendentes -->
-                    <div style="background: #111; padding: 10px; border-radius: 15px; border: 1px solid #333;">
-                        <h3 style="color: #ffcc00; font-size: 0.85rem; margin: 0 0 8px 0; text-align: center; border-bottom: 1px solid #333; padding-bottom: 6px;">ITENS PENDENTES</h3>
-                        <div id="dash-pending-list" style="display: flex; flex-direction: column; gap: 6px; max-height: 150px; overflow-y: auto; padding-right: 5px;">
-                            <!-- Itens pendentes via JS -->
-                            <p style="color: #666; text-align: center; font-size: 0.75rem;">Nenhuma tratativa pendente.</p>
-                        </div>
-                    </div>
-
-                    <!-- Coluna 2: Resumo Financeiro -->
-                    <div style="background: #111; padding: 12px; border-radius: 15px; border: 1px solid #333;">
-                        <h3 style="color: #007bff; font-size: 0.9rem; margin: 0 0 12px 0; text-align: center; border-bottom: 1px solid #333; padding-bottom: 8px;">RESUMO FINANCEIRO</h3>
-                        
-                        <div style="display: flex; flex-direction: column; gap: 10px;">
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                                <div style="background: #1a1a1a; padding: 10px; border-radius: 10px; border-left: 3px solid #fff;">
-                                    <small style="color: #888; display: block; font-size: 0.6rem;">QUEBRA (TOTAL)</small>
-                                    <span id="val-quebra-bruta" style="color: #fff; font-weight: bold; font-size: 1.1rem;">R$ 0,00</span>
-                                </div>
-                                
-                                <div style="background: #1a1a1a; padding: 10px; border-radius: 10px; border-left: 3px solid #28a745;">
-                                    <small style="color: #888; display: block; font-size: 0.6rem;">ECONOMIA (SALVA)</small>
-                                    <span id="val-economia-results" style="color: #28a745; font-weight: bold; font-size: 1.1rem;">R$ 0,00</span>
-                                </div>
-
-                                <div style="background: #1a1a1a; padding: 10px; border-radius: 10px; border-left: 3px solid #ff4444;">
-                                    <small style="color: #888; display: block; font-size: 0.6rem;">PERDA CONCILIADA</small>
-                                    <span id="val-quebra-liquida" style="color: #ff4444; font-weight: bold; font-size: 1.1rem;">R$ 0,00</span>
-                                </div>
-
-                                <div style="background: #1a1a1a; padding: 10px; border-radius: 10px; border-left: 3px solid #ffcc00;">
-                                    <small style="color: #888; display: block; font-size: 0.6rem;">TRATATIVAS</small>
-                                    <span id="val-quebra-tratativa" style="color: #ffcc00; font-weight: bold; font-size: 1.1rem;">R$ 0,00</span>
-                                </div>
-                            </div>
-                            
-                            <div style="background: #1a1a1a; padding: 8px; border-radius: 8px; text-align: center; border: 1px solid #333;">
-                                <small style="color: #888; display: inline-block; font-size: 0.65rem; margin-right: 5px;">GERAL/LIMPEZA:</small>
-                                <span id="val-quebra-geral" style="color: #007bff; font-weight: bold; font-size: 0.9rem;">R$ 0,00</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;">
-            <button id="btn-relatorio-diario" class="btn" style="background: #25D366; color: white; width: 100%; font-weight: bold; padding: 15px; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 10px;">
-                📊 ENVIAR RELATÓRIO DIÁRIO
-            </button>
-            <button id="btn-print-results" class="btn" style="background: #444; color: white; width: 100%; font-weight: bold; padding: 15px; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 10px;">
-                📸 GERAR PRINT PARA GERÊNCIA
-            </button>
-        </div>
-    </div>
-
-    <!-- Modal de Aprovação/Edição -->
-    <div id="modal-approval" class="screen" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; padding: 20px;">
-        <div style="background: #1a1a1a; width: 100%; max-width: 400px; padding: 25px; border-radius: 15px; border: 1px solid #333; box-shadow: 0 0 20px rgba(0,0,0,0.5);">
-            <h3 style="color: #ffcc00; margin-top: 0; text-align: center;">Aprovação Parcial</h3>
-            <p id="modal-product-name" style="font-weight: bold; color: white; text-align: center; margin-bottom: 5px;"></p>
-            <p id="modal-original-info" style="color: #888; text-align: center; font-size: 0.85rem; margin-bottom: 20px;"></p>
-            
-            <div style="margin-bottom: 20px;">
-                <label style="display: block; color: #aaa; font-size: 0.9rem; margin-bottom: 8px;">Quantidade Aprovada (Salva):</label>
-                <input type="text" id="modal-edit-qty" inputmode="decimal" class="input-field" style="width: 100%; font-size: 1.5rem; text-align: center; color: #28a745; background: #000; border: 1px solid #444;">
-                <div style="display: flex; justify-content: space-between; margin-top: 10px; padding: 10px; background: #000; border-radius: 8px;">
-                    <div style="text-align: center; flex: 1;">
-                        <small style="color: #28a745; display: block; font-size: 0.7rem;">VALOR SALVO</small>
-                        <span id="modal-calc-salvo" style="color: #28a745; font-weight: bold; font-size: 1rem;">R$ 0,00</span>
-                    </div>
-                    <div style="width: 1px; background: #333; margin: 0 10px;"></div>
-                    <div style="text-align: center; flex: 1;">
-                        <small style="color: #ff4444; display: block; font-size: 0.7rem;">SALDO QUEBRA</small>
-                        <span id="modal-calc-saldo" style="color: #ff4444; font-weight: bold; font-size: 1rem;">R$ 0,00</span>
-                    </div>
-                </div>
-            </div>
-
-            <div style="display: flex; gap: 10px;">
-                <button onclick="closeApprovalModal()" class="btn" style="background: #444; color: white; flex: 1;">CANCELAR</button>
-                <button id="btn-confirm-approval" class="btn" style="background: #28a745; color: white; flex: 2; font-weight: bold;">✅ APROVAR</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Tela: Cadastro de Itens (Gerenciamento) -->
-    <div id="products-screen" class="screen">
-        <button id="btn-voltar-products" class="btn btn-back">⬅️ VOLTAR AO MENU</button>
-        <h2 style="color: var(--title-color); font-size: 1.6rem; text-align: center; margin-bottom: 20px;">Cadastro de Itens</h2>
-
-        <!-- Formulário Manual -->
-        <div style="background: #1a1a1a; padding: 20px; border-radius: 15px; border: 1px solid #333; margin-bottom: 20px;">
-            <h3 style="color: #fff; margin-top: 0; font-size: 1rem; margin-bottom: 15px;">Cadastro Manual</h3>
-            <input type="hidden" id="edit-prod-id">
-            <div class="form-group">
-                <label>Código do Produto</label>
-                <input type="number" id="prod-codigo" placeholder="0000">
-            </div>
-            <div class="form-group">
-                <label>Nome do Produto</label>
-                <input type="text" id="prod-nome" placeholder="Ex: Tomate Italiano">
-            </div>
-            <div class="form-group">
-                <label>Preço de Venda (R$)</label>
-                <input type="text" id="prod-preco" placeholder="R$ 0,00">
-            </div>
-            <button id="btn-save-product" class="btn" style="background: #28a745; color: white; width: 100%; font-weight: bold; padding: 15px; margin-top: 10px;">
-                ✅ SALVAR PRODUTO
-            </button>
-        </div>
-
-        <!-- Lista de Produtos Cadastrados -->
-        <h3 style="color: #ffcc00; font-size: 1.1rem; margin-bottom: 15px;">Itens Cadastrados</h3>
-        <div id="products-list-container" style="display: grid; gap: 10px;">
-            <!-- Itens via JS -->
+        <div class="history-card" style="border-left-color: var(--success); text-align: center;">
+            <label>TOTAL QUEBRA ACUMULADA</label>
+            <h2 id="painel-total" style="margin: 10px 0;">R$ 0,00</h2>
         </div>
     </div>
 
     <script>
-        // --- 1. CONFIGURAÇÕES E BANCO DE DADOS ---
-        const APP_VERSION = '1.8';
-        const dbName = "FLVDatabase";
-        const historyStore = "historico";
-        const productStore = "produtos";
-        let db;
-
-        // Banco de Dados Interno (Autocomplete) - Itens Reais
-        const produtosFLV = { 
-            '7028': {nome: 'TOMATE', uni: 'KG'}, 
-            '1125': {nome: 'CEBOLA', uni: 'KG'}, 
-            '2030': {nome: 'PIMENTÃO', uni: 'KG'},
-            '3560': {nome: 'MELANCIA', uni: 'UND'},
-            '1120': {nome: 'ALHO', uni: 'KG'},
-            '1540': {nome: 'BATATA', uni: 'KG'},
-            '2233': {nome: 'BANANA', uni: 'KG'}
+        // BANCO DE DADOS DE PRODUTOS (7028 TOMATE)
+        const dbProdutos = {
+            "7028": "TOMATE",
+            "1125": "CEBOLA",
+            "2030": "PIMENTÃO",
+            "4050": "BATATA"
         };
 
-        function initDB() {
-            const request = indexedDB.open(dbName, 3);
-            request.onupgradeneeded = (e) => {
-                const dbInstance = e.target.result;
-                if (!dbInstance.objectStoreNames.contains(historyStore)) {
-                    dbInstance.createObjectStore(historyStore, { keyPath: "id", autoIncrement: true });
-                }
-                if (!dbInstance.objectStoreNames.contains(productStore)) {
-                    dbInstance.createObjectStore(productStore, { keyPath: "codigo" });
-                }
-            };
-            request.onsuccess = (e) => {
-                db = e.target.result;
-                console.log("IndexedDB Conectado!");
-                initAutocomplete();
-                updateResultsDashboard();
-                renderHistory();
-            };
-            request.onerror = (e) => console.error("Erro no DB:", e.target.error);
-        }
+        const codigoInput = document.getElementById('codigo');
+        const produtoInput = document.getElementById('produto');
+        const form = document.getElementById('main-form');
 
-        // --- 2. AUTOMAÇÃO DE PRODUTOS ---
-        function initAutocomplete() {
-            const setups = [
-                { cod: 'codigo', nome: 'produto', unit: 'unidade', prefix: '' },
-                { cod: 'geral-codigo', nome: 'geral-nome', unit: 'geral-unidade', prefix: 'geral-' }
-            ];
-
-            const listNomes = document.getElementById('lista-nomes');
-            const listCodigos = document.getElementById('lista-codigos');
-            
-            if (listNomes) {
-                listNomes.innerHTML = '';
-                for (const cod in produtosFLV) {
-                    const opt = document.createElement('option');
-                    opt.value = produtosFLV[cod].nome;
-                    listNomes.appendChild(opt);
-                }
+        // 1. AUTOMAÇÃO DE CÓDIGO
+        codigoInput.addEventListener('input', () => {
+            const cod = codigoInput.value;
+            if (dbProdutos[cod]) {
+                produtoInput.value = dbProdutos[cod];
+                produtoInput.style.borderColor = "lime";
             }
-
-            if (listCodigos) {
-                listCodigos.innerHTML = '';
-                for (const cod in produtosFLV) {
-                    const opt = document.createElement('option');
-                    opt.value = cod;
-                    listCodigos.appendChild(opt);
-                }
-            }
-
-            setups.forEach(setup => {
-                const inputCod = document.getElementById(setup.cod);
-                const inputNome = document.getElementById(setup.nome);
-
-                if (!inputCod || !inputNome) return;
-
-                // Busca por Código
-                inputCod.addEventListener('input', () => {
-                    const p = produtosFLV[inputCod.value];
-                    if (p) {
-                        inputNome.value = p.nome;
-                        if (setup.prefix === 'geral-') {
-                            window.setUnitGeral(p.uni);
-                        } else {
-                            window.setUnit(p.uni);
-                        }
-                    }
-                });
-
-                // Busca por Nome
-                inputNome.addEventListener('input', () => {
-                    const nomeDigitado = inputNome.value.toUpperCase();
-                    for (const cod in produtosFLV) {
-                        if (produtosFLV[cod].nome === nomeDigitado) {
-                            inputCod.value = cod;
-                            if (setup.prefix === 'geral-') {
-                                window.setUnitGeral(produtosFLV[cod].uni);
-                            } else {
-                                window.setUnit(produtosFLV[cod].uni);
-                            }
-                            break;
-                        }
-                    }
-                });
-            });
-        }
-
-        // --- 3. NAVEGAÇÃO ENTRE TELAS ---
-        const screens = ['results-screen', 'cadastro-screen', 'geral-screen', 'menu-screen', 'history-screen', 'review-screen'];
-        
-        function showScreen(screenId) {
-            screens.forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.classList.remove('active');
-            });
-            const target = document.getElementById(screenId);
-            if (target) target.classList.add('active');
-
-            // Ativar botões do menu superior
-            const navButtons = {
-                'nav-dash': 'results-screen',
-                'nav-tratativa': 'cadastro-screen',
-                'nav-geral': 'geral-screen',
-                'nav-menu': 'menu-screen'
-            };
-
-            for (const btnId in navButtons) {
-                const btn = document.getElementById(btnId);
-                if (btn) {
-                    if (navButtons[btnId] === screenId) {
-                        btn.classList.add('active');
-                        btn.style.borderBottom = '2px solid yellow';
-                        btn.style.color = 'yellow';
-                    } else {
-                        btn.classList.remove('active');
-                        btn.style.borderBottom = '1px solid #333';
-                        btn.style.color = '#fff';
-                    }
-                }
-            }
-
-            if (screenId === 'results-screen') updateResultsDashboard();
-            if (screenId === 'history-screen') renderHistory();
-        }
-
-        // --- 4. CÁLCULOS E FORMATAÇÃO ---
-        function parseCurrency(value) {
-            if (!value) return 0;
-            let clean = value.toString().replace(/[^\d]/g, "");
-            return parseFloat(clean) / 100;
-        }
-
-        function parseCommaFloat(value) {
-            if (!value) return 0;
-            return parseFloat(value.toString().replace(',', '.')) || 0;
-        }
-
-        function setupNumericInput(id) {
-            const input = document.getElementById(id);
-            if (!input) return;
-
-            input.addEventListener('input', (e) => {
-                // Máscara de Moeda para Preços
-                if (id === 'preco_custo' || id === 'geral-custo' || id === 'venda-dia-results' || id === 'input-venda-dia') {
-                    let val = e.target.value.replace(/\D/g, "");
-                    let float = parseFloat(val) / 100;
-                    e.target.value = float.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-                    
-                    // Sincronizar inputs de venda
-                    if (id === 'venda-dia-results') {
-                        const other = document.getElementById('input-venda-dia');
-                        if (other) other.value = e.target.value;
-                    } else if (id === 'input-venda-dia') {
-                        const other = document.getElementById('venda-dia-results');
-                        if (other) other.value = e.target.value;
-                    }
-                    
-                    // Atualizar dashboard se estiver no dashboard
-                    updateResultsDashboard();
-                } else {
-                    // Apenas números e vírgula para quantidades
-                    e.target.value = e.target.value.replace(/[^0-9,]/g, '');
-                }
-
-                // Cálculo Quebra Geral Automático
-                if (id === 'geral-qtd' || id === 'geral-custo') {
-                    const q = parseCommaFloat(document.getElementById('geral-qtd').value);
-                    const c = parseCurrency(document.getElementById('geral-custo').value);
-                    const total = q * c;
-                    document.getElementById('geral-valor-total').innerText = `R$ ${total.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-                }
-            });
-        }
-
-        // --- 5. FUNÇÕES DE SALVAMENTO ---
-        function salvarQuebraGeral(e) {
-            if (e) e.preventDefault();
-            if (!db) return alert("Banco não pronto!");
-
-            const item = {
-                codigo: document.getElementById('geral-codigo').value || 'S/C',
-                nome: document.getElementById('geral-nome').value.toUpperCase(),
-                unidade: document.getElementById('geral-unidade').value,
-                qtd_quebra_kg: document.getElementById('geral-qtd').value,
-                preco_custo: document.getElementById('geral-custo').value,
-                qtd_quebra: document.getElementById('geral-valor-total').innerText.replace('R$ ', ''),
-                tipo_quebra: 'GERAL',
-                data: new Date().toLocaleDateString('pt-BR'),
-                timestamp: Date.now(),
-                status: 'CONCLUÍDO'
-            };
-
-            const tx = db.transaction(historyStore, "readwrite");
-            tx.objectStore(historyStore).add(item).onsuccess = () => {
-                alert("✅ Quebra Geral Salva com Sucesso!");
-                document.getElementById('geral-form').reset();
-                document.getElementById('geral-valor-total').innerText = "R$ 0,00";
-                showScreen('results-screen');
-            };
-        }
-
-        let currentTratativaData = null;
-        function salvarTratativa() {
-            if (!db || !currentTratativaData) return;
-            
-            const tx = db.transaction(historyStore, "readwrite");
-            tx.objectStore(historyStore).add(currentTratativaData).onsuccess = () => {
-                alert("✅ Tratativa Salva com Sucesso!");
-                document.getElementById('tratativa-form').reset();
-                showScreen('results-screen');
-            };
-        }
-
-        // --- 6. EVENTOS E INICIALIZAÇÃO ---
-        document.addEventListener('DOMContentLoaded', () => {
-            initDB();
-
-            // Menu Superior
-            document.getElementById('nav-dash').onclick = () => showScreen('results-screen');
-            document.getElementById('nav-tratativa').onclick = () => showScreen('cadastro-screen');
-            document.getElementById('nav-geral').onclick = () => showScreen('geral-screen');
-            document.getElementById('nav-menu').onclick = () => showScreen('menu-screen');
-
-            // Formulários
-            document.getElementById('geral-form').onsubmit = salvarQuebraGeral;
-            
-            document.getElementById('tratativa-form').onsubmit = (e) => {
-                e.preventDefault();
-                const q = parseCommaFloat(document.getElementById('quantidade').value);
-                const c = parseCurrency(document.getElementById('preco_custo').value);
-                const total = q * c;
-
-                currentTratativaData = {
-                    codigo: document.getElementById('codigo').value || 'S/C',
-                    nome: document.getElementById('produto').value.toUpperCase(),
-                    unidade: document.getElementById('unidade').value,
-                    qtd_chegou: document.getElementById('qtd_chegou').value,
-                    qtd_quebra_kg: document.getElementById('quantidade').value,
-                    preco_custo: document.getElementById('preco_custo').value,
-                    qtd_quebra: total.toLocaleString('pt-BR', {minimumFractionDigits: 2}),
-                    tipo_quebra: 'TRATATIVA',
-                    data: new Date().toLocaleDateString('pt-BR'),
-                    timestamp: Date.now(),
-                    status: 'PENDENTE'
-                };
-
-                // Tela de Revisão
-                document.getElementById('review-data').innerHTML = `
-                    <p style="margin: 5px 0;"><strong>PRODUTO:</strong> ${currentTratativaData.nome}</p>
-                    <p style="margin: 5px 0;"><strong>CÓDIGO:</strong> ${currentTratativaData.codigo}</p>
-                    <p style="margin: 5px 0;"><strong>QUANTIDADE:</strong> ${currentTratativaData.qtd_quebra_kg} ${currentTratativaData.unidade}</p>
-                    <p style="margin: 5px 0; font-size: 1.2rem; color: #ff4444;"><strong>VALOR:</strong> R$ ${currentTratativaData.qtd_quebra}</p>
-                `;
-                
-                // Habilitar botão de finalizar na revisão
-                const btnFinalizar = document.getElementById('btn-finalizar-tudo');
-                if (btnFinalizar) {
-                    btnFinalizar.disabled = false;
-                    btnFinalizar.style.background = 'lime';
-                    btnFinalizar.style.color = 'black';
-                    btnFinalizar.style.cursor = 'pointer';
-                }
-                
-                showScreen('review-screen');
-            };
-
-            document.getElementById('btn-finalizar-tudo').onclick = salvarTratativa;
-            document.getElementById('btn-voltar-review').onclick = () => showScreen('cadastro-screen');
-            document.getElementById('btn-voltar-results').onclick = () => showScreen('menu-screen');
-
-            // Unidades
-            window.setUnit = (u) => {
-                document.getElementById('unidade').value = u;
-                document.getElementById('unit-kg').classList.toggle('active', u === 'KG');
-                document.getElementById('unit-und').classList.toggle('active', u === 'UND');
-            };
-            window.setUnitGeral = (u) => {
-                document.getElementById('geral-unidade').value = u;
-                document.getElementById('geral-unit-kg').classList.toggle('active', u === 'KG');
-                document.getElementById('geral-unit-und').classList.toggle('active', u === 'UND');
-            };
-
-            document.getElementById('unit-kg').onclick = () => setUnit('KG');
-            document.getElementById('unit-und').onclick = () => setUnit('UND');
-            document.getElementById('geral-unit-kg').onclick = () => setUnitGeral('KG');
-            document.getElementById('geral-unit-und').onclick = () => setUnitGeral('UND');
-
-            // Inputs Numéricos
-            ['quantidade', 'preco_custo', 'geral-qtd', 'geral-custo', 'venda-dia-results', 'input-venda-dia'].forEach(setupNumericInput);
-            
-            // Dashboard Date
-            const df = document.getElementById('dash-date-filter');
-            if (df) {
-                df.value = new Date().toISOString().split('T')[0];
-                df.onchange = updateResultsDashboard;
-            }
-
-            // Iniciar na tela do Dashboard
-            showScreen('results-screen');
         });
 
-        // --- 7. DASHBOARD E HISTÓRICO ---
-        function updateResultsDashboard() {
-            if (!db) return;
-            const tx = db.transaction(historyStore, "readonly");
-            tx.objectStore(historyStore).getAll().onsuccess = (e) => {
-                const logs = e.target.result;
-                const filterDate = document.getElementById('dash-date-filter').value;
-                const filterDateBR = filterDate.split('-').reverse().join('/');
-                
-                document.getElementById('dash-current-date').innerText = filterDateBR;
-
-                let tGeral = 0, tTrat = 0;
-                const pendingList = document.getElementById('dash-pending-list');
-                pendingList.innerHTML = '';
-
-                logs.forEach(item => {
-                    if (item.data === filterDateBR) {
-                        const val = parseFloat(item.qtd_quebra.replace('.', '').replace(',', '.'));
-                        if (item.tipo_quebra === 'GERAL') {
-                            tGeral += val;
-                        } else {
-                            tTrat += val;
-                            if (item.status === 'PENDENTE') {
-                                const div = document.createElement('div');
-                                div.className = 'pending-item-dash';
-                                div.style = 'background: #222; padding: 8px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; border-left: 3px solid yellow;';
-                                div.innerHTML = `
-                                    <div style="font-size: 0.8rem;">
-                                        <strong>${item.nome}</strong><br>
-                                        <small>${item.qtd_quebra_kg} ${item.unidade}</small>
-                                    </div>
-                                    <div style="color: yellow; font-weight: bold; font-size: 0.9rem;">R$ ${item.qtd_quebra}</div>
-                                `;
-                                pendingList.appendChild(div);
-                            }
-                        }
-                    }
-                });
-
-                if (pendingList.innerHTML === '') {
-                    pendingList.innerHTML = '<p style="color: #666; text-align: center; font-size: 0.75rem;">Nenhuma tratativa pendente.</p>';
-                }
-
-                document.getElementById('val-quebra-geral').innerText = `R$ ${tGeral.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-                document.getElementById('val-quebra-tratativa').innerText = `R$ ${tTrat.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-                document.getElementById('val-quebra-bruta').innerText = `R$ ${(tGeral + tTrat).toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-                
-                // Cálculo de Índice (IG) se houver venda
-                const vendaStr = document.getElementById('venda-dia-results').value;
-                const venda = parseCurrency(vendaStr);
-                if (venda > 0) {
-                    const ig = ((tGeral + tTrat) / venda) * 100;
-                    document.getElementById('val-ig-percent').innerText = `${ig.toLocaleString('pt-BR', {minimumFractionDigits: 2})}%`;
-                }
+        // 2. LÓGICA DE SALVAMENTO (LOCALSTORAGE PARA SER DEFINITIVO)
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const novoRegistro = {
+                codigo: codigoInput.value,
+                produto: produtoInput.value,
+                qtd: document.getElementById('qtd_quebra').value,
+                custo: document.getElementById('custo').value,
+                total: (document.getElementById('qtd_quebra').value * document.getElementById('custo').value).toFixed(2),
+                data: new Date().toLocaleDateString()
             };
+
+            // Salva no banco do navegador
+            let historico = JSON.parse(localStorage.getItem('trataflv_v1')) || [];
+            historico.unshift(novoRegistro);
+            localStorage.setItem('trataflv_v1', JSON.stringify(historico));
+
+            alert('✅ Registro da 1018 Salvo!');
+            form.reset();
+            renderHistory();
+            updatePainel();
+        });
+
+        // 3. NAVEGAÇÃO ENTRE TELAS
+        function showScreen(screenId, btn) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+            btn.classList.add('active');
+            if(screenId === 'history-screen') renderHistory();
+            if(screenId === 'results-screen') updatePainel();
         }
 
         function renderHistory() {
-            if (!db) return;
-            const tx = db.transaction(historyStore, "readonly");
-            tx.objectStore(historyStore).getAll().onsuccess = (e) => {
-                const list = document.getElementById('history-list');
-                if (!list) return;
-                const data = e.target.result.reverse();
-                list.innerHTML = data.length > 0 ? data.map(item => `
-                    <div class="history-card" style="border-left: 5px solid ${item.tipo_quebra === 'GERAL' ? '#007bff' : '#ffcc00'}; margin-bottom: 10px; background: #111; padding: 10px; border-radius: 8px;">
-                        <div style="flex: 1;">
-                            <strong style="color: #fff;">${item.nome}</strong><br>
-                            <small style="color: #888;">${item.data} - ${item.tipo_quebra}</small>
-                        </div>
-                        <div style="color: #ff4444; font-weight: bold;">R$ ${item.qtd_quebra}</div>
+            const list = document.getElementById('history-list');
+            const dados = JSON.parse(localStorage.getItem('trataflv_v1')) || [];
+            
+            if(dados.length === 0) {
+                list.innerHTML = '<p style="text-align: center; color: #666;">Vazio.</p>';
+                return;
+            }
+
+            list.innerHTML = dados.map(item => `
+                <div class="history-card">
+                    <div class="card-header">
+                        <span>${item.produto}</span>
+                        <span>R$ ${item.total}</span>
                     </div>
-                `).join('') : '<p class="empty-msg">Nenhum registro encontrado.</p>';
-            };
+                    <div class="card-body">
+                        Cód: ${item.codigo} | Qtd: ${item.qtd} | Data: ${item.data}
+                    </div>
+                </div>
+            `).join('');
         }
+
+        function updatePainel() {
+            const dados = JSON.parse(localStorage.getItem('trataflv_v1')) || [];
+            const totalGeral = dados.reduce((acc, item) => acc + parseFloat(item.total), 0);
+            document.getElementById('painel-total').innerText = `R$ ${totalGeral.toFixed(2)}`;
+        }
+
+        // Inicia carregando os dados
+        renderHistory();
+        updatePainel();
     </script>
 </body>
 </html>
