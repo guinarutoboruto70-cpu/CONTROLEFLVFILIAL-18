@@ -336,6 +336,11 @@
         
         <form id="tratativa-form">
             <div class="form-group">
+                <label>Data da Ocorrência</label>
+                <input type="date" id="data-ocorrencia" required>
+            </div>
+
+            <div class="form-group">
                 <label>Código do Produto</label>
                 <input type="number" id="codigo" required placeholder="0000" list="lista-codigos">
                 <datalist id="lista-codigos"></datalist>
@@ -672,6 +677,12 @@
             initAutocomplete();
             loadDraft();
             renderProductList(); // Carregar lista de produtos ao iniciar
+
+            // Preencher data da ocorrência se estiver vazio (novo formulário)
+            const dateInput = document.getElementById('data-ocorrencia');
+            if (dateInput && !dateInput.value) {
+                dateInput.value = new Date().toISOString().split('T')[0];
+            }
         };
 
         // Auto-completar dinâmico com banco de dados
@@ -758,6 +769,12 @@
         document.getElementById('btn-new-tratativa').addEventListener('click', () => {
             menuScreen.classList.remove('active');
             cadastroScreen.classList.add('active');
+            
+            // Se não houver rascunho carregado, garante a data atual
+            const dateInput = document.getElementById('data-ocorrencia');
+            if (dateInput && !dateInput.value) {
+                dateInput.value = new Date().toISOString().split('T')[0];
+            }
         });
 
         document.getElementById('btn-manage-products').addEventListener('click', () => {
@@ -1296,16 +1313,18 @@
 
         // Salvar Rascunho Automaticamente
         const formTratativa = document.getElementById('tratativa-form');
-        const inputsForm = formTratativa.querySelectorAll('input');
+        const inputsForm = formTratativa.querySelectorAll('input, select, textarea');
 
         inputsForm.forEach(input => {
             input.addEventListener('input', saveDraft);
+            input.addEventListener('change', saveDraft); // Importante para campos de data
         });
 
         function saveDraft() {
             if (!db) return;
             const draft = {
                 id: "current_draft",
+                data_ocorrencia: document.getElementById('data-ocorrencia').value,
                 codigo: document.getElementById('codigo').value,
                 nome: document.getElementById('nome').value,
                 qtd_chegou: document.getElementById('qtd_chegou').value,
@@ -1326,6 +1345,7 @@
             request.onsuccess = () => {
                 if (request.result) {
                     const data = request.result;
+                    if (data.data_ocorrencia) document.getElementById('data-ocorrencia').value = data.data_ocorrencia;
                     document.getElementById('codigo').value = data.codigo || '';
                     document.getElementById('nome').value = data.nome || '';
                     document.getElementById('qtd_chegou').value = data.qtd_chegou || '';
@@ -1377,6 +1397,9 @@
         formTratativa.addEventListener('submit', (e) => {
             e.preventDefault();
             
+            const selectedDate = document.getElementById('data-ocorrencia').value;
+            const formattedDate = selectedDate.split('-').reverse().join('/'); // Converte de AAAA-MM-DD para DD/MM/AAAA
+
             const agora = new Date();
             let nomeLimpo = document.getElementById('nome').value;
             nomeLimpo = nomeLimpo.replace(/^(produto|nome|item|tratativa)[:\s-]*/i, '').trim();
@@ -1389,7 +1412,7 @@
                 foto_produto: document.getElementById('prev-produto').src || null,
                 foto_balanca: document.getElementById('prev-balanca').src || null,
                 foto_etiqueta: document.getElementById('prev-etiqueta').src || null,
-                data: agora.toLocaleDateString('pt-BR'),
+                data: formattedDate,
                 hora: agora.toLocaleTimeString('pt-BR'),
                 timestamp: agora.getTime(),
                 status: 'PENDENTE'
@@ -1399,9 +1422,9 @@
 
             const reviewContainer = document.getElementById('review-data');
             reviewContainer.innerHTML = `
+                <p style="margin: 5px 0;"><strong>Data da Ocorrência:</strong> ${currentData.data}</p>
                 <p style="margin: 5px 0;"><strong>Cód:</strong> ${currentData.codigo}</p>
                 <p style="margin: 5px 0;"><strong>Produto:</strong> ${currentData.nome}</p>
-                <p style="margin: 5px 0;"><strong>Data:</strong> ${currentData.data}</p>
                 <p style="margin: 5px 0;"><strong>Chegou:</strong> ${currentData.qtd_chegou}</p>
                 <p style="margin: 5px 0;"><strong>Quebra:</strong> ${currentData.qtd_quebra}</p>
                 <p style="margin: 5px 0;"><strong>Status:</strong> <span style="color: #ffcc00; font-weight: bold;">PENDENTE</span></p>
@@ -1447,7 +1470,7 @@
 
         document.getElementById('btn-send-text').addEventListener('click', function() {
             if (!currentData) return;
-            const texto = `*TRATATIVA FLV 1018*\n\nCód: ${currentData.codigo}\nProduto: ${currentData.nome}\nData: ${currentData.data}\nChegou: ${currentData.qtd_chegou}\nQuebra: ${currentData.qtd_quebra}`;
+            const texto = `*TRATATIVA FLV 1018*\n\nData da Ocorrência: ${currentData.data}\nCód: ${currentData.codigo}\nProduto: ${currentData.nome}\nChegou: ${currentData.qtd_chegou}\nQuebra: ${currentData.qtd_quebra}`;
             window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(texto)}`, '_blank');
             markAsSent(this);
         });
@@ -1492,6 +1515,13 @@
                 feedbackSucesso();
                 alert("Lançamento salvo e finalizado!");
                 formTratativa.reset();
+                
+                // Resetar data para hoje após o reset do form
+                const dateInput = document.getElementById('data-ocorrencia');
+                if (dateInput) {
+                    dateInput.value = new Date().toISOString().split('T')[0];
+                }
+
                 document.querySelectorAll('.photo-preview').forEach(img => {
                     img.src = '';
                     img.style.display = 'none';
