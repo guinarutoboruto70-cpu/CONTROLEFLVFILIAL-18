@@ -358,120 +358,211 @@
             justify-content: center;
             gap: 10px;
         }
+        /* Estilo Compacto para Mobile */
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            font-size: 14px; /* Base menor */
+            overflow-x: hidden;
+        }
+
+        .screen {
+            width: 95%; /* Ocupa mais espaço lateral */
+            max-width: 500px;
+            gap: 10px; /* Menos espaço entre elementos */
+            padding-bottom: 20px;
+        }
+
+        .btn {
+            padding: 10px 15px; /* Botões mais finos */
+            font-size: 0.9rem;
+            border-radius: 6px;
+        }
+
+        .form-group {
+            gap: 4px; /* Menos espaço interno nos grupos */
+        }
+
+        input {
+            padding: 8px 10px; /* Inputs mais compactos */
+            font-size: 0.95rem;
+        }
+
+        h1 { font-size: 1.4rem; }
+        h2 { font-size: 1.2rem; }
+        h3 { font-size: 1rem; }
+
+        .unit-btn {
+            padding: 6px;
+            font-size: 0.8rem;
+        }
+
+        /* Ajustes específicos para o Dashboard */
+        .dashboard-grid {
+            gap: 8px;
+        }
+
+        #card-ig-box {
+            padding: 8px;
+        }
+
+        #val-ig-percent {
+            font-size: 1.6rem;
+        }
+
+        .pending-item-dash {
+            padding: 6px !important;
+        }
+
+        /* Esconder cabeçalho original em prol do novo tab bar */
+        header h1 { display: none; }
+        header { padding: 5px 0 !important; }
+
+        /* Estilo para abas ativas */
+        .nav-btn.active {
+            border-bottom: 2px solid #ffcc00 !important;
+            color: #ffcc00 !important;
+        }
     </style>
 </head>
 <body>
 
-    <header>
-        <h1>SISTEMA TRATAFLV</h1>
+    <header style="padding: 10px; background: #000; border-bottom: 1px solid #333;">
+        <h1 style="font-size: 1.1rem; margin: 0; color: #ffcc00; text-align: center;">SISTEMA TRATAFLV 1018</h1>
+        <div style="display: flex; gap: 5px; margin-top: 10px; justify-content: center;">
+            <button id="nav-dash" class="btn active" style="flex: 1; padding: 6px; font-size: 0.75rem; background: #1a1a1a; border: 1px solid #333; color: #fff;">📊 PAINEL</button>
+            <button id="nav-tratativa" class="btn" style="flex: 1; padding: 6px; font-size: 0.75rem; background: #1a1a1a; border: 1px solid #333; color: #fff;">🍎 TRATATIVA</button>
+            <button id="nav-geral" class="btn" style="flex: 1; padding: 6px; font-size: 0.75rem; background: #1a1a1a; border: 1px solid #333; color: #fff;">🗑️ GERAL</button>
+            <button id="nav-menu" class="btn" style="flex: 0.5; padding: 6px; font-size: 0.75rem; background: #1a1a1a; border: 1px solid #333; color: #fff;">⚙️</button>
+        </div>
     </header>
 
-    <!-- Tela 1: Menu Principal -->
-    <div id="menu-screen" class="screen active">
-        <button id="btn-new-tratativa" class="btn btn-new">[ + NOVA TRATATIVA ]</button>
-        <button id="btn-manage-products" class="btn btn-history" style="background-color: #007bff; color: white;">[ 📦 CADASTRAR ITENS/PREÇOS ]</button>
-        <button id="btn-show-history" class="btn btn-history">[ CONSULTAR HISTÓRICO ]</button>
-        <button id="btn-show-results" class="btn btn-history" style="background-color: #ffcc00; color: black;">[ 📊 PAINEL DE RESULTADOS ]</button>
+    <!-- Tela 1: Menu Principal (Configurações) -->
+    <div id="menu-screen" class="screen">
+        <div style="padding: 15px;">
+            <h3 style="color: #ffcc00; font-size: 1rem; text-align: center; margin-bottom: 15px;">CONFIGURAÇÕES</h3>
+            <button id="btn-manage-products" class="btn" style="background-color: #007bff; color: white; width: 100%; margin-bottom: 10px; padding: 12px; font-weight: bold;">[ 📦 CADASTRAR ITENS/PREÇOS ]</button>
+            <button id="btn-show-history" class="btn" style="background-color: #444; color: white; width: 100%; margin-bottom: 10px; padding: 12px; font-weight: bold;">[ 📜 CONSULTAR HISTÓRICO ]</button>
+            <p style="color: #666; font-size: 0.75rem; text-align: center; margin-top: 20px;">Versão 1.8 - Foco em Performance</p>
+        </div>
     </div>
 
-    <!-- Tela 2: Cadastro de Tratativa -->
+    <!-- Tela de Quebra Geral (Nova) -->
+    <div id="geral-screen" class="screen">
+        <form id="geral-form" style="padding: 10px;">
+            <h3 style="color: #007bff; font-size: 0.95rem; text-align: center; margin: 0 0 12px 0;">NOVA QUEBRA GERAL / LIMPEZA</h3>
+            
+            <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 8px; margin-bottom: 8px;">
+                <div class="form-group" style="margin: 0;">
+                    <label style="font-size: 0.75rem;">Código</label>
+                    <input type="number" id="geral-codigo" required placeholder="0000" list="lista-codigos" style="padding: 8px; font-size: 0.9rem;">
+                </div>
+                <div class="form-group" style="margin: 0;">
+                    <label style="font-size: 0.75rem;">Produto</label>
+                    <input type="text" id="geral-nome" required placeholder="Ex: Tomate" list="lista-nomes" style="padding: 8px; font-size: 0.9rem;">
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 8px;">
+                <label style="font-size: 0.75rem;">Unidade de Medida</label>
+                <div class="unit-selector" style="padding: 2px;">
+                    <button type="button" id="geral-unit-kg" class="unit-btn active" onclick="setUnitGeral('KG')" style="padding: 6px; font-size: 0.8rem;">KG</button>
+                    <button type="button" id="geral-unit-und" class="unit-btn" onclick="setUnitGeral('UND')" style="padding: 6px; font-size: 0.8rem;">UND</button>
+                </div>
+                <input type="hidden" id="geral-unidade" value="KG">
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;">
+                <div class="form-group" style="margin: 0;">
+                    <label style="font-size: 0.75rem;">Qtd Quebrada</label>
+                    <input type="text" id="geral-qtd" inputmode="decimal" required placeholder="0.00" style="padding: 8px; font-size: 1rem; font-weight: bold; color: #ff4444; background: #000;">
+                </div>
+                <div class="form-group" style="margin: 0;">
+                    <label style="font-size: 0.75rem;">Preço Custo (R$)</label>
+                    <input type="text" id="geral-custo" inputmode="decimal" required placeholder="0,00" style="padding: 8px; font-size: 1rem; font-weight: bold; color: #28a745; background: #000;">
+                </div>
+            </div>
+
+            <div style="background: #1a1a1a; padding: 10px; border-radius: 8px; border: 1px solid #333; margin-bottom: 15px; text-align: center;">
+                <small style="color: #888; font-size: 0.65rem;">VALOR TOTAL DA QUEBRA</small>
+                <div id="geral-valor-total" style="color: #ff4444; font-size: 1.4rem; font-weight: bold;">R$ 0,00</div>
+            </div>
+
+            <button type="submit" class="btn" style="background: #007bff; color: white; width: 100%; padding: 12px; font-weight: bold; font-size: 0.95rem; border-radius: 10px;">✅ SALVAR QUEBRA GERAL</button>
+        </form>
+    </div>
+
+    <!-- Tela 2: Cadastro de Tratativa (Otimizada) -->
     <div id="cadastro-screen" class="screen">
-        <button id="btn-voltar-cadastro" class="btn btn-back">Voltar</button>
-        
-        <form id="tratativa-form">
-            <div class="form-group">
-                <label>Tipo de Quebra</label>
-                <div class="unit-selector" style="margin-bottom: 10px;">
-                    <button type="button" id="type-tratativa" class="unit-btn active" onclick="setQuebraType('TRATATIVA')">Item para Tratativa</button>
-                    <button type="button" id="type-geral" class="unit-btn" onclick="setQuebraType('GERAL')">Quebra Geral/Limpeza</button>
+        <form id="tratativa-form" style="padding: 10px;">
+            <h3 style="color: #ffcc00; font-size: 0.95rem; text-align: center; margin: 0 0 12px 0;">REGISTRAR NOVA TRATATIVA</h3>
+            
+            <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 8px; margin-bottom: 8px;">
+                <div class="form-group" style="margin: 0;">
+                    <label style="font-size: 0.75rem;">Código</label>
+                    <input type="number" id="codigo" required placeholder="0000" list="lista-codigos" style="padding: 8px;">
                 </div>
-                <input type="hidden" id="tipo_quebra" value="TRATATIVA">
-            </div>
-
-            <div class="form-group">
-                <label>Data da Ocorrência</label>
-                <input type="date" id="data-ocorrencia" required>
-            </div>
-
-            <div class="form-group">
-                <label>Código do Produto</label>
-                <input type="number" id="codigo" required placeholder="0000" list="lista-codigos">
-                <datalist id="lista-codigos"></datalist>
-            </div>
-
-            <div class="form-group">
-                <label>Nome do Produto</label>
-                <input type="text" id="nome" required placeholder="Ex: Tomate" list="lista-nomes">
-                <datalist id="lista-nomes"></datalist>
-            </div>
-
-            <div class="form-group">
-                <label>Unidade de Medida</label>
-                <div class="unit-selector">
-                    <button type="button" id="unit-kg" class="unit-btn active" onclick="setUnit('KG')">KG</button>
-                    <button type="button" id="unit-und" class="unit-btn" onclick="setUnit('UND')">UND</button>
+                <div class="form-group" style="margin: 0;">
+                    <label style="font-size: 0.75rem;">Produto</label>
+                    <input type="text" id="nome" required placeholder="Produto" list="lista-nomes" style="padding: 8px;">
                 </div>
-                <input type="hidden" id="unidade" value="KG">
             </div>
 
-            <div class="form-group">
-                <label>Quantidade Chegou</label>
-                <input type="text" id="qtd_chegou" inputmode="decimal" required placeholder="0,00">
-            </div>
-
-            <div class="form-group">
-                <label>Quantidade Quebra</label>
-                <input type="text" id="qtd_quebra_kg" inputmode="decimal" required placeholder="0,00">
-            </div>
-
-            <div class="form-group">
-                <label>Preço de Custo (R$)</label>
-                <input type="text" id="preco_custo" inputmode="decimal" required placeholder="0,00">
-            </div>
-
-            <div class="form-group">
-                <label>Valor da Quebra (R$)</label>
-                <input type="text" id="qtd_quebra" inputmode="decimal" required placeholder="0,00" readonly style="background-color: #333; color: #ff4444; font-weight: bold;">
-            </div>
-
-            <div class="form-group" id="container-fotos">
-                <label>Fotos (Obrigatórias para Tratativa)</label>
-                <div class="photo-grid">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                        <div class="photo-container">
-                            <img id="prev-produto" class="photo-preview" style="height: 60px;">
-                            <button type="button" class="btn btn-photo" onclick="document.getElementById('input-produto').click()" style="width: 100%;">
-                                <span>🖼️ Selecionar da Galeria</span>
-                            </button>
-                            <input type="file" id="input-produto" accept="image/*" style="display: none;">
-                        </div>
-                        <div class="photo-container">
-                            <img id="prev-balanca" class="photo-preview" style="height: 60px;">
-                            <button type="button" class="btn btn-photo" onclick="document.getElementById('input-balanca').click()" style="width: 100%;">
-                                <span>🖼️ Selecionar da Galeria</span>
-                            </button>
-                            <input type="file" id="input-balanca" accept="image/*" style="display: none;">
-                        </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+                <div class="form-group" style="margin: 0;">
+                    <label style="font-size: 0.75rem;">Unidade</label>
+                    <div class="unit-selector" style="padding: 2px;">
+                        <button type="button" id="unit-kg" class="unit-btn active" onclick="setUnit('KG')" style="padding: 5px; font-size: 0.75rem;">KG</button>
+                        <button type="button" id="unit-und" class="unit-btn" onclick="setUnit('UND')" style="padding: 5px; font-size: 0.75rem;">UND</button>
                     </div>
-                    
-                    <div class="photo-container" style="border: 1px solid #333; padding: 10px; border-radius: 8px;">
-                        <label style="color: #ffcc00; font-weight: bold; display: block; margin-bottom: 8px; text-align: center;">🏷️ Etiqueta</label>
-                        <img id="prev-etiqueta" class="photo-preview" style="height: 80px; margin-bottom: 10px;">
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                            <button type="button" class="btn btn-photo" onclick="document.getElementById('input-etiqueta-camera').click()" style="background: #007bff;">
-                                <span>📷 Tirar Foto</span>
-                            </button>
-                            <button type="button" class="btn btn-photo" onclick="document.getElementById('input-etiqueta-galeria').click()" style="background: #6c757d;">
-                                <span>🖼️ Escolher da Galeria</span>
-                            </button>
-                        </div>
+                    <input type="hidden" id="unidade" value="KG">
+                </div>
+                <div class="form-group" style="margin: 0;">
+                    <label style="font-size: 0.75rem;">Qtd Chegou</label>
+                    <input type="text" id="qtd_chegou" inputmode="decimal" required placeholder="0.00" style="padding: 8px;">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+                <div class="form-group" style="margin: 0;">
+                    <label style="font-size: 0.75rem;">Qtd Quebra</label>
+                    <input type="text" id="qtd_quebra_kg" inputmode="decimal" required placeholder="0.00" style="padding: 8px;">
+                </div>
+                <div class="form-group" style="margin: 0;">
+                    <label style="font-size: 0.75rem;">Custo (R$)</label>
+                    <input type="text" id="preco_custo" inputmode="decimal" required placeholder="0,00" style="padding: 8px;">
+                </div>
+            </div>
+
+            <div class="form-group" id="container-fotos" style="margin-bottom: 12px;">
+                <label style="font-size: 0.75rem;">Fotos Obrigatórias</label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px;">
+                    <div class="photo-container" style="min-height: 60px;" onclick="document.getElementById('input-produto').click()">
+                        <img id="prev-produto" class="photo-preview" style="height: 40px; display: none;">
+                        <div class="photo-placeholder" style="font-size: 0.6rem;">🍎 PROD</div>
+                        <input type="file" id="input-produto" accept="image/*" style="display: none;">
+                    </div>
+                    <div class="photo-container" style="min-height: 60px;" onclick="document.getElementById('input-balanca').click()">
+                        <img id="prev-balanca" class="photo-preview" style="height: 40px; display: none;">
+                        <div class="photo-placeholder" style="font-size: 0.6rem;">⚖️ BAL</div>
+                        <input type="file" id="input-balanca" accept="image/*" style="display: none;">
+                    </div>
+                    <div class="photo-container" style="min-height: 60px;" onclick="document.getElementById('input-etiqueta-camera').click()">
+                        <img id="prev-etiqueta" class="photo-preview" style="height: 40px; display: none;">
+                        <div class="photo-placeholder" style="font-size: 0.6rem;">🏷️ ETIQ</div>
                         <input type="file" id="input-etiqueta-camera" accept="image/*" capture="environment" style="display: none;">
-                        <input type="file" id="input-etiqueta-galeria" accept="image/*" style="display: none;">
                     </div>
                 </div>
             </div>
 
-            <button type="submit" class="btn btn-save" style="width: 100%;">[ REVISAR ENVIO ]</button>
+            <input type="hidden" id="qtd_quebra" value="0,00">
+            <input type="hidden" id="tipo_quebra" value="TRATATIVA">
+            <input type="hidden" id="data-ocorrencia">
+
+            <button type="submit" class="btn btn-save" style="width: 100%; padding: 12px; font-weight: bold;">[ REVISAR E ENVIAR ]</button>
         </form>
     </div>
 
@@ -874,67 +965,144 @@
             setupPhoto('input-etiqueta-galeria', 'prev-etiqueta');
         }
 
-        // Navegação entre telas
-        const menuScreen = document.getElementById('menu-screen');
-        const cadastroScreen = document.getElementById('cadastro-screen');
-        const historyScreen = document.getElementById('history-screen');
-        const reviewScreen = document.getElementById('review-screen');
-        const resultsScreen = document.getElementById('results-screen');
-        const productsScreen = document.getElementById('products-screen');
+        // Navegação entre telas (Abas e Botões)
+        const screens = ['results-screen', 'cadastro-screen', 'geral-screen', 'menu-screen', 'history-screen', 'products-screen', 'review-screen'];
+        const navButtons = {
+            'nav-dash': 'results-screen',
+            'nav-tratativa': 'cadastro-screen',
+            'nav-geral': 'geral-screen',
+            'nav-menu': 'menu-screen'
+        };
 
-        document.getElementById('btn-new-tratativa').addEventListener('click', () => {
-            menuScreen.classList.remove('active');
-            cadastroScreen.classList.add('active');
+        function showScreen(screenId) {
+            screens.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.classList.remove('active');
+            });
+            const activeScreen = document.getElementById(screenId);
+            if (activeScreen) activeScreen.classList.add('active');
+
+            // Atualizar botões de navegação
+            Object.keys(navButtons).forEach(btnId => {
+                const btn = document.getElementById(btnId);
+                if (btn) {
+                    if (navButtons[btnId] === screenId) {
+                        btn.classList.add('active');
+                        btn.style.background = '#007bff';
+                    } else {
+                        btn.classList.remove('active');
+                        btn.style.background = '#1a1a1a';
+                    }
+                }
+            });
+
+            // Ações específicas ao abrir telas
+            if (screenId === 'results-screen') updateResultsDashboard();
+            if (screenId === 'history-screen') renderHistory();
+            if (screenId === 'products-screen') renderProductList();
+        }
+
+        // Eventos de Navegação
+        Object.keys(navButtons).forEach(btnId => {
+            document.getElementById(btnId).addEventListener('click', () => showScreen(navButtons[btnId]));
+        });
+
+        // Botões Internos de Navegação
+        document.getElementById('btn-manage-products').addEventListener('click', () => showScreen('products-screen'));
+        document.getElementById('btn-show-history').addEventListener('click', () => showScreen('history-screen'));
+        document.getElementById('btn-voltar-products').addEventListener('click', () => showScreen('menu-screen'));
+        document.getElementById('btn-voltar-history').addEventListener('click', () => showScreen('menu-screen'));
+        document.getElementById('btn-voltar-results').addEventListener('click', () => showScreen('menu-screen'));
+        document.getElementById('btn-voltar-cadastro').addEventListener('click', () => showScreen('menu-screen'));
+        document.getElementById('btn-voltar-review').addEventListener('click', () => showScreen('cadastro-screen'));
+
+        // Lógica do Formulário de Quebra Geral
+        document.getElementById('geral-form').addEventListener('submit', (e) => {
+            e.preventDefault();
             
-            // Se não houver rascunho carregado, garante a data atual
-            const dateInput = document.getElementById('data-ocorrencia');
-            if (dateInput && !dateInput.value) {
-                dateInput.value = new Date().toISOString().split('T')[0];
+            const codigo = document.getElementById('geral-codigo').value;
+            const nome = document.getElementById('geral-nome').value;
+            const unidade = document.getElementById('geral-unidade').value;
+            const qtd = document.getElementById('geral-qtd').value;
+            const custo = document.getElementById('geral-custo').value;
+            const valorTotal = parseCurrency(document.getElementById('geral-valor-total').innerText.replace('R$ ', ''));
+
+            if (!codigo || !nome || !qtd || !custo) {
+                alert("Por favor, preencha todos os campos!");
+                return;
             }
+
+            const item = {
+                id: Date.now(),
+                codigo,
+                nome,
+                unidade,
+                qtd_quebra_kg: qtd,
+                preco_custo: custo,
+                qtd_quebra: valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+                tipo_quebra: 'GERAL',
+                data: new Date().toLocaleDateString('pt-BR'),
+                status: 'CONCLUÍDO',
+                fotos: []
+            };
+
+            const tx = db.transaction(historyStore, "readwrite");
+            const store = tx.objectStore(historyStore);
+            store.add(item);
+
+            tx.oncomplete = () => {
+                feedbackSucesso();
+                e.target.reset();
+                document.getElementById('geral-valor-total').innerText = 'R$ 0,00';
+                showScreen('results-screen');
+            };
         });
 
-        document.getElementById('btn-manage-products').addEventListener('click', () => {
-            menuScreen.classList.remove('active');
-            productsScreen.classList.add('active');
-            renderProductList();
+        // Auto-complete para Quebra Geral
+        const geralCodigo = document.getElementById('geral-codigo');
+        const geralNome = document.getElementById('geral-nome');
+
+        geralCodigo.addEventListener('input', (e) => {
+            const tx = db.transaction(productStore, "readonly");
+            const store = tx.objectStore(productStore);
+            const getReq = store.get(e.target.value);
+            getReq.onsuccess = () => {
+                if (getReq.result) {
+                    geralNome.value = getReq.result.nome;
+                    document.getElementById('geral-custo').value = formatCurrency(getReq.result.preco * 100);
+                    // Dispara evento input para recalcular total
+                    document.getElementById('geral-custo').dispatchEvent(new Event('input'));
+                }
+            };
         });
 
-        document.getElementById('btn-voltar-products').addEventListener('click', () => {
-            productsScreen.classList.remove('active');
-            menuScreen.classList.add('active');
+        geralNome.addEventListener('input', (e) => {
+            const tx = db.transaction(productStore, "readonly");
+            const store = tx.objectStore(productStore);
+            const req = store.getAll();
+            req.onsuccess = () => {
+                const p = req.result.find(prod => prod.nome.toLowerCase() === e.target.value.toLowerCase());
+                if (p) {
+                    geralCodigo.value = p.codigo;
+                    document.getElementById('geral-custo').value = formatCurrency(p.preco * 100);
+                    // Dispara evento input para recalcular total
+                    document.getElementById('geral-custo').dispatchEvent(new Event('input'));
+                }
+            };
         });
 
-        document.getElementById('btn-show-history').addEventListener('click', () => {
-            menuScreen.classList.remove('active');
-            historyScreen.classList.add('active');
-            renderHistory();
+        // Inicializa na tela de dashboard por padrão
+        window.addEventListener('load', () => {
+            setTimeout(() => showScreen('results-screen'), 500);
         });
 
-        document.getElementById('btn-voltar-cadastro').addEventListener('click', () => {
-            cadastroScreen.classList.remove('active');
-            menuScreen.classList.add('active');
-        });
-
-        document.getElementById('btn-voltar-history').addEventListener('click', () => {
-            historyScreen.classList.remove('active');
-            menuScreen.classList.add('active');
-        });
-
-        document.getElementById('btn-voltar-review').addEventListener('click', () => {
-            reviewScreen.classList.remove('active');
-            cadastroScreen.classList.add('active');
-        });
-
-        document.getElementById('btn-show-results').addEventListener('click', () => {
-            menuScreen.classList.remove('active');
-            resultsScreen.classList.add('active');
-            updateResultsDashboard();
-        });
-
-        document.getElementById('btn-voltar-results').addEventListener('click', () => {
-            resultsScreen.classList.remove('active');
-            menuScreen.classList.add('active');
-        });
+        function feedbackSucesso() {
+            const div = document.createElement('div');
+            div.style = 'position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #28a745; color: white; padding: 15px 30px; border-radius: 30px; font-weight: bold; z-index: 2000; box-shadow: 0 4px 15px rgba(0,0,0,0.3); animation: slideDown 0.3s ease-out;';
+            div.innerText = '✅ REGISTRADO COM SUCESSO!';
+            document.body.appendChild(div);
+            setTimeout(() => div.remove(), 2500);
+        }
 
         // Lógica de Gerenciamento de Produtos
         const inputPreco = document.getElementById('prod-preco');
@@ -1104,13 +1272,19 @@
             saveDraft();
         };
 
+        window.setUnitGeral = function(unit) {
+            document.getElementById('geral-unidade').value = unit;
+            document.getElementById('geral-unit-kg').classList.toggle('active', unit === 'KG');
+            document.getElementById('geral-unit-und').classList.toggle('active', unit === 'UND');
+        };
+
         const setupNumericInput = (id) => {
             const input = document.getElementById(id);
             if (!input) return;
 
             input.addEventListener('input', (e) => {
                 // Se for o campo de quebra (valor total) ou preço de custo, aplica máscara de moeda
-                if (id === 'qtd_quebra' || id === 'preco_custo') {
+                if (id === 'qtd_quebra' || id === 'preco_custo' || id === 'geral-custo') {
                     e.target.value = formatCurrency(e.target.value);
                 } else {
                     // Para outros campos (como chegou, qtd quebra kg, ou modal-edit-qty), mantém apenas números e uma vírgula
@@ -1122,17 +1296,28 @@
                     e.target.value = value;
                 }
 
-                // Cálculo Automático: Valor da Quebra = Quantidade Quebra * Preço de Custo
+                // Cálculo Automático Tratativa
                 if (id === 'qtd_quebra_kg' || id === 'preco_custo') {
                     const qtd = parseCommaFloat(document.getElementById('qtd_quebra_kg').value);
                     const custo = parseCurrency(document.getElementById('preco_custo').value);
                     const total = qtd * custo;
                     
-                    // Formata o total como moeda para o campo readonly
                     document.getElementById('qtd_quebra').value = total.toLocaleString('pt-BR', {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2
                     });
+                }
+
+                // Cálculo Automático Quebra Geral
+                if (id === 'geral-qtd' || id === 'geral-custo') {
+                    const qtd = parseCommaFloat(document.getElementById('geral-qtd').value);
+                    const custo = parseCurrency(document.getElementById('geral-custo').value);
+                    const total = qtd * custo;
+                    
+                    document.getElementById('geral-valor-total').innerText = `R$ ${total.toLocaleString('pt-BR', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    })}`;
                 }
 
                 saveDraft();
@@ -1145,6 +1330,8 @@
         setupNumericInput('preco_custo');
         setupNumericInput('qtd_quebra');
         setupNumericInput('modal-edit-qty');
+        setupNumericInput('geral-qtd');
+        setupNumericInput('geral-custo');
 
         const inputVendaResults = document.getElementById('venda-dia-results');
         const dashDateFilter = document.getElementById('dash-date-filter');
