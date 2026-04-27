@@ -148,6 +148,85 @@
         .stat-value { font-size: 1.2rem; font-weight: bold; color: var(--primary); margin-top: 5px; }
         .stat-label { font-size: 0.7rem; color: #888; text-transform: uppercase; }
 
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.85);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: var(--card);
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .modal-header {
+            padding: 15px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-body {
+            padding: 15px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .product-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 0.85rem;
+        }
+
+        .product-table th, .product-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #333;
+        }
+
+        .product-table th { color: #888; font-weight: 500; }
+
+        .btn-action {
+            padding: 5px 8px;
+            border-radius: 4px;
+            border: none;
+            font-size: 0.75rem;
+            cursor: pointer;
+            margin-right: 5px;
+        }
+
+        .btn-edit { background: var(--primary); color: #000; }
+        .btn-delete { background: var(--danger); color: #fff; }
+        .btn-add-product { background: #44ff44; color: #000; font-weight: bold; }
+
+        .gear-btn {
+            background: transparent;
+            border: none;
+            color: #aaa;
+            font-size: 1.2rem;
+            cursor: pointer;
+            position: absolute;
+            right: 15px;
+            top: 10px;
+        }
+
         /* Mobile specific adjustments */
         @media (max-width: 380px) {
             .nav-btn { font-size: 0.6rem; }
@@ -159,6 +238,7 @@
 
     <header>
         <h1>SISTEMA TRATAFLV 1018</h1>
+        <button class="gear-btn" onclick="openProductModal()">⚙️</button>
         <div class="nav-bar">
             <button id="nav-dash" class="nav-btn active" onclick="showScreen('results-screen')">📊 PAINEL</button>
             <button id="nav-tratativa" class="nav-btn" onclick="showScreen('cadastro-screen')">🍎 TRATATIVA</button>
@@ -280,6 +360,52 @@
             </div>
         </div>
 
+        <!-- MODAL GERENCIAR PRODUTOS -->
+        <div id="product-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 style="font-size: 1rem; color: var(--primary); margin: 0;">⚙️ GERENCIAR PRODUTOS</h2>
+                    <button onclick="closeProductModal()" style="background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer;">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-card" style="margin-bottom: 15px;">
+                        <h3 style="font-size: 0.8rem; margin-top: 0; color: #aaa;">ADICIONAR NOVO</h3>
+                        <div class="row">
+                            <div class="form-group">
+                                <label>Código</label>
+                                <input type="number" id="new-prod-cod" placeholder="Ex: 1000">
+                            </div>
+                            <div class="form-group">
+                                <label>Unidade</label>
+                                <select id="new-prod-uni">
+                                    <option value="KG">KG</option>
+                                    <option value="UND">UND</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Nome do Produto</label>
+                            <input type="text" id="new-prod-nome" placeholder="NOME DO ITEM">
+                        </div>
+                        <button class="btn-save btn-add-product" onclick="saveNewProduct()">✅ SALVAR PRODUTO</button>
+                    </div>
+
+                    <table class="product-table">
+                        <thead>
+                            <tr>
+                                <th>Cód</th>
+                                <th>Nome</th>
+                                <th>Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody id="product-table-body">
+                            <!-- JS will fill this -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <!-- DATALISTS PARA AUTOCOMPLETE -->
@@ -290,7 +416,9 @@
         // --- 1. CONFIGURAÇÕES E BANCO DE DADOS ---
         const dbName = "FLVDatabase";
         const historyStore = "historico";
+        const productStore = "produtos";
         let db;
+        let PRODUTOS_CACHE = {};
 
         const LISTA_PRODUTOS = { 
             "1124": { nome: "ABACATE", unidade: "KG" }, 
@@ -335,35 +463,59 @@
 
         // --- 2. INICIALIZAÇÃO DO BANCO ---
         function initDB() {
-            const request = indexedDB.open(dbName, 3);
+            const request = indexedDB.open(dbName, 4);
             request.onupgradeneeded = (e) => {
                 const db = e.target.result;
                 if (!db.objectStoreNames.contains(historyStore)) {
                     db.createObjectStore(historyStore, { keyPath: "id", autoIncrement: true });
                 }
+                if (!db.objectStoreNames.contains(productStore)) {
+                    db.createObjectStore(productStore, { keyPath: "codigo" });
+                }
             };
             request.onsuccess = (e) => {
                 db = e.target.result;
+                loadProducts();
                 updateResultsDashboard();
-                initAutocomplete();
             };
         }
 
-        // --- 3. AUTOCOMPLETE ---
-        function initAutocomplete() {
-            const listCod = document.getElementById('lista-codigos');
-            const listNom = document.getElementById('lista-nomes');
-            
-            for (const cod in LISTA_PRODUTOS) {
-                const optCod = document.createElement('option');
-                optCod.value = cod;
-                listCod.appendChild(optCod);
+        function loadProducts() {
+            return new Promise((resolve) => {
+                const tx = db.transaction(productStore, "readonly");
+                const store = tx.objectStore(productStore);
+                const request = store.getAll();
                 
-                const optNom = document.createElement('option');
-                optNom.value = LISTA_PRODUTOS[cod].nome;
-                listNom.appendChild(optNom);
-            }
+                request.onsuccess = () => {
+                    const results = request.result;
+                    if (results.length === 0) {
+                        // Migração inicial se estiver vazio
+                        migrateProducts().then(resolve);
+                    } else {
+                        PRODUTOS_CACHE = {};
+                        results.forEach(p => {
+                            PRODUTOS_CACHE[p.codigo] = { nome: p.nome, unidade: p.unidade };
+                        });
+                        initAutocomplete();
+                        resolve();
+                    }
+                };
+            });
+        }
 
+        function migrateProducts() {
+            return new Promise((resolve) => {
+                const tx = db.transaction(productStore, "readwrite");
+                const store = tx.objectStore(productStore);
+                for (const cod in LISTA_PRODUTOS) {
+                    store.put({ codigo: cod, ...LISTA_PRODUTOS[cod] });
+                }
+                tx.oncomplete = () => loadProducts().then(resolve);
+            });
+        }
+
+        // --- 3. AUTOCOMPLETE ---
+        function setupAutocompleteListeners() {
             // Tratativa listeners
             document.getElementById('codigo').addEventListener('input', (e) => preencher(e.target.value, 'produto', 'unidade'));
             document.getElementById('produto').addEventListener('input', (e) => preencherPorNome(e.target.value, 'codigo', 'unidade'));
@@ -373,21 +525,105 @@
             document.getElementById('geral-nome').addEventListener('input', (e) => preencherPorNome(e.target.value, 'geral-codigo', 'geral-unidade'));
         }
 
+        function initAutocomplete() {
+            const listCod = document.getElementById('lista-codigos');
+            const listNom = document.getElementById('lista-nomes');
+            listCod.innerHTML = '';
+            listNom.innerHTML = '';
+            
+            for (const cod in PRODUTOS_CACHE) {
+                const optCod = document.createElement('option');
+                optCod.value = cod;
+                listCod.appendChild(optCod);
+                
+                const optNom = document.createElement('option');
+                optNom.value = PRODUTOS_CACHE[cod].nome;
+                listNom.appendChild(optNom);
+            }
+        }
+
         function preencher(cod, nomeId, unitId) {
-            if (LISTA_PRODUTOS[cod]) {
-                document.getElementById(nomeId).value = LISTA_PRODUTOS[cod].nome;
-                document.getElementById(unitId).value = LISTA_PRODUTOS[cod].unidade;
+            if (PRODUTOS_CACHE[cod]) {
+                document.getElementById(nomeId).value = PRODUTOS_CACHE[cod].nome;
+                document.getElementById(unitId).value = PRODUTOS_CACHE[cod].unidade;
             }
         }
 
         function preencherPorNome(nome, codId, unitId) {
-            for (const cod in LISTA_PRODUTOS) {
-                if (LISTA_PRODUTOS[cod].nome === nome.toUpperCase()) {
+            for (const cod in PRODUTOS_CACHE) {
+                if (PRODUTOS_CACHE[cod].nome === nome.toUpperCase()) {
                     document.getElementById(codId).value = cod;
-                    document.getElementById(unitId).value = LISTA_PRODUTOS[cod].unidade;
+                    document.getElementById(unitId).value = PRODUTOS_CACHE[cod].unidade;
                     break;
                 }
             }
+        }
+
+        // --- 3.1 GESTÃO DE PRODUTOS (MODAL) ---
+        function openProductModal() {
+            document.getElementById('product-modal').style.display = 'flex';
+            renderProductTable();
+        }
+
+        function closeProductModal() {
+            document.getElementById('product-modal').style.display = 'none';
+        }
+
+        function renderProductTable() {
+            const tbody = document.getElementById('product-table-body');
+            tbody.innerHTML = '';
+            
+            // Ordenar por nome para facilitar busca visual
+            const sortedCodes = Object.keys(PRODUTOS_CACHE).sort((a, b) => 
+                PRODUTOS_CACHE[a].nome.localeCompare(PRODUTOS_CACHE[b].nome)
+            );
+
+            sortedCodes.forEach(cod => {
+                const p = PRODUTOS_CACHE[cod];
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${cod}</td>
+                    <td>${p.nome} (${p.unidade})</td>
+                    <td>
+                        <button class="btn-action btn-edit" onclick="editProduct('${cod}')">✏️</button>
+                        <button class="btn-action btn-delete" onclick="deleteProduct('${cod}')">🗑️</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function saveNewProduct() {
+            const cod = document.getElementById('new-prod-cod').value;
+            const nome = document.getElementById('new-prod-nome').value.toUpperCase();
+            const uni = document.getElementById('new-prod-uni').value;
+
+            if (!cod || !nome) return alert("Preencha código e nome!");
+
+            const product = { codigo: cod, nome: nome, unidade: uni };
+            const tx = db.transaction(productStore, "readwrite");
+            tx.objectStore(productStore).put(product).onsuccess = () => {
+                document.getElementById('new-prod-cod').value = '';
+                document.getElementById('new-prod-nome').value = '';
+                loadProducts().then(() => renderProductTable());
+            };
+        }
+
+        function editProduct(cod) {
+            const p = PRODUTOS_CACHE[cod];
+            document.getElementById('new-prod-cod').value = cod;
+            document.getElementById('new-prod-nome').value = p.nome;
+            document.getElementById('new-prod-uni').value = p.unidade;
+            document.getElementById('new-prod-nome').focus();
+        }
+
+        function deleteProduct(cod) {
+            if (!confirm(`Excluir produto ${PRODUTOS_CACHE[cod].nome}?`)) return;
+            
+            const tx = db.transaction(productStore, "readwrite");
+            tx.objectStore(productStore).delete(cod).onsuccess = () => {
+                loadProducts().then(() => renderProductTable());
+            };
         }
 
         // --- 4. NAVEGAÇÃO ---
@@ -556,6 +792,7 @@
         // Inicia tudo
         window.onload = () => {
             initDB();
+            setupAutocompleteListeners();
             // Define data de hoje no dash
             const hoje = new Date().toISOString().split('T')[0];
             document.getElementById('dash-date').value = hoje;
