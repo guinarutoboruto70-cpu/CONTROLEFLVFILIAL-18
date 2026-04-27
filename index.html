@@ -439,6 +439,9 @@
             <button id="nav-menu" class="btn" style="flex: 0.5; padding: 6px; font-size: 0.75rem; background: #1a1a1a; border: 1px solid #333; color: #fff;">⚙️</button>
         </div>
     </header>
+    
+    <datalist id="lista-codigos"></datalist>
+    <datalist id="lista-nomes"></datalist>
 
     <!-- Tela 1: Menu Principal (Configurações) -->
     <div id="menu-screen" class="screen">
@@ -798,6 +801,76 @@
     </div>
 
     <script>
+        // Banco de Dados Interno (Autocomplete) - Teste Definitivo
+        const produtosFLV = { 
+            '7028': {nome: 'TOMATE', uni: 'KG'}, 
+            '1125': {nome: 'CEBOLA', uni: 'KG'}, 
+            '3560': {nome: 'MELANCIA', uni: 'UND'} 
+        };
+
+        // Funções de Utilidade (Acesso Rápido)
+        window.setUnit = function(unit) {
+            const el = document.getElementById('unidade');
+            const btnKg = document.getElementById('unit-kg');
+            const btnUnd = document.getElementById('unit-und');
+            if (el) el.value = unit;
+            if (btnKg) btnKg.classList.toggle('active', unit === 'KG');
+            if (btnUnd) btnUnd.classList.toggle('active', unit === 'UND');
+            if (window.saveDraft) window.saveDraft();
+        };
+
+        window.setUnitGeral = function(unit) {
+            const el = document.getElementById('geral-unidade');
+            const btnKg = document.getElementById('geral-unit-kg');
+            const btnUnd = document.getElementById('geral-unit-und');
+            if (el) el.value = unit;
+            if (btnKg) btnKg.classList.toggle('active', unit === 'KG');
+            if (btnUnd) btnUnd.classList.toggle('active', unit === 'UND');
+        };
+
+        // Função de Automação (Carrega Primeiro)
+        function initAutocomplete() {
+            const inputCodigo = document.getElementById('codigo');
+            const inputNome = document.getElementById('nome');
+            const listNomes = document.getElementById('lista-nomes');
+
+            if (!inputCodigo || !inputNome || !listNomes) return;
+
+            // Popular datalist de nomes
+            listNomes.innerHTML = '';
+            for (const cod in produtosFLV) {
+                const opt = document.createElement('option');
+                opt.value = produtosFLV[cod].nome;
+                listNomes.appendChild(opt);
+            }
+
+            // Busca por Código
+            inputCodigo.addEventListener('input', () => {
+                const p = produtosFLV[inputCodigo.value];
+                if (p) {
+                    inputNome.value = p.nome;
+                    if (window.setUnit) window.setUnit(p.uni);
+                }
+            });
+
+            // Busca por Nome (Datalist)
+            inputNome.addEventListener('input', () => {
+                const nomeDigitado = inputNome.value.toUpperCase();
+                for (const cod in produtosFLV) {
+                    if (produtosFLV[cod].nome === nomeDigitado) {
+                        inputCodigo.value = cod;
+                        if (window.setUnit) window.setUnit(produtosFLV[cod].uni);
+                        break;
+                    }
+                }
+            });
+            
+            console.log("Automação de Tratativa Carregada!");
+        }
+
+        // Executar imediatamente
+        document.addEventListener('DOMContentLoaded', initAutocomplete);
+
         // Protocolo de Atualização Forçada (Garantia Mobile)
         const APP_VERSION = '1.2';
         const lastVersion = localStorage.getItem('app_version');
@@ -892,155 +965,31 @@
             }
         };
 
-        // Banco de Dados Interno de Produtos (Array)
-        const FLV_DATABASE = [
-            { codigo: "1125", nome: "CEBOLA", unidade: "KG" },
-            { codigo: "2030", nome: "PIMENTÃO", unidade: "KG" },
-            { codigo: "4050", nome: "TOMATE", unidade: "KG" },
-            { codigo: "101", nome: "BATATA MONALISA", unidade: "KG" },
-            { codigo: "105", nome: "BANANA NANICA", unidade: "KG" },
-            { codigo: "104", nome: "ALFACE CRESPA", unidade: "UND" },
-            { codigo: "108", nome: "OVOS BRANCOS G", unidade: "UND" },
-            { codigo: "115", nome: "BROCOLIS NINJA", unidade: "UND" },
-            { codigo: "117", nome: "ABACAXI PEROLA", unidade: "UND" },
-            { codigo: "125", nome: "COUVE MANTEIGA", unidade: "UND" },
-            { codigo: "106", nome: "MACA GALA", unidade: "KG" },
-            { codigo: "107", nome: "MAMAO PAPAYA", unidade: "KG" },
-            { codigo: "109", nome: "CENOURA", unidade: "KG" },
-            { codigo: "110", nome: "LARANJA PERA", unidade: "KG" },
-            { codigo: "111", nome: "UVA ITALIA", unidade: "KG" },
-            { codigo: "112", nome: "MACA ARGENTINA", unidade: "KG" },
-            { codigo: "113", nome: "PIMENTAO VERDE", unidade: "KG" },
-            { codigo: "114", nome: "ABOBRINHA ITALIANA", unidade: "KG" },
-            { codigo: "116", nome: "ALHO NACIONAL", unidade: "KG" },
-            { codigo: "118", nome: "MELANCIA", unidade: "KG" },
-            { codigo: "119", nome: "MANGA PALMER", unidade: "KG" },
-            { codigo: "120", nome: "CHUCHU", unidade: "KG" },
-            { codigo: "121", nome: "PEPINO JAPONES", unidade: "KG" },
-            { codigo: "122", nome: "BERINJELA", unidade: "KG" },
-            { codigo: "123", nome: "LIMAO TAITI", unidade: "KG" },
-            { codigo: "124", nome: "MELAO AMARELO", unidade: "KG" }
-        ];
-
-        // Auto-completar dinâmico com banco de dados
-        function initAutocomplete() {
-            const listCodigos = document.getElementById('lista-codigos');
-            const listNomes = document.getElementById('lista-nomes');
+        // Lógica de Captura de Fotos (Original)
+        const setupPhoto = (inputId, previewId) => {
+            const input = document.getElementById(inputId);
+            const preview = document.getElementById(previewId);
             
-            // Limpar datalists antes de recarregar
-            listCodigos.innerHTML = '';
-            listNomes.innerHTML = '';
-
-            // Adicionar produtos do array interno (FLV_DATABASE)
-            FLV_DATABASE.forEach(p => {
-                const optCod = document.createElement('option');
-                optCod.value = p.codigo;
-                listCodigos.appendChild(optCod);
-
-                const optNome = document.createElement('option');
-                optNome.value = p.nome;
-                listNomes.appendChild(optNome);
-            });
-
-            // Adicionar produtos do IndexedDB (Customizados)
-            const tx = db.transaction(productStore, "readonly");
-            const store = tx.objectStore(productStore);
-            const request = store.getAll();
-
-            request.onsuccess = () => {
-                const produtos = request.result;
-                produtos.forEach(p => {
-                    // Evita duplicatas se o código já existir no array interno
-                    if (!FLV_DATABASE.find(item => item.codigo === p.codigo)) {
-                        const optCod = document.createElement('option');
-                        optCod.value = p.codigo;
-                        listCodigos.appendChild(optCod);
-
-                        const optNome = document.createElement('option');
-                        optNome.value = p.nome;
-                        listNomes.appendChild(optNome);
-                    }
-                });
-            };
-
-            const inputCodigo = document.getElementById('codigo');
-            const inputNome = document.getElementById('nome');
-
-            // Lógica de Autocompletar para TRATATIVA
-            inputCodigo.addEventListener('input', (e) => {
-                const val = e.target.value;
-                if (!val) return;
-
-                // 1. Tentar no Banco Interno (Array)
-                const prodArray = FLV_DATABASE.find(p => p.codigo === val);
-                if (prodArray) {
-                    inputNome.value = prodArray.nome;
-                    window.setUnit(prodArray.unidade);
-                    return;
+            if (!input || !preview) return;
+            
+            input.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        preview.src = event.target.result;
+                        preview.style.display = 'block';
+                        if (window.saveDraft) window.saveDraft(); // Salva no rascunho após tirar a foto
+                    };
+                    reader.readAsDataURL(file);
                 }
-
-                // 2. Tentar no IndexedDB
-                const tx = db.transaction(productStore, "readonly");
-                const store = tx.objectStore(productStore);
-                const getReq = store.get(val);
-                getReq.onsuccess = () => {
-                    if (getReq.result) {
-                        inputNome.value = getReq.result.nome;
-                        // Nota: Se o IndexedDB não tiver unidade, assume KG por padrão
-                        window.setUnit(getReq.result.unidade || 'KG');
-                    }
-                };
             });
+        };
 
-            inputNome.addEventListener('input', (e) => {
-                const val = e.target.value.toUpperCase();
-                if (!val) return;
-
-                // 1. Tentar no Banco Interno (Array)
-                const prodArray = FLV_DATABASE.find(p => p.nome === val);
-                if (prodArray) {
-                    inputCodigo.value = prodArray.codigo;
-                    window.setUnit(prodArray.unidade);
-                    return;
-                }
-
-                // 2. Tentar no IndexedDB
-                const tx = db.transaction(productStore, "readonly");
-                const store = tx.objectStore(productStore);
-                const req = store.getAll();
-                req.onsuccess = () => {
-                    const p = req.result.find(prod => prod.nome.toUpperCase() === val);
-                    if (p) {
-                        inputCodigo.value = p.codigo;
-                        window.setUnit(p.unidade || 'KG');
-                    }
-                };
-            });
-
-            // Lógica de Captura de Fotos (Original)
-            const setupPhoto = (inputId, previewId) => {
-                const input = document.getElementById(inputId);
-                const preview = document.getElementById(previewId);
-                
-                input.addEventListener('change', (e) => {
-                    const file = e.target.files[0];
-                    if (file) {
-                        const reader = new FileReader();
-                        reader.onload = (event) => {
-                            preview.src = event.target.result;
-                            preview.style.display = 'block';
-                            saveDraft(); // Salva no rascunho após tirar a foto
-                        };
-                        reader.readAsDataURL(file);
-                    }
-                });
-            };
-
-            setupPhoto('input-produto', 'prev-produto');
-            setupPhoto('input-balanca', 'prev-balanca');
-            setupPhoto('input-etiqueta-camera', 'prev-etiqueta');
-            setupPhoto('input-etiqueta-galeria', 'prev-etiqueta');
-        }
+        setupPhoto('input-produto', 'prev-produto');
+        setupPhoto('input-balanca', 'prev-balanca');
+        setupPhoto('input-etiqueta-camera', 'prev-etiqueta');
+        setupPhoto('input-etiqueta-galeria', 'prev-etiqueta');
 
         // Navegação entre telas (Abas e Botões)
         const screens = ['results-screen', 'cadastro-screen', 'geral-screen', 'menu-screen', 'history-screen', 'products-screen', 'review-screen'];
@@ -1310,19 +1259,6 @@
                 containerFotos.style.display = 'block';
             }
             saveDraft();
-        };
-
-        window.setUnit = function(unit) {
-            document.getElementById('unidade').value = unit;
-            document.getElementById('unit-kg').classList.toggle('active', unit === 'KG');
-            document.getElementById('unit-und').classList.toggle('active', unit === 'UND');
-            saveDraft();
-        };
-
-        window.setUnitGeral = function(unit) {
-            document.getElementById('geral-unidade').value = unit;
-            document.getElementById('geral-unit-kg').classList.toggle('active', unit === 'KG');
-            document.getElementById('geral-unit-und').classList.toggle('active', unit === 'UND');
         };
 
         const setupNumericInput = (id) => {
