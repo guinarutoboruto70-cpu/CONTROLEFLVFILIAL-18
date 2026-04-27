@@ -472,8 +472,8 @@
             <div class="form-group" style="margin-bottom: 8px;">
                 <label style="font-size: 0.75rem;">Unidade de Medida</label>
                 <div class="unit-selector" style="padding: 2px;">
-                    <button type="button" id="geral-unit-kg" class="unit-btn active" onclick="setUnitGeral('KG')" style="padding: 6px; font-size: 0.8rem;">KG</button>
-                    <button type="button" id="geral-unit-und" class="unit-btn" onclick="setUnitGeral('UND')" style="padding: 6px; font-size: 0.8rem;">UND</button>
+                    <button type="button" id="geral-unit-kg" class="unit-btn active" style="padding: 6px; font-size: 0.8rem;">KG</button>
+                    <button type="button" id="geral-unit-und" class="unit-btn" style="padding: 6px; font-size: 0.8rem;">UND</button>
                 </div>
                 <input type="hidden" id="geral-unidade" value="KG">
             </div>
@@ -518,8 +518,8 @@
                 <div class="form-group" style="margin: 0;">
                     <label style="font-size: 0.75rem;">Unidade</label>
                     <div class="unit-selector" style="padding: 2px;">
-                        <button type="button" id="unit-kg" class="unit-btn active" onclick="setUnit('KG')" style="padding: 5px; font-size: 0.75rem;">KG</button>
-                        <button type="button" id="unit-und" class="unit-btn" onclick="setUnit('UND')" style="padding: 5px; font-size: 0.75rem;">UND</button>
+                        <button type="button" id="unit-kg" class="unit-btn active" style="padding: 5px; font-size: 0.75rem;">KG</button>
+                        <button type="button" id="unit-und" class="unit-btn" style="padding: 5px; font-size: 0.75rem;">UND</button>
                     </div>
                     <input type="hidden" id="unidade" value="KG">
                 </div>
@@ -801,11 +801,11 @@
     </div>
 
     <script>
-        // Banco de Dados Interno (Autocomplete) - Teste Definitivo
+        // Banco de Dados Interno (Autocomplete) - Real
         const produtosFLV = { 
             '7028': {nome: 'TOMATE', uni: 'KG'}, 
             '1125': {nome: 'CEBOLA', uni: 'KG'}, 
-            '3560': {nome: 'MELANCIA', uni: 'UND'} 
+            '2030': {nome: 'PIMENTÃO', uni: 'KG'} 
         };
 
         // Funções de Utilidade (Acesso Rápido)
@@ -851,21 +851,33 @@
                     inputNome.value = p.nome;
                     if (window.setUnit) window.setUnit(p.uni);
                 }
+                // Independência: Se o código for apagado ou não existir, 
+                // o usuário pode digitar o nome manualmente (o campo não é bloqueado).
             });
 
             // Busca por Nome (Datalist)
             inputNome.addEventListener('input', () => {
                 const nomeDigitado = inputNome.value.toUpperCase();
+                let encontrado = false;
                 for (const cod in produtosFLV) {
                     if (produtosFLV[cod].nome === nomeDigitado) {
                         inputCodigo.value = cod;
                         if (window.setUnit) window.setUnit(produtosFLV[cod].uni);
+                        encontrado = true;
                         break;
                     }
                 }
+                // Independência: Se não encontrar o nome no banco, 
+                // permite continuar digitando sem forçar um código.
             });
             
             console.log("Automação de Tratativa Carregada!");
+
+            // Eventos manuais para os botões de unidade (Garantir que sempre funcionem)
+            document.getElementById('unit-kg').addEventListener('click', () => window.setUnit('KG'));
+            document.getElementById('unit-und').addEventListener('click', () => window.setUnit('UND'));
+            document.getElementById('geral-unit-kg').addEventListener('click', () => window.setUnitGeral('KG'));
+            document.getElementById('geral-unit-und').addEventListener('click', () => window.setUnitGeral('UND'));
         }
 
         // Executar imediatamente
@@ -1051,36 +1063,45 @@
             const unidade = document.getElementById('geral-unidade').value;
             const qtd = document.getElementById('geral-qtd').value;
             const custo = document.getElementById('geral-custo').value;
-            const valorTotal = parseCurrency(document.getElementById('geral-valor-total').innerText.replace('R$ ', ''));
+            const valorTotalStr = document.getElementById('geral-valor-total').innerText.replace('R$ ', '');
+            const valorTotal = parseCurrency(valorTotalStr);
 
-            if (!codigo || !nome || !qtd || !custo) {
-                alert("Por favor, preencha todos os campos!");
+            if (!nome || !qtd || !custo) {
+                alert("Por favor, preencha Produto, Quantidade e Custo!");
                 return;
             }
 
+            const agora = new Date();
             const item = {
-                id: Date.now(),
-                codigo,
-                nome,
-                unidade,
+                codigo: codigo || 'S/C',
+                nome: nome.toUpperCase(),
+                unidade: unidade,
                 qtd_quebra_kg: qtd,
                 preco_custo: custo,
-                qtd_quebra: valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+                qtd_quebra: valorTotalStr, // Mantém a string formatada R$
                 tipo_quebra: 'GERAL',
-                data: new Date().toLocaleDateString('pt-BR'),
+                data: agora.toLocaleDateString('pt-BR'),
+                hora: agora.toLocaleTimeString('pt-BR'),
+                timestamp: agora.getTime(),
                 status: 'CONCLUÍDO',
                 fotos: []
             };
 
             const tx = db.transaction(historyStore, "readwrite");
             const store = tx.objectStore(historyStore);
-            store.add(item);
+            const request = store.add(item);
 
-            tx.oncomplete = () => {
+            request.onsuccess = () => {
                 feedbackSucesso();
                 e.target.reset();
                 document.getElementById('geral-valor-total').innerText = 'R$ 0,00';
-                showScreen('results-screen');
+                updateResultsDashboard(); // Atualiza o dashboard imediatamente
+                setTimeout(() => showScreen('results-screen'), 1000);
+            };
+
+            request.onerror = (err) => {
+                console.error("Erro ao salvar Quebra Geral:", err);
+                alert("Erro ao salvar registro. Tente novamente.");
             };
         });
 
@@ -2101,10 +2122,13 @@
             if (!currentData) return;
 
             const tx = db.transaction([historyStore, draftStore], "readwrite");
-            tx.objectStore(historyStore).add(currentData);
-            tx.objectStore(draftStore).delete("current_draft");
+            const histStore = tx.objectStore(historyStore);
+            const drfStore = tx.objectStore(draftStore);
+            
+            const request = histStore.add(currentData);
+            drfStore.delete("current_draft");
 
-            tx.oncomplete = () => {
+            request.onsuccess = () => {
                 feedbackSucesso();
                 alert("Lançamento salvo e finalizado!");
                 formTratativa.reset();
@@ -2120,8 +2144,14 @@
                     img.style.display = 'none';
                 });
                 currentData = null;
+                updateResultsDashboard(); // Garante atualização do dashboard
                 reviewScreen.classList.remove('active');
-                menuScreen.classList.add('active');
+                showScreen('results-screen'); // Volta para o painel
+            };
+
+            request.onerror = (err) => {
+                console.error("Erro ao finalizar Tratativa:", err);
+                alert("Erro ao salvar. Verifique se os dados estão corretos.");
             };
         });
     </script>
