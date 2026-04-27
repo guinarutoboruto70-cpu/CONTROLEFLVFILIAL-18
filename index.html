@@ -352,6 +352,72 @@
             top: 10px;
         }
 
+        /* Review Screen Styles */
+        .review-section {
+            background: #1f1f1f;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid #333;
+        }
+
+        .review-title {
+            font-size: 0.9rem;
+            color: var(--primary);
+            font-weight: bold;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .review-group {
+            margin-bottom: 10px;
+        }
+
+        .review-group label {
+            display: block;
+            margin-bottom: 3px;
+        }
+
+        .review-whatsapp-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .btn-wa-action {
+            background: #25d366;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 0.8rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .btn-wa-action:disabled {
+            background: #333;
+            color: #666;
+            cursor: not-allowed;
+        }
+
+        .btn-finalize {
+            background: var(--primary);
+            color: #000;
+            margin-top: 20px;
+            padding: 15px;
+        }
+
         /* Mobile specific adjustments */
         @media (max-width: 380px) {
             .nav-btn { font-size: 0.6rem; }
@@ -526,6 +592,75 @@
         <div id="history-screen" class="screen">
             <div id="history-list">
                 <p style="text-align: center; color: #666; margin-top: 50px;">Carregando...</p>
+            </div>
+        </div>
+
+        <!-- REVIEW SCREEN -->
+        <div id="review-screen" class="screen">
+            <div class="form-card">
+                <h2 style="color: var(--primary); font-size: 1.1rem; margin-top: 0; text-align: center;">🔍 CONFERÊNCIA DE DADOS</h2>
+                
+                <div class="review-section">
+                    <div class="review-title">📝 DADOS BÁSICOS</div>
+                    <div class="row">
+                        <div class="review-group">
+                            <label>Código</label>
+                            <input type="number" id="rev-codigo">
+                        </div>
+                        <div class="review-group">
+                            <label>Unidade</label>
+                            <select id="rev-unidade">
+                                <option value="KG">KG</option>
+                                <option value="UND">UND</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="review-group">
+                        <label>Produto</label>
+                        <input type="text" id="rev-produto">
+                    </div>
+                    <div class="row">
+                        <div class="review-group">
+                            <label>Qtd Chegou</label>
+                            <input type="text" id="rev-qtd-chegou">
+                        </div>
+                        <div class="review-group">
+                            <label>Qtd Quebra</label>
+                            <input type="text" id="rev-qtd-quebra">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="review-section">
+                    <div class="review-title">📱 ENVIO POR WHATSAPP</div>
+                    <div class="review-whatsapp-buttons">
+                        <button class="btn-wa-action" onclick="sendWhatsAppTextOnly()">
+                            💬 ENVIAR TEXTO (RESUMO)
+                        </button>
+                        
+                        <div style="border-top: 1px solid #333; margin: 5px 0; padding-top: 10px;">
+                            <button id="btn-send-prod" class="btn-wa-action" onclick="sendWhatsAppMedia('preview-produto', 'PRODUTO')">
+                                📸 ENVIAR FOTOS DO PRODUTO
+                            </button>
+                        </div>
+                        
+                        <div>
+                            <button id="btn-send-bal" class="btn-wa-action" onclick="sendWhatsAppMedia('preview-balanca', 'BALANÇA')">
+                                ⚖️ ENVIAR FOTOS DA BALANÇA
+                            </button>
+                        </div>
+                        
+                        <div>
+                            <button id="btn-send-etiq" class="btn-wa-action" onclick="sendWhatsAppMedia('preview-etiqueta', 'ETIQUETA')">
+                                🏷️ ENVIAR FOTO DA ETIQUETA
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn-save btn-finalize" onclick="finalizeTratativa()">
+                    🏁 FINALIZAR E SAIR
+                </button>
             </div>
         </div>
 
@@ -808,7 +943,8 @@
                 'results-screen': 'nav-dash',
                 'cadastro-screen': 'nav-tratativa',
                 'geral-screen': 'nav-geral',
-                'history-screen': 'nav-history'
+                'history-screen': 'nav-history',
+                'review-screen': 'nav-tratativa'
             };
             if (btnMap[screenId]) document.getElementById(btnMap[screenId]).classList.add('active');
             
@@ -844,24 +980,58 @@
         setupNumericInput('preco_custo', true);
         setupNumericInput('geral-qtd');
         setupNumericInput('geral-custo', true);
+        
+        // Máscaras para a tela de revisão
+        setupNumericInput('rev-qtd-chegou');
+        setupNumericInput('rev-qtd-quebra');
 
         // --- 6. SALVAMENTO ---
         document.getElementById('tratativa-form').onsubmit = (e) => {
             e.preventDefault();
+            prepareReview();
+        };
+
+        function prepareReview() {
+            // Pega os dados atuais do formulário
+            const cod = document.getElementById('codigo').value || 'S/C';
+            const prod = document.getElementById('produto').value.toUpperCase();
+            const unit = document.getElementById('unidade').value;
+            const qChegou = document.getElementById('qtd_chegou').value;
+            const qQuebra = document.getElementById('qtd_quebra').value;
+
+            if (!prod) return alert("Selecione um produto!");
+
+            // Preenche a tela de revisão
+            document.getElementById('rev-codigo').value = cod;
+            document.getElementById('rev-produto').value = prod;
+            document.getElementById('rev-unidade').value = unit;
+            document.getElementById('rev-qtd-chegou').value = qChegou;
+            document.getElementById('rev-qtd-quebra').value = qQuebra;
+
+            // Habilita/Desabilita botões de mídia baseado no que foi selecionado
+            document.getElementById('btn-send-prod').disabled = selectedMedia['preview-produto'].length === 0;
+            document.getElementById('btn-send-bal').disabled = selectedMedia['preview-balanca'].length === 0;
+            document.getElementById('btn-send-etiq').disabled = selectedMedia['preview-etiqueta'].length === 0;
+
+            showScreen('review-screen');
+        }
+
+        function finalizeTratativa() {
             const item = {
-                codigo: document.getElementById('codigo').value || 'S/C',
-                nome: document.getElementById('produto').value.toUpperCase(),
-                unidade: document.getElementById('unidade').value,
-                qtd_chegou: document.getElementById('qtd_chegou').value,
-                qtd_quebra: document.getElementById('qtd_quebra').value,
+                codigo: document.getElementById('rev-codigo').value || 'S/C',
+                nome: document.getElementById('rev-produto').value.toUpperCase(),
+                unidade: document.getElementById('rev-unidade').value,
+                qtd_chegou: document.getElementById('rev-qtd-chegou').value,
+                qtd_quebra: document.getElementById('rev-qtd-quebra').value,
                 preco_custo: document.getElementById('preco_custo').value,
-                media: { ...selectedMedia }, // Salva as fotos
+                media: { ...selectedMedia },
                 tipo: 'TRATATIVA',
                 data: new Date().toLocaleDateString('pt-BR'),
                 timestamp: Date.now()
             };
+
             salvar(item);
-        };
+        }
 
         document.getElementById('geral-form').onsubmit = (e) => {
             e.preventDefault();
@@ -1047,17 +1217,15 @@
         }
 
         // --- 9. INTEGRAÇÃO WHATSAPP ---
-        function sendWhatsApp() {
-            const cod = document.getElementById('codigo').value || 'S/C';
-            const produto = document.getElementById('produto').value.toUpperCase();
+        function sendWhatsAppTextOnly() {
+            const cod = document.getElementById('rev-codigo').value || 'S/C';
+            const produto = document.getElementById('rev-produto').value.toUpperCase();
             const data = new Date().toLocaleDateString('pt-BR');
-            const qtdChegou = document.getElementById('qtd_chegou').value || '0';
-            const qtdQuebra = document.getElementById('qtd_quebra').value || '0';
-            const unidade = document.getElementById('unidade').value;
+            const qtdChegou = document.getElementById('rev-qtd-chegou').value || '0';
+            const qtdQuebra = document.getElementById('rev-qtd-quebra').value || '0';
+            const unidade = document.getElementById('rev-unidade').value;
 
-            if (!produto) return alert("Selecione um produto primeiro!");
-
-            const texto = `*TRATATIVA FLV - V18*\n\n` +
+            const texto = `*RESUMO TRATATIVA*\n\n` +
                           `*Cód:* ${cod}\n` +
                           `*Produto:* ${produto}\n` +
                           `*Data:* ${data}\n` +
@@ -1067,6 +1235,31 @@
 
             const encodedText = encodeURIComponent(texto);
             window.open(`https://wa.me/?text=${encodedText}`, '_blank');
+        }
+
+        async function sendWhatsAppMedia(previewId, categoryName) {
+            const photos = selectedMedia[previewId];
+            if (photos.length === 0) return;
+
+            // Baixa as fotos automaticamente
+            photos.forEach((base64, index) => {
+                downloadPhoto(base64, `AUDITORIA_${categoryName}_${index + 1}.jpg`);
+            });
+
+            // Pequeno delay para os downloads iniciarem antes de abrir o WhatsApp
+            setTimeout(() => {
+                const texto = `*FOTOS DA ${categoryName}*\n` +
+                              `Produto: ${document.getElementById('rev-produto').value.toUpperCase()}\n` +
+                              `_Anexe as fotos baixadas agora._`;
+                
+                const encodedText = encodeURIComponent(texto);
+                window.open(`https://wa.me/?text=${encodedText}`, '_blank');
+            }, 500);
+        }
+
+        function sendWhatsApp() {
+            // Mantém compatibilidade ou remove se não for mais usado no botão antigo
+            sendWhatsAppTextOnly();
         }
 
         // Inicia tudo
