@@ -271,6 +271,23 @@
             color: black;
         }
 
+        /* Estilo para itens pendentes no dashboard */
+        .pending-item-dash {
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* Responsividade para o Dashboard Unificado */
+        @media (min-width: 768px) {
+            .dashboard-grid > div:last-child {
+                grid-template-columns: 1fr 1fr !important;
+            }
+        }
+
         /* Modal de Fotos */
         .modal {
             display: none;
@@ -403,7 +420,7 @@
             </div>
 
             <div class="form-group">
-                <label>Quantidade Quebra</label>
+                <label>Valor da Quebra (R$)</label>
                 <input type="text" id="qtd_quebra" inputmode="decimal" required placeholder="0,00">
             </div>
 
@@ -547,40 +564,59 @@
 
         <div id="capture-area" style="background: var(--bg-color); padding: 10px; border-radius: 15px;">
             <div style="text-align: center; margin-bottom: 15px;">
-                <h3 style="color: #ffcc00; margin: 0; font-size: 1.2rem;">RELATÓRIO DE PERFORMANCE</h3>
-                <h4 style="color: #fff; margin: 5px 0; font-size: 1rem;">FLV 1018 - <span id="dash-current-date">--/--/----</span></h4>
+                <h3 style="color: #ffcc00; margin: 0; font-size: 1.2rem;">GESTÃO UNIFICADA FLV</h3>
+                <h4 style="color: #fff; margin: 5px 0; font-size: 1rem;">Performance - <span id="dash-current-date">--/--/----</span></h4>
             </div>
 
-            <!-- Cards de Indicadores -->
-            <div style="display: grid; grid-template-columns: 1fr; gap: 15px; margin-bottom: 20px;">
-                <!-- IG % -->
-                <div id="card-ig-box" style="background: #1a1a1a; padding: 25px; border-radius: 15px; border: 2px solid #333; text-align: center; transition: all 0.3s ease;">
-                    <small style="color: #888; display: block; font-size: 0.9rem; margin-bottom: 5px;">INDICADOR DE QUEBRA (%)</small>
-                    <div id="val-ig-percent" style="font-size: 3.5rem; font-weight: bold; color: #fff;">0,00%</div>
-                    <div id="status-ig" style="font-size: 1rem; font-weight: bold; margin-top: 5px; padding: 5px 20px; border-radius: 20px; display: inline-block;">-</div>
+            <div class="dashboard-grid" style="display: flex; flex-direction: column; gap: 20px;">
+                <!-- Seção Superior: Indicador IG -->
+                <div id="card-ig-box" style="background: #1a1a1a; padding: 20px; border-radius: 15px; border: 2px solid #333; text-align: center;">
+                    <small style="color: #888; display: block; font-size: 0.8rem; margin-bottom: 5px;">ÍNDICE DE QUEBRA (IG %)</small>
+                    <div id="val-ig-percent" style="font-size: 2.8rem; font-weight: bold; color: #fff;">0,00%</div>
+                    <div id="status-ig" style="font-size: 0.85rem; font-weight: bold; margin-top: 5px; padding: 4px 15px; border-radius: 20px; display: inline-block;">-</div>
                 </div>
 
-                <!-- Resumo Financeiro -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                    <div style="background: #1a1a1a; padding: 15px; border-radius: 15px; border: 1px solid #333; text-align: center;">
-                        <small style="color: #888; display: block; font-size: 0.75rem; margin-bottom: 5px;">QUEBRA TRATATIVA</small>
-                        <span id="val-quebra-tratativa" style="color: #ffcc00; font-weight: bold; font-size: 1.2rem;">R$ 0,00</span>
+                <div style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+                    <!-- Coluna 1: Pendentes -->
+                    <div style="background: #111; padding: 15px; border-radius: 15px; border: 1px solid #333;">
+                        <h3 style="color: #ffcc00; font-size: 1rem; margin: 0 0 15px 0; text-align: center; border-bottom: 1px solid #333; padding-bottom: 10px;">ITENS PENDENTES</h3>
+                        <div id="dash-pending-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 300px; overflow-y: auto; padding-right: 5px;">
+                            <!-- Itens pendentes via JS -->
+                            <p style="color: #666; text-align: center; font-size: 0.9rem;">Nenhuma tratativa pendente.</p>
+                        </div>
                     </div>
-                    <div style="background: #1a1a1a; padding: 15px; border-radius: 15px; border: 1px solid #333; text-align: center;">
-                        <small style="color: #888; display: block; font-size: 0.75rem; margin-bottom: 5px;">QUEBRA GERAL</small>
-                        <span id="val-quebra-geral" style="color: #007bff; font-weight: bold; font-size: 1.2rem;">R$ 0,00</span>
-                    </div>
-                    <div style="background: #1a1a1a; padding: 15px; border-radius: 15px; border: 1px solid #333; text-align: center; grid-column: span 2;">
-                        <small style="color: #888; display: block; font-size: 0.75rem; margin-bottom: 5px;">QUEBRA BRUTA TOTAL</small>
-                        <span id="val-quebra-bruta" style="color: #fff; font-weight: bold; font-size: 1.5rem;">R$ 0,00</span>
-                    </div>
-                    <div style="background: #1a1a1a; padding: 15px; border-radius: 15px; border: 1px solid #333; text-align: center;">
-                        <small style="color: #888; display: block; font-size: 0.75rem; margin-bottom: 5px;">VALOR SALVO</small>
-                        <span id="val-economia-results" style="color: #28a745; font-weight: bold; font-size: 1.2rem;">R$ 0,00</span>
-                    </div>
-                    <div style="background: #1a1a1a; padding: 15px; border-radius: 15px; border: 1px solid #333; text-align: center;">
-                        <small style="color: #888; display: block; font-size: 0.75rem; margin-bottom: 5px;">QUEBRA LÍQUIDA</small>
-                        <span id="val-quebra-liquida" style="color: #ff4444; font-weight: bold; font-size: 1.2rem;">R$ 0,00</span>
+
+                    <!-- Coluna 2: Resumo Financeiro -->
+                    <div style="background: #111; padding: 15px; border-radius: 15px; border: 1px solid #333;">
+                        <h3 style="color: #007bff; font-size: 1rem; margin: 0 0 15px 0; text-align: center; border-bottom: 1px solid #333; padding-bottom: 10px;">RESUMO FINANCEIRO</h3>
+                        
+                        <div style="display: flex; flex-direction: column; gap: 12px;">
+                            <div style="background: #1a1a1a; padding: 12px; border-radius: 10px; border-left: 4px solid #fff;">
+                                <small style="color: #888; display: block; font-size: 0.7rem;">QUEBRA BRUTA TOTAL</small>
+                                <span id="val-quebra-bruta" style="color: #fff; font-weight: bold; font-size: 1.3rem;">R$ 0,00</span>
+                            </div>
+                            
+                            <div style="background: #1a1a1a; padding: 12px; border-radius: 10px; border-left: 4px solid #28a745;">
+                                <small style="color: #888; display: block; font-size: 0.7rem;">ECONOMIA GERADA (SALVA)</small>
+                                <span id="val-economia-results" style="color: #28a745; font-weight: bold; font-size: 1.3rem;">R$ 0,00</span>
+                            </div>
+
+                            <div style="background: #1a1a1a; padding: 12px; border-radius: 10px; border-left: 4px solid #ff4444;">
+                                <small style="color: #888; display: block; font-size: 0.7rem;">QUEBRA LÍQUIDA (REAL)</small>
+                                <span id="val-quebra-liquida" style="color: #ff4444; font-weight: bold; font-size: 1.3rem;">R$ 0,00</span>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 5px;">
+                                <div style="background: #1a1a1a; padding: 10px; border-radius: 8px; text-align: center; border: 1px solid #333;">
+                                    <small style="color: #888; display: block; font-size: 0.65rem;">TRATATIVAS</small>
+                                    <span id="val-quebra-tratativa" style="color: #ffcc00; font-weight: bold; font-size: 0.9rem;">R$ 0,00</span>
+                                </div>
+                                <div style="background: #1a1a1a; padding: 10px; border-radius: 8px; text-align: center; border: 1px solid #333;">
+                                    <small style="color: #888; display: block; font-size: 0.65rem;">GERAL/LIMPEZA</small>
+                                    <span id="val-quebra-geral" style="color: #007bff; font-weight: bold; font-size: 0.9rem;">R$ 0,00</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -993,8 +1029,9 @@
 
         // Máscara de Moeda (BRL)
         function formatCurrency(value) {
-            if (!value) return "0,00";
+            if (!value && value !== 0) return "0,00";
             let cleanValue = value.toString().replace(/\D/g, "");
+            if (cleanValue === "") return "0,00";
             let floatValue = parseFloat(cleanValue) / 100;
             return floatValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
@@ -1007,8 +1044,13 @@
 
         function parseCommaFloat(value) {
             if (!value) return 0;
-            const str = value.toString().replace(',', '.');
-            const parsed = parseFloat(str);
+            // Se já for um número (como no IndexedDB), retorna ele mesmo
+            if (typeof value === 'number') return value;
+            
+            // Para strings vindas do input formatado (ex: 36.834,64)
+            // Remove os pontos de milhar e troca a vírgula por ponto
+            const cleanStr = value.toString().replace(/\./g, '').replace(',', '.');
+            const parsed = parseFloat(cleanStr);
             return isNaN(parsed) ? 0 : parsed;
         }
 
@@ -1021,11 +1063,9 @@
             // Ajustar obrigatoriedade de fotos
             const containerFotos = document.getElementById('container-fotos');
             if (type === 'GERAL') {
-                containerFotos.style.opacity = '0.5';
-                containerFotos.style.pointerEvents = 'none';
+                containerFotos.style.display = 'none';
             } else {
-                containerFotos.style.opacity = '1';
-                containerFotos.style.pointerEvents = 'auto';
+                containerFotos.style.display = 'block';
             }
             saveDraft();
         };
@@ -1042,13 +1082,18 @@
             if (!input) return;
 
             input.addEventListener('input', (e) => {
-                // Permite apenas números e uma vírgula
-                let value = e.target.value.replace(/[^0-9,]/g, '');
-                const parts = value.split(',');
-                if (parts.length > 2) {
-                    value = parts[0] + ',' + parts.slice(1).join('');
+                // Se for o campo de quebra, aplica máscara de moeda
+                if (id === 'qtd_quebra') {
+                    e.target.value = formatCurrency(e.target.value);
+                } else {
+                    // Para outros campos (como chegou), mantém apenas números e uma vírgula
+                    let value = e.target.value.replace(/[^0-9,]/g, '');
+                    const parts = value.split(',');
+                    if (parts.length > 2) {
+                        value = parts[0] + ',' + parts.slice(1).join('');
+                    }
+                    e.target.value = value;
                 }
-                e.target.value = value;
                 saveDraft();
             });
         };
@@ -1107,6 +1152,10 @@
                 let quebraBruta = 0;
                 let valorSalvo = 0;
 
+                const pendingListEl = document.getElementById('dash-pending-list');
+                pendingListEl.innerHTML = '';
+                let hasPending = false;
+
                 logs.forEach(item => {
                     if (item.data === selectedDateBR) {
                         const valor = parseCommaFloat(item.qtd_quebra || 0);
@@ -1115,6 +1164,24 @@
                             quebraGeral += valor;
                         } else {
                             quebraTratativa += valor;
+                            
+                            // Adicionar à lista de pendentes se não estiver concluído
+                            if (item.status !== 'CONCLUÍDO') {
+                                hasPending = true;
+                                const pItem = document.createElement('div');
+                                pItem.className = 'pending-item-dash';
+                                pItem.style = 'background: #1a1a1a; padding: 10px; border-radius: 8px; border-left: 3px solid #ffcc00; display: flex; justify-content: space-between; align-items: center;';
+                                pItem.innerHTML = `
+                                    <div style="flex: 1;">
+                                        <div style="color: #fff; font-weight: bold; font-size: 0.85rem;">${item.nome}</div>
+                                        <div style="color: #ffcc00; font-size: 0.8rem;">R$ ${valor.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
+                                    </div>
+                                    <button onclick="approveFromDashboard(${item.id})" style="background: #28a745; border: none; color: white; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 0.75rem; font-weight: bold;">
+                                        ✅ APROVAR
+                                    </button>
+                                `;
+                                pendingListEl.appendChild(pItem);
+                            }
                         }
                         
                         quebraBruta += valor;
@@ -1124,6 +1191,10 @@
                         }
                     }
                 });
+
+                if (!hasPending) {
+                    pendingListEl.innerHTML = '<p style="color: #666; text-align: center; font-size: 0.9rem; margin: 20px 0;">Nenhuma tratativa pendente.</p>';
+                }
 
                 const quebraLiquida = quebraBruta - valorSalvo;
                 const vendaDia = parseCurrency(inputVendaResults.value);
@@ -1169,17 +1240,47 @@
             };
         }
 
+        window.approveFromDashboard = function(id) {
+            const tx = db.transaction(historyStore, "readwrite");
+            const store = tx.objectStore(historyStore);
+            const request = store.get(id);
+
+            request.onsuccess = () => {
+                const item = request.result;
+                item.status = 'CONCLUÍDO';
+                store.put(item);
+                
+                tx.oncomplete = () => {
+                    updateResultsDashboard();
+                    // Opcional: mostrar um feedback visual rápido
+                };
+            };
+        };
+
         const btnRelatorioDiario = document.getElementById('btn-relatorio-diario');
         if (btnRelatorioDiario) {
             btnRelatorioDiario.addEventListener('click', () => {
                 const data = document.getElementById('dash-current-date').innerText;
+                const quebraBruta = document.getElementById('val-quebra-bruta').innerText;
+                const economia = document.getElementById('val-economia-results').innerText;
+                const quebraLiquida = document.getElementById('val-quebra-liquida').innerText;
                 const quebraTratativa = document.getElementById('val-quebra-tratativa').innerText;
                 const quebraGeral = document.getElementById('val-quebra-geral').innerText;
-                const quebraBruta = document.getElementById('val-quebra-bruta').innerText;
                 const vendaDia = inputVendaResults.value;
                 const igPercent = document.getElementById('val-ig-percent').innerText;
 
-                const textoRelatorio = `*RELATÓRIO DIÁRIO FLV 1018*\nData: ${data}\n\n*Resumo Financeiro:*\nTotal Quebra Tratativa: ${quebraTratativa}\nTotal Quebra Geral/Limpeza: ${quebraGeral}\n*VALOR TOTAL DO DIA: ${quebraBruta}*\n\n*Indicadores:*\nVenda Diária: R$ ${vendaDia}\nÍndice de Quebra (IG): ${igPercent}`;
+                let textoRelatorio = `*RELATÓRIO DE GESTÃO FLV 1018*\n`;
+                textoRelatorio += `Data: ${data}\n\n`;
+                textoRelatorio += `*RESUMO FINANCEIRO:*\n`;
+                textoRelatorio += `🔴 Quebra Bruta: ${quebraBruta}\n`;
+                textoRelatorio += `🟢 Economia (Salva): ${economia}\n`;
+                textoRelatorio += `⚫ *Quebra Líquida: ${quebraLiquida}*\n\n`;
+                textoRelatorio += `*DETALHAMENTO:*\n`;
+                textoRelatorio += `- Tratativas: ${quebraTratativa}\n`;
+                textoRelatorio += `- Geral/Limpeza: ${quebraGeral}\n\n`;
+                textoRelatorio += `*INDICADORES:*\n`;
+                textoRelatorio += `Venda Diária: R$ ${vendaDia}\n`;
+                textoRelatorio += `Índice de Quebra (IG): ${igPercent}`;
                 
                 window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(textoRelatorio)}`, '_blank');
             });
@@ -1348,6 +1449,7 @@
                 tx.oncomplete = () => {
                     closeApprovalModal();
                     renderHistory();
+                    updateResultsDashboard(); // Atualiza painel financeiro imediatamente
                 };
             };
         });
@@ -1357,27 +1459,43 @@
             const store = tx.objectStore(historyStore);
             const request = store.getAll();
             const filterDate = document.getElementById('filter-date').value;
+            const filterDateBR = filterDate ? filterDate.split('-').reverse().join('/') : new Date().toLocaleDateString('pt-BR');
 
             request.onsuccess = () => {
                 const logs = request.result;
-                let texto = `*RELATÓRIO TRATAFLV 1018*\n`;
-                texto += `Data: ${filterDate || new Date().toLocaleDateString('pt-BR')}\n\n`;
+                let quebraTratativa = 0;
+                let quebraGeral = 0;
+                let economia = 0;
                 
-                let totalGeral = 0;
                 logs.forEach(item => {
-                    const itemDate = item.data.split('/').reverse().join('-');
-                    if (!filterDate || itemDate === filterDate) {
-                        texto += `Item: ${item.nome} - Quebra: ${item.qtd_quebra}\n`;
-                        totalGeral += parseCommaFloat(item.qtd_quebra);
+                    if (!filterDate || item.data === filterDateBR) {
+                        const valor = parseCommaFloat(item.qtd_quebra || 0);
+                        if (item.tipo_quebra === 'GERAL') {
+                            quebraGeral += valor;
+                        } else {
+                            quebraTratativa += valor;
+                            if (item.status === 'CONCLUÍDO') economia += valor;
+                        }
                     }
                 });
 
-                if (totalGeral === 0) {
+                const quebraBruta = quebraTratativa + quebraGeral;
+                const quebraLiquida = quebraBruta - economia;
+
+                let texto = `*RELATÓRIO DE GESTÃO FLV 1018*\n`;
+                texto += `Data: ${filterDateBR}\n\n`;
+                texto += `*RESUMO FINANCEIRO:*\n`;
+                texto += `🔴 Quebra Bruta: R$ ${quebraBruta.toLocaleString('pt-BR', {minimumFractionDigits: 2})}\n`;
+                texto += `🟢 Economia (Salva): R$ ${economia.toLocaleString('pt-BR', {minimumFractionDigits: 2})}\n`;
+                texto += `⚫ *Quebra Líquida: R$ ${quebraLiquida.toLocaleString('pt-BR', {minimumFractionDigits: 2})}*\n\n`;
+                texto += `*DETALHAMENTO:*\n`;
+                texto += `- Tratativas: R$ ${quebraTratativa.toLocaleString('pt-BR', {minimumFractionDigits: 2})}\n`;
+                texto += `- Geral/Limpeza: R$ ${quebraGeral.toLocaleString('pt-BR', {minimumFractionDigits: 2})}\n`;
+                
+                if (quebraBruta === 0) {
                     alert("Não há lançamentos nesta data para exportar.");
                     return;
                 }
-
-                texto += `\n*Total Geral: ${totalGeral.toFixed(2)}*`;
                 
                 const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(texto)}`;
                 window.open(url, '_blank');
@@ -1393,6 +1511,7 @@
                 tx.oncomplete = () => {
                     alert("Histórico limpo com sucesso!");
                     renderHistory();
+                    updateResultsDashboard();
                 };
             }
         });
@@ -1403,6 +1522,7 @@
                 tx.objectStore(historyStore).delete(id);
                 tx.oncomplete = () => {
                     renderHistory();
+                    updateResultsDashboard();
                 };
             }
         };
