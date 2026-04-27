@@ -941,41 +941,50 @@
         const dbName = "TratativasFLV";
         const draftStore = "rascunhos";
         const historyStore = "historico";
-        const productStore = "produtos"; // Nova store para produtos
+        const productStore = "produtos";
         let db;
 
-        const request = indexedDB.open(dbName, 3); // Versão 3 para garantir atualização de cache e novas colunas
-        request.onupgradeneeded = (e) => {
-            db = e.target.result;
-            const oldVersion = e.oldVersion;
-            
-            if (!db.objectStoreNames.contains(draftStore)) {
-                db.createObjectStore(draftStore, { keyPath: "id" });
-            }
-            if (!db.objectStoreNames.contains(historyStore)) {
-                db.createObjectStore(historyStore, { keyPath: "id", autoIncrement: true });
-            }
-            if (!db.objectStoreNames.contains(productStore)) {
-                db.createObjectStore(productStore, { keyPath: "codigo" });
-            }
+        function initDB() {
+            const request = indexedDB.open(dbName, 3);
 
-            // Lógica de compatibilidade (se necessário)
-            if (oldVersion < 3) {
-                console.log("Atualizando estrutura do banco para v3...");
-            }
-        };
-        request.onsuccess = (e) => {
-            db = e.target.result;
-            initAutocomplete();
-            loadDraft();
-            renderProductList(); // Carregar lista de produtos ao iniciar
+            request.onupgradeneeded = (e) => {
+                const dbInstance = e.target.result;
+                if (!dbInstance.objectStoreNames.contains(draftStore)) {
+                    dbInstance.createObjectStore(draftStore, { keyPath: "id" });
+                }
+                if (!dbInstance.objectStoreNames.contains(historyStore)) {
+                    dbInstance.createObjectStore(historyStore, { keyPath: "id", autoIncrement: true });
+                }
+                if (!dbInstance.objectStoreNames.contains(productStore)) {
+                    dbInstance.createObjectStore(productStore, { keyPath: "codigo" });
+                }
+                console.log("Banco de dados atualizado/criado.");
+            };
 
-            // Preencher data da ocorrência se estiver vazio (novo formulário)
-            const dateInput = document.getElementById('data-ocorrencia');
-            if (dateInput && !dateInput.value) {
-                dateInput.value = new Date().toISOString().split('T')[0];
-            }
-        };
+            request.onsuccess = (e) => {
+                db = e.target.result;
+                console.log("Conexão com IndexedDB estabelecida com sucesso.");
+                
+                // Inicializar automação e carregar dados
+                initAutocomplete();
+                loadDraft();
+                renderProductList();
+                updateResultsDashboard();
+
+                const dateInput = document.getElementById('data-ocorrencia');
+                if (dateInput && !dateInput.value) {
+                    dateInput.value = new Date().toISOString().split('T')[0];
+                }
+            };
+
+            request.onerror = (e) => {
+                console.error("Erro crítico ao abrir IndexedDB:", e.target.error);
+                alert("Erro ao carregar o banco de dados. O app pode não salvar corretamente.");
+            };
+        }
+
+        // Chamar inicialização do banco
+        initDB();
 
         // Lógica de Captura de Fotos (Original)
         const setupPhoto = (inputId, previewId) => {
@@ -1058,12 +1067,17 @@
         document.getElementById('geral-form').addEventListener('submit', (e) => {
             e.preventDefault();
             
-            const codigo = document.getElementById('geral-codigo').value;
-            const nome = document.getElementById('geral-nome').value;
+            if (!db) {
+                alert("Erro: Banco de dados não inicializado. Tente recarregar a página.");
+                return;
+            }
+
+            const codigo = document.getElementById('geral-codigo').value.trim();
+            const nome = document.getElementById('geral-nome').value.trim();
             const unidade = document.getElementById('geral-unidade').value;
             const qtd = document.getElementById('geral-qtd').value;
             const custo = document.getElementById('geral-custo').value;
-            const valorTotalStr = document.getElementById('geral-valor-total').innerText.replace('R$ ', '');
+            const valorTotalStr = document.getElementById('geral-valor-total').innerText.replace('R$ ', '').trim();
             const valorTotal = parseCurrency(valorTotalStr);
 
             if (!nome || !qtd || !custo) {
@@ -1078,9 +1092,9 @@
                 unidade: unidade,
                 qtd_quebra_kg: qtd,
                 preco_custo: custo,
-                qtd_quebra: valorTotalStr, // Mantém a string formatada R$
+                qtd_quebra: valorTotalStr, // Salva o valor formatado (ex: 10,00)
                 tipo_quebra: 'GERAL',
-                data: agora.toLocaleDateString('pt-BR'),
+                data: getTodayBR(), // Usa função padronizada
                 hora: agora.toLocaleTimeString('pt-BR'),
                 timestamp: agora.getTime(),
                 status: 'CONCLUÍDO',
@@ -1130,8 +1144,13 @@
         }
 
         document.getElementById('btn-save-product').addEventListener('click', () => {
-            const codigo = document.getElementById('prod-codigo').value;
-            const nome = document.getElementById('prod-nome').value;
+            if (!db) {
+                alert("Erro: Banco de dados não inicializado.");
+                return;
+            }
+
+            const codigo = document.getElementById('prod-codigo').value.trim();
+            const nome = document.getElementById('prod-nome').value.trim();
             const preco = document.getElementById('prod-preco').value;
 
             if (!codigo || !nome) {
@@ -1141,20 +1160,26 @@
 
             const product = {
                 codigo: codigo,
-                nome: nome,
+                nome: nome.toUpperCase(),
                 preco: parseCurrency(preco),
                 data_cadastro: new Date().toISOString()
             };
 
             const tx = db.transaction(productStore, "readwrite");
             const store = tx.objectStore(productStore);
-            store.put(product);
+            const request = store.put(product);
 
-            tx.oncomplete = () => {
+            request.onsuccess = () => {
+                feedbackSucesso();
                 alert("Produto salvo com sucesso!");
                 clearProductForm();
                 renderProductList();
                 initAutocomplete(); // Atualiza auto-complete na tela de cadastro
+            };
+
+            request.onerror = (err) => {
+                console.error("Erro ao salvar produto:", err);
+                alert("Erro ao salvar produto no banco.");
             };
         });
 
@@ -1234,7 +1259,7 @@
             }
         };
 
-        // Máscara de Moeda (BRL)
+        // Funções de Conversão e Formatação
         function formatCurrency(value) {
             if (!value && value !== 0) return "0,00";
             let cleanValue = value.toString().replace(/\D/g, "");
@@ -1245,20 +1270,35 @@
 
         function parseCurrency(value) {
             if (!value) return 0;
-            let cleanValue = value.toString().replace(/\D/g, "");
+            let cleanValue = value.toString().replace(/[^\d]/g, "");
             return parseFloat(cleanValue) / 100;
         }
 
         function parseCommaFloat(value) {
             if (!value) return 0;
-            // Se já for um número (como no IndexedDB), retorna ele mesmo
             if (typeof value === 'number') return value;
-            
-            // Para strings vindas do input formatado (ex: 36.834,64)
-            // Remove os pontos de milhar e troca a vírgula por ponto
-            const cleanStr = value.toString().replace(/\./g, '').replace(',', '.');
+            // Remove R$, espaços, pontos de milhar e troca vírgula por ponto
+            const cleanStr = value.toString()
+                .replace(/R\$/g, '')
+                .replace(/\s/g, '')
+                .replace(/\./g, '')
+                .replace(',', '.');
             const parsed = parseFloat(cleanStr);
             return isNaN(parsed) ? 0 : parsed;
+        }
+
+        function getTodayBR() {
+            const now = new Date();
+            const d = String(now.getDate()).padStart(2, '0');
+            const m = String(now.getMonth() + 1).padStart(2, '0');
+            const y = now.getFullYear();
+            return `${d}/${m}/${y}`;
+        }
+
+        function formatDateToBR(dateStrISO) {
+            if (!dateStrISO) return getTodayBR();
+            const [y, m, d] = dateStrISO.split('-');
+            return `${d}/${m}/${y}`;
         }
 
         // Funções Globais de UI
@@ -1986,9 +2026,14 @@
         formTratativa.addEventListener('submit', (e) => {
             e.preventDefault();
             
+            if (!db) {
+                alert("Erro: Banco de dados não inicializado.");
+                return;
+            }
+
             const tipoQuebra = document.getElementById('tipo_quebra').value;
             const selectedDate = document.getElementById('data-ocorrencia').value;
-            const formattedDate = selectedDate.split('-').reverse().join('/'); // Converte de AAAA-MM-DD para DD/MM/AAAA
+            const formattedDate = formatDateToBR(selectedDate);
 
             const agora = new Date();
             let nomeLimpo = document.getElementById('nome').value;
@@ -1996,8 +2041,8 @@
 
             currentData = {
                 tipo_quebra: tipoQuebra,
-                codigo: document.getElementById('codigo').value,
-                nome: nomeLimpo,
+                codigo: document.getElementById('codigo').value.trim() || 'S/C',
+                nome: nomeLimpo.toUpperCase(),
                 unidade: document.getElementById('unidade').value,
                 qtd_chegou: document.getElementById('qtd_chegou').value,
                 qtd_quebra_kg: document.getElementById('qtd_quebra_kg').value,
@@ -2023,49 +2068,39 @@
                 <p style="margin: 5px 0;"><strong>Chegou:</strong> ${currentData.qtd_chegou} ${currentData.unidade}</p>
                 <p style="margin: 5px 0;"><strong>Quantidade Quebra:</strong> ${currentData.qtd_quebra_kg} ${currentData.unidade}</p>
                 <p style="margin: 5px 0;"><strong>Preço de Custo:</strong> ${currentData.preco_custo}</p>
-                <p style="margin: 5px 0;"><strong>Valor Total Quebra:</strong> <span style="color: #ff4444; font-weight: bold;">${currentData.qtd_quebra}</span></p>
+                <p style="margin: 5px 0;"><strong>Valor Total Quebra:</strong> <span style="color: #ff4444; font-weight: bold;">R$ ${currentData.qtd_quebra}</span></p>
                 <p style="margin: 5px 0;"><strong>Status:</strong> <span style="color: #ffcc00; font-weight: bold;">PENDENTE</span></p>
-                <div style="display: flex; gap: 10px; margin-top: 15px; padding-top: 10px; border-top: 1px solid #333;">
-                    ${currentData.foto_produto && currentData.foto_produto.length > 100 ? '<span>🖼️ <small>Produto</small></span>' : ''}
-                    ${currentData.foto_balanca && currentData.foto_balanca.length > 100 ? '<span>⚖️ <small>Balança</small></span>' : ''}
-                    ${currentData.foto_etiqueta && currentData.foto_etiqueta.length > 100 ? '<span>🏷️ <small>Etiqueta</small></span>' : ''}
-                </div>
             `;
 
             cadastroScreen.classList.remove('active');
             reviewScreen.classList.add('active');
 
+            // Habilitar o botão de finalizar imediatamente conforme pedido
+            const btnFinal = document.getElementById('btn-finalizar-tudo');
+            btnFinal.disabled = false;
+            btnFinal.style.backgroundColor = '#28a745';
+            btnFinal.style.color = 'white';
+            btnFinal.style.cursor = 'pointer';
+            btnFinal.style.fontWeight = 'bold';
+            btnFinal.innerText = '✅ CONFIRMAR E SALVAR AGORA';
+            
+            // Ajustar botões de compartilhamento
             document.querySelectorAll('.btn-send-review').forEach(btn => {
                 btn.style.border = 'none';
                 if (btn.id === 'btn-send-text') {
                     btn.style.backgroundColor = '#25D366';
-                    btn.innerHTML = '🟢 ENVIAR TEXTO';
+                    btn.innerHTML = '🟢 ENVIAR TEXTO WHATSAPP';
                 } else {
-                    // Esconder botões de foto se for Quebra Geral
                     if (tipoQuebra === 'GERAL') {
                         btn.style.display = 'none';
                     } else {
                         btn.style.display = 'block';
                         btn.style.backgroundColor = '#444';
-                        btn.innerHTML = btn.id === 'btn-send-photo-prod' ? '📸 ENVIAR FOTO PRODUTO' : 
-                                        btn.id === 'btn-send-photo-bal' ? '📸 ENVIAR FOTO BALANÇA' : '📸 ENVIAR FOTO ETIQUETA';
+                        btn.innerHTML = btn.id === 'btn-send-photo-prod' ? '📸 FOTO PRODUTO' : 
+                                        btn.id === 'btn-send-photo-bal' ? '📸 FOTO BALANÇA' : '📸 FOTO ETIQUETA';
                     }
                 }
             });
-            
-            const btnFinal = document.getElementById('btn-finalizar-tudo');
-            // Se for Geral, habilita o botão de finalizar direto, pois não tem fotos
-            if (tipoQuebra === 'GERAL') {
-                btnFinal.disabled = false;
-                btnFinal.style.backgroundColor = 'var(--btn-new-bg)';
-                btnFinal.style.color = 'black';
-                btnFinal.style.cursor = 'pointer';
-            } else {
-                btnFinal.disabled = true;
-                btnFinal.style.backgroundColor = '#333';
-                btnFinal.style.color = '#777';
-                btnFinal.style.cursor = 'not-allowed';
-            }
         });
 
         function markAsSent(btn) {
@@ -2119,7 +2154,15 @@
         document.getElementById('btn-send-photo-etiq').addEventListener('click', function() { sharePhoto(this, currentData.foto_etiqueta, "Foto_Etiqueta"); });
 
         document.getElementById('btn-finalizar-tudo').addEventListener('click', () => {
-            if (!currentData) return;
+            if (!currentData) {
+                alert("Nenhum dado para salvar.");
+                return;
+            }
+
+            if (!db) {
+                alert("Erro: Banco de dados não disponível.");
+                return;
+            }
 
             const tx = db.transaction([historyStore, draftStore], "readwrite");
             const histStore = tx.objectStore(historyStore);
@@ -2130,7 +2173,6 @@
 
             request.onsuccess = () => {
                 feedbackSucesso();
-                alert("Lançamento salvo e finalizado!");
                 formTratativa.reset();
                 
                 // Resetar data para hoje após o reset do form
@@ -2139,10 +2181,16 @@
                     dateInput.value = new Date().toISOString().split('T')[0];
                 }
 
+                // Resetar botões de unidade
+                document.getElementById('unit-kg').classList.add('active');
+                document.getElementById('unit-und').classList.remove('active');
+                document.getElementById('unidade').value = 'KG';
+
                 document.querySelectorAll('.photo-preview').forEach(img => {
                     img.src = '';
                     img.style.display = 'none';
                 });
+                
                 currentData = null;
                 updateResultsDashboard(); // Garante atualização do dashboard
                 reviewScreen.classList.remove('active');
@@ -2151,7 +2199,7 @@
 
             request.onerror = (err) => {
                 console.error("Erro ao finalizar Tratativa:", err);
-                alert("Erro ao salvar. Verifique se os dados estão corretos.");
+                alert("Erro ao salvar no banco de dados.");
             };
         });
     </script>
