@@ -1,0 +1,1799 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Controle de Cache para Forçar Atualização -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    
+    <title>TRATAFLV - Sistema</title>
+    <!-- Versão do Script para Cache Busting -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js?v=1.2"></script>
+    <link rel="manifest" href="manifest.json?v=1.2">
+    <meta name="theme-color" content="#000000">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <style>
+        :root {
+            --primary-bg: black;
+            --title-color: yellow;
+            --btn-new-bg: lime;
+            --btn-new-text: black;
+            --btn-secondary-bg: #333;
+            --btn-secondary-text: white;
+            --input-bg: #222;
+            --input-text: white;
+        }
+
+        body {
+            background-color: var(--primary-bg);
+            color: white;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        header {
+            padding: 20px 0;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            color: var(--title-color);
+            font-weight: bold;
+            font-size: 1.8rem;
+            margin: 0;
+            text-transform: uppercase;
+        }
+
+        .screen {
+            width: 90%;
+            max-width: 450px;
+            display: none;
+            flex-direction: column;
+            gap: 20px;
+            padding-bottom: 40px;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        /* Menu Principal */
+        #menu-screen {
+            justify-content: center;
+            flex-grow: 1;
+        }
+
+        /* Botões Gerais */
+        .btn {
+            padding: 15px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            transition: opacity 0.2s;
+        }
+
+        .btn:active {
+            opacity: 0.7;
+        }
+
+        .btn-new {
+            background-color: var(--btn-new-bg);
+            color: var(--btn-new-text);
+            padding: 25px;
+            font-size: 1.3rem;
+        }
+
+        .btn-history {
+            background-color: var(--btn-secondary-bg);
+            color: var(--btn-secondary-text);
+            padding: 25px;
+            font-size: 1.3rem;
+        }
+
+        .btn-save {
+            background-color: var(--btn-new-bg);
+            color: var(--btn-new-text);
+            margin-top: 10px;
+        }
+
+        .btn-back {
+            background-color: transparent;
+            color: white;
+            border: 1px solid white;
+            padding: 8px 15px;
+            font-size: 0.9rem;
+            align-self: flex-start;
+        }
+
+        /* Formulário */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            font-size: 0.9rem;
+            color: #ccc;
+        }
+
+        input {
+            background-color: var(--input-bg);
+            border: 1px solid #444;
+            color: var(--input-text);
+            padding: 12px;
+            font-size: 1rem;
+            border-radius: 5px;
+            transition: box-shadow 0.3s, border-color 0.3s;
+        }
+
+        input:valid:not(:placeholder-shown) {
+            border-color: var(--btn-new-bg);
+            box-shadow: 0 0 8px rgba(0, 255, 0, 0.3);
+        }
+
+        .photo-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+        }
+
+        .btn-photo {
+            background-color: #444;
+            color: white;
+            font-size: 0.8rem;
+            padding: 10px 5px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            height: auto;
+            min-height: 60px;
+            justify-content: center;
+        }
+
+        .photo-preview {
+            width: 100%;
+            height: 40px;
+            object-fit: cover;
+            border-radius: 4px;
+            display: none;
+            border: 1px solid var(--btn-new-bg);
+        }
+
+        /* Histórico */
+        #history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .history-card {
+            background-color: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 10px;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-info {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .card-date {
+            font-size: 0.75rem;
+            color: #888;
+        }
+
+        .card-name {
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: var(--title-color);
+        }
+
+        .card-qty {
+            font-size: 0.9rem;
+            color: #ccc;
+        }
+
+        .btn-delete {
+            background-color: #442222;
+            color: #ff5555;
+            border: 1px solid #663333;
+            border-radius: 5px;
+            padding: 8px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .btn-view {
+            background-color: #223344;
+            color: #55aaff;
+            border: 1px solid #334466;
+            border-radius: 5px;
+            padding: 8px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            margin-right: 5px;
+        }
+
+        .empty-msg {
+            text-align: center;
+            color: #666;
+            margin-top: 20px;
+        }
+
+        /* Modal de Fotos */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.9);
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            width: 90%;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            padding: 20px;
+            background: #111;
+            border-radius: 15px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-photo-item {
+            width: 100%;
+            border-radius: 8px;
+            border: 1px solid #333;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        /* Rodapé do Histórico */
+        .history-footer {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #111;
+            border-top: 2px solid #333;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .total-counter {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--btn-new-bg);
+            text-align: center;
+        }
+
+        .btn-whatsapp {
+            background-color: #25D366;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>SISTEMA TRATAFLV</h1>
+    </header>
+
+    <!-- Tela 1: Menu Principal -->
+    <div id="menu-screen" class="screen active">
+        <button id="btn-new-tratativa" class="btn btn-new">[ + NOVA TRATATIVA ]</button>
+        <button id="btn-manage-products" class="btn btn-history" style="background-color: #007bff; color: white;">[ 📦 CADASTRAR ITENS/PREÇOS ]</button>
+        <button id="btn-show-history" class="btn btn-history">[ CONSULTAR HISTÓRICO ]</button>
+        <button id="btn-show-results" class="btn btn-history" style="background-color: #ffcc00; color: black;">[ 📊 PAINEL DE RESULTADOS ]</button>
+    </div>
+
+    <!-- Tela 2: Cadastro de Tratativa -->
+    <div id="cadastro-screen" class="screen">
+        <button id="btn-voltar-cadastro" class="btn btn-back">Voltar</button>
+        
+        <!-- Botão OCR Avançado -->
+        <div style="margin: 15px 0; border: 1px dashed #444; padding: 10px; border-radius: 10px;">
+            <button id="btn-ocr-start" type="button" class="btn" style="background: #007bff; color: white; width: 100%; font-weight: bold; padding: 12px; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.9rem;">
+                📷 CADASTRAR VIA NOTA/LISTA
+            </button>
+            <input type="file" id="input-ocr" accept="image/*" style="display: none;">
+            <small style="color: #888; display: block; text-align: center; margin-top: 5px;">Tire foto ou escolha da galeria</small>
+        </div>
+
+        <form id="tratativa-form">
+            <div class="form-group">
+                <label>Código do Produto</label>
+                <input type="number" id="codigo" required placeholder="0000" list="lista-codigos">
+                <datalist id="lista-codigos"></datalist>
+            </div>
+
+            <div class="form-group">
+                <label>Nome do Produto</label>
+                <input type="text" id="nome" required placeholder="Ex: Tomate" list="lista-nomes">
+                <datalist id="lista-nomes"></datalist>
+            </div>
+
+            <div class="form-group">
+                <label>Quantidade Chegou</label>
+                <input type="number" id="qtd_chegou" step="0.01" required placeholder="0.00">
+            </div>
+
+            <div class="form-group">
+                <label>Quantidade Quebra</label>
+                <input type="number" id="qtd_quebra" step="0.01" required placeholder="0.00">
+            </div>
+
+            <div class="form-group">
+                <label>Fotos</label>
+                <div class="photo-grid">
+                    <div class="photo-container">
+                        <img id="prev-produto" class="photo-preview">
+                        <button type="button" class="btn btn-photo" onclick="document.getElementById('input-produto').click()">
+                            <span>📷 Produto</span>
+                        </button>
+                        <input type="file" id="input-produto" accept="image/*" capture="environment" style="display: none;">
+                    </div>
+                    <div class="photo-container">
+                        <img id="prev-balanca" class="photo-preview">
+                        <button type="button" class="btn btn-photo" onclick="document.getElementById('input-balanca').click()">
+                            <span>📷 Balança</span>
+                        </button>
+                        <input type="file" id="input-balanca" accept="image/*" capture="environment" style="display: none;">
+                    </div>
+                    <div class="photo-container">
+                        <img id="prev-etiqueta" class="photo-preview">
+                        <button type="button" class="btn btn-photo" onclick="document.getElementById('input-etiqueta').click()">
+                            <span>📷 Etiqueta</span>
+                        </button>
+                        <input type="file" id="input-etiqueta" accept="image/*" capture="environment" style="display: none;">
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-save" style="width: 100%;">[ REVISAR ENVIO ]</button>
+        </form>
+    </div>
+
+    <!-- Tela 4: Revisão e Envio -->
+    <div id="review-screen" class="screen">
+        <button id="btn-voltar-review" class="btn btn-back">⬅️ CORRIGIR DADOS</button>
+        <h2 style="color: var(--title-color); font-size: 1.4rem; text-align: center;">Revisão da Tratativa</h2>
+        
+        <div id="review-data" style="background: #111; padding: 15px; border-radius: 10px; border: 1px solid #333; margin-bottom: 15px;">
+            <!-- Dados preenchidos aparecerão aqui -->
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+            <button id="btn-send-text" class="btn btn-send-review" style="background-color: #25D366; color: white;">🟢 ENVIAR TEXTO</button>
+            <button id="btn-send-photo-prod" class="btn btn-send-review" style="background-color: #444; color: white;">📸 ENVIAR FOTO PRODUTO</button>
+            <button id="btn-send-photo-bal" class="btn btn-send-review" style="background-color: #444; color: white;">📸 ENVIAR FOTO BALANÇA</button>
+            <button id="btn-send-photo-etiq" class="btn btn-send-review" style="background-color: #444; color: white;">📸 ENVIAR FOTO ETIQUETA</button>
+        </div>
+
+        <button id="btn-finalizar-tudo" class="btn btn-save" style="width: 100%; margin-top: 20px; background-color: #333; color: #777; cursor: not-allowed;" disabled>
+            ✅ SALVAR NO HISTÓRICO E FINALIZAR
+        </button>
+    </div>
+
+    <!-- Tela 3: Histórico de Tratativas -->
+    <div id="history-screen" class="screen">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <button id="btn-voltar-history" class="btn btn-back">Voltar</button>
+            <button id="btn-clear-all" class="btn-delete" style="background-color: #662222;">Limpar Tudo</button>
+        </div>
+
+        <div class="filter-container">
+            <!-- Painel Financeiro -->
+            <div id="financial-panel" style="background: #1a1a1a; padding: 15px; border-radius: 12px; border: 1px solid #333; margin-bottom: 15px; width: 100%;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                    <label style="color: #ffcc00; font-weight: bold; font-size: 0.9rem; white-space: nowrap;">Venda Diária:</label>
+                    <input type="number" id="input-venda-dia" placeholder="R$ 0,00" style="background: #000; color: #fff; border: 1px solid #444; padding: 8px; border-radius: 5px; flex: 1; font-size: 1rem;">
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div style="background: #222; padding: 10px; border-radius: 8px; border-left: 4px solid #ff4444;">
+                        <small style="color: #888; display: block; font-size: 0.7rem;">QUEBRA REAL</small>
+                        <span id="stat-quebra-total" style="color: #ff4444; font-weight: bold; font-size: 1.1rem;">R$ 0,00</span>
+                        <span id="stat-quebra-percent" style="color: #888; font-size: 0.8rem; margin-left: 5px;">(0%)</span>
+                    </div>
+                    <div style="background: #222; padding: 10px; border-radius: 8px; border-left: 4px solid #28a745;">
+                        <small style="color: #888; display: block; font-size: 0.7rem;">ECONOMIA (TRATADO)</small>
+                        <span id="stat-economia" style="color: #28a745; font-weight: bold; font-size: 1.1rem;">R$ 0,00</span>
+                    </div>
+                    <div style="background: #222; padding: 10px; border-radius: 8px; border-left: 4px solid #ffcc00; grid-column: span 2;">
+                        <small style="color: #888; display: block; font-size: 0.7rem;">EM TRATATIVA (PENDENTE)</small>
+                        <span id="stat-pendente" style="color: #ffcc00; font-weight: bold; font-size: 1.1rem;">R$ 0,00</span>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 5px; flex-wrap: wrap; width: 100%;">
+                <button id="btn-filter-all" class="btn" style="background-color: #444; color: white; flex: 1; font-size: 0.75rem; padding: 8px;">Ver Todos</button>
+                <button id="btn-filter-pending" class="btn" style="background-color: #ffcc00; color: black; flex: 1; font-size: 0.75rem; padding: 8px;">Ver Pendentes</button>
+                <input type="date" id="filter-date" style="flex: 1.5; font-size: 0.75rem; padding: 5px;">
+                <button id="btn-clear-history" class="btn" style="background-color: #ff4444; color: white; flex: 0.6; font-size: 0.75rem; padding: 8px;">Limpar</button>
+            </div>
+        </div>
+
+        <div id="history-list">
+            <!-- Itens do histórico serão inseridos aqui -->
+        </div>
+        <div class="history-footer">
+            <div id="total-quebra-dia" class="total-counter">Total Quebra (Hoje): 0.00</div>
+            <button id="btn-export-whatsapp" class="btn btn-whatsapp">
+                Exportar para WhatsApp
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal de Visualização de Fotos -->
+    <div id="photo-modal" class="modal">
+        <span class="modal-close" onclick="closeModal()">&times;</span>
+        <div class="modal-content" id="modal-content">
+            <!-- Fotos serão inseridas aqui -->
+        </div>
+    </div>
+
+    <!-- Tela de Painel de Resultados -->
+    <div id="results-screen" class="screen">
+        <button id="btn-voltar-results" class="btn btn-back">⬅️ VOLTAR AO MENU</button>
+        <h2 style="color: var(--title-color); font-size: 1.6rem; text-align: center; margin-bottom: 20px;">Painel de Resultados</h2>
+        
+        <!-- Seletor de Data Dashboard -->
+        <div style="background: #1a1a1a; padding: 15px; border-radius: 15px; border: 1px solid #333; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+            <label style="color: #888; font-weight: bold; font-size: 0.9rem;">Filtrar Data:</label>
+            <input type="date" id="dash-date-filter" class="input-field" style="flex: 1; background: #000; color: #fff; border: 1px solid #444; padding: 8px; border-radius: 8px; text-align: center;">
+        </div>
+
+        <!-- Entrada de Venda -->
+        <div style="background: #1a1a1a; padding: 20px; border-radius: 15px; border: 1px solid #333; margin-bottom: 20px;">
+            <label style="color: #ffcc00; font-weight: bold; display: block; margin-bottom: 10px;">Venda Total do Dia (R$):</label>
+            <input type="text" id="venda-dia-results" placeholder="R$ 0,00" class="input-field" style="width: 100%; font-size: 1.8rem; text-align: center; background: #000; color: #fff; border: 1px solid #444; font-weight: bold;">
+        </div>
+
+        <div id="capture-area" style="background: var(--bg-color); padding: 10px; border-radius: 15px;">
+            <div style="text-align: center; margin-bottom: 15px;">
+                <h3 style="color: #ffcc00; margin: 0; font-size: 1.2rem;">RELATÓRIO DE PERFORMANCE</h3>
+                <h4 style="color: #fff; margin: 5px 0; font-size: 1rem;">FLV 1018 - <span id="dash-current-date">--/--/----</span></h4>
+            </div>
+
+            <!-- Cards de Indicadores -->
+            <div style="display: grid; grid-template-columns: 1fr; gap: 15px; margin-bottom: 20px;">
+                <!-- IG % -->
+                <div id="card-ig-box" style="background: #1a1a1a; padding: 25px; border-radius: 15px; border: 2px solid #333; text-align: center; transition: all 0.3s ease;">
+                    <small style="color: #888; display: block; font-size: 0.9rem; margin-bottom: 5px;">INDICADOR DE QUEBRA (%)</small>
+                    <div id="val-ig-percent" style="font-size: 3.5rem; font-weight: bold; color: #fff;">0,00%</div>
+                    <div id="status-ig" style="font-size: 1rem; font-weight: bold; margin-top: 5px; padding: 5px 20px; border-radius: 20px; display: inline-block;">-</div>
+                </div>
+
+                <!-- Resumo Financeiro -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div style="background: #1a1a1a; padding: 15px; border-radius: 15px; border: 1px solid #333; text-align: center;">
+                        <small style="color: #888; display: block; font-size: 0.75rem; margin-bottom: 5px;">QUEBRA BRUTA</small>
+                        <span id="val-quebra-bruta" style="color: #fff; font-weight: bold; font-size: 1.2rem;">R$ 0,00</span>
+                    </div>
+                    <div style="background: #1a1a1a; padding: 15px; border-radius: 15px; border: 1px solid #333; text-align: center;">
+                        <small style="color: #888; display: block; font-size: 0.75rem; margin-bottom: 5px;">VALOR SALVO</small>
+                        <span id="val-economia-results" style="color: #28a745; font-weight: bold; font-size: 1.2rem;">R$ 0,00</span>
+                    </div>
+                    <div style="background: #1a1a1a; padding: 15px; border-radius: 15px; border: 1px solid #333; text-align: center; grid-column: span 2;">
+                        <small style="color: #888; display: block; font-size: 0.75rem; margin-bottom: 5px;">QUEBRA LÍQUIDA</small>
+                        <span id="val-quebra-liquida" style="color: #ff4444; font-weight: bold; font-size: 1.5rem;">R$ 0,00</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button id="btn-print-results" class="btn" style="background: #25D366; color: white; width: 100%; font-weight: bold; padding: 15px; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 10px;">
+            📸 GERAR PRINT PARA GERÊNCIA
+        </button>
+    </div>
+
+    <!-- Modal de Aprovação/Edição -->
+    <div id="modal-approval" class="screen" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; padding: 20px;">
+        <div style="background: #1a1a1a; width: 100%; max-width: 400px; padding: 25px; border-radius: 15px; border: 1px solid #333; box-shadow: 0 0 20px rgba(0,0,0,0.5);">
+            <h3 style="color: #ffcc00; margin-top: 0; text-align: center;">Aprovar Tratativa</h3>
+            <p id="modal-product-name" style="font-weight: bold; color: white; text-align: center; margin-bottom: 20px;"></p>
+            
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; color: #aaa; font-size: 0.9rem; margin-bottom: 8px;">Quantidade de Quebra:</label>
+                <input type="number" id="modal-edit-qty" step="0.01" class="input-field" style="width: 100%; font-size: 1.5rem; text-align: center; color: #ff4444; background: #000; border: 1px solid #444;">
+                <small style="color: #666; display: block; margin-top: 5px; text-align: center;">(Você pode ajustar o valor antes de aprovar)</small>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button onclick="closeApprovalModal()" class="btn" style="background: #444; color: white; flex: 1;">CANCELAR</button>
+                <button id="btn-confirm-approval" class="btn" style="background: #28a745; color: white; flex: 2; font-weight: bold;">✅ CONFIRMAR E APROVAR</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tela: Cadastro de Itens (Gerenciamento) -->
+    <div id="products-screen" class="screen">
+        <button id="btn-voltar-products" class="btn btn-back">⬅️ VOLTAR AO MENU</button>
+        <h2 style="color: var(--title-color); font-size: 1.6rem; text-align: center; margin-bottom: 20px;">Cadastro de Itens</h2>
+
+        <!-- Opções de Captura Inteligente -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
+            <button id="btn-ocr-camera-prod" class="btn" style="background: #007bff; color: white; padding: 15px; border-radius: 10px; font-size: 0.8rem;">
+                📷 TIRAR FOTO<br>(NOTA/LISTA)
+            </button>
+            <button id="btn-ocr-gallery-prod" class="btn" style="background: #6c757d; color: white; padding: 15px; border-radius: 10px; font-size: 0.8rem;">
+                🖼️ GALERIA<br>(CELULAR)
+            </button>
+            <input type="file" id="input-ocr-prod-camera" accept="image/*" capture="environment" style="display: none;">
+            <input type="file" id="input-ocr-prod-gallery" accept="image/*" style="display: none;">
+        </div>
+
+        <!-- Formulário Manual -->
+        <div style="background: #1a1a1a; padding: 20px; border-radius: 15px; border: 1px solid #333; margin-bottom: 20px;">
+            <h3 style="color: #fff; margin-top: 0; font-size: 1rem; margin-bottom: 15px;">Cadastro Manual</h3>
+            <input type="hidden" id="edit-prod-id">
+            <div class="form-group">
+                <label>Código do Produto</label>
+                <input type="number" id="prod-codigo" placeholder="0000">
+            </div>
+            <div class="form-group">
+                <label>Nome do Produto</label>
+                <input type="text" id="prod-nome" placeholder="Ex: Tomate Italiano">
+            </div>
+            <div class="form-group">
+                <label>Preço de Venda (R$)</label>
+                <input type="text" id="prod-preco" placeholder="R$ 0,00">
+            </div>
+            <button id="btn-save-product" class="btn" style="background: #28a745; color: white; width: 100%; font-weight: bold; padding: 15px; margin-top: 10px;">
+                ✅ SALVAR PRODUTO
+            </button>
+        </div>
+
+        <!-- Lista de Produtos Cadastrados -->
+        <h3 style="color: #ffcc00; font-size: 1.1rem; margin-bottom: 15px;">Itens Cadastrados</h3>
+        <div id="products-list-container" style="display: grid; gap: 10px;">
+            <!-- Itens via JS -->
+        </div>
+    </div>
+
+    <!-- Modal de Confirmação OCR -->
+    <div id="modal-ocr-results" class="screen" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 2000; flex-direction: column; padding: 20px;">
+        <h3 style="color: #ffcc00; text-align: center;">Itens Detectados</h3>
+        <p style="color: #aaa; text-align: center; font-size: 0.9rem; margin-bottom: 15px;">Selecione o item que deseja cadastrar:</p>
+        
+        <div id="ocr-loading" style="display: none; text-align: center; margin: 20px 0;">
+            <div style="border: 4px solid #333; border-top: 4px solid #007bff; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto;"></div>
+            <p style="color: #007bff; margin-top: 10px; font-weight: bold;">Processando imagem, por favor aguarde...</p>
+            <small style="color: #888;">Aplicando filtros de nitidez...</small>
+        </div>
+
+        <div id="ocr-items-list" style="flex: 1; overflow-y: auto; background: #111; border-radius: 10px; padding: 10px; margin-bottom: 20px;">
+            <!-- Itens via JS -->
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+            <button id="btn-ocr-manual" onclick="closeOcrModal()" class="btn" style="background: #ffcc00; color: black; font-weight: bold; display: none;">⌨️ CADASTRAR MANUALMENTE</button>
+            <button onclick="closeOcrModal()" class="btn" style="background: #444; color: white;">CANCELAR</button>
+        </div>
+    </div>
+
+    <!-- Canvas oculto para pré-processamento de imagem -->
+    <canvas id="ocr-canvas" style="display: none;"></canvas>
+
+    <style>
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+
+    <script>
+        // Protocolo de Atualização Forçada (Garantia Mobile)
+        const APP_VERSION = '1.2';
+        const lastVersion = localStorage.getItem('app_version');
+        
+        if (lastVersion && lastVersion !== APP_VERSION) {
+            console.log("Versão antiga detectada. Limpando cache e forçando atualização...");
+            localStorage.setItem('app_version', APP_VERSION);
+            if ('caches' in window) {
+                caches.keys().then(names => {
+                    for (let name of names) caches.delete(name);
+                });
+            }
+            // Força um hard reload ignorando o cache
+            window.location.reload(true);
+        } else {
+            localStorage.setItem('app_version', APP_VERSION);
+        }
+
+        // Registrar Service Worker para PWA com Verificação de Atualização
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js?v=' + APP_VERSION)
+                    .then(reg => {
+                        console.log("Service Worker registrado!");
+                        
+                        // Verifica atualizações a cada carregamento
+                        reg.update();
+
+                        reg.onupdatefound = () => {
+                            const installingWorker = reg.installing;
+                            installingWorker.onstatechange = () => {
+                                if (installingWorker.state === 'installed') {
+                                    if (navigator.serviceWorker.controller) {
+                                        // Nova versão disponível! Força o reload para o usuário
+                                        console.log("Nova versão detectada! Atualizando...");
+                                        window.location.reload();
+                                    }
+                                }
+                            };
+                        };
+                    })
+                    .catch(err => console.log("Erro ao registrar SW:", err));
+            });
+
+            // Detecta quando o novo SW assume o controle e recarrega
+            let refreshing = false;
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                if (!refreshing) {
+                    window.location.reload();
+                    refreshing = true;
+                }
+            });
+        }
+
+        // Lista de Produtos FLV para Auto-completar
+        const produtosFLV = [
+            { codigo: 101, nome: "Tomate Italiano" },
+            { codigo: 102, nome: "Banana da Terra" },
+            { codigo: 103, nome: "Batata Lavada" },
+            { codigo: 104, nome: "Cebola Nacional" },
+            { codigo: 105, nome: "Maçã Gala" },
+            { codigo: 106, nome: "Alface Crespa" },
+            { codigo: 107, nome: "Pimentão Verde" },
+            { codigo: 108, nome: "Cenoura" },
+            { codigo: 109, nome: "Abóbora Cabotiá" },
+            { codigo: 110, nome: "Mamão Papaia" }
+        ];
+
+        // Configuração do IndexedDB
+        const dbName = "TratativasFLV";
+        const draftStore = "rascunhos";
+        const historyStore = "historico";
+        const productStore = "produtos"; // Nova store para produtos
+        let db;
+
+        const request = indexedDB.open(dbName, 3); // Versão 3 para garantir atualização de cache e novas colunas
+        request.onupgradeneeded = (e) => {
+            db = e.target.result;
+            const oldVersion = e.oldVersion;
+            
+            if (!db.objectStoreNames.contains(draftStore)) {
+                db.createObjectStore(draftStore, { keyPath: "id" });
+            }
+            if (!db.objectStoreNames.contains(historyStore)) {
+                db.createObjectStore(historyStore, { keyPath: "id", autoIncrement: true });
+            }
+            if (!db.objectStoreNames.contains(productStore)) {
+                db.createObjectStore(productStore, { keyPath: "codigo" });
+            }
+
+            // Lógica de compatibilidade (se necessário)
+            if (oldVersion < 3) {
+                console.log("Atualizando estrutura do banco para v3...");
+                // Aqui poderiam ser adicionados índices novos se necessário
+            }
+        };
+        request.onsuccess = (e) => {
+            db = e.target.result;
+            initAutocomplete();
+            loadDraft();
+            renderProductList(); // Carregar lista de produtos ao iniciar
+        };
+
+        // Auto-completar dinâmico com banco de dados
+        function initAutocomplete() {
+            const listCodigos = document.getElementById('lista-codigos');
+            const listNomes = document.getElementById('lista-nomes');
+            
+            // Limpar datalists antes de recarregar
+            listCodigos.innerHTML = '';
+            listNomes.innerHTML = '';
+
+            const tx = db.transaction(productStore, "readonly");
+            const store = tx.objectStore(productStore);
+            const request = store.getAll();
+
+            request.onsuccess = () => {
+                const produtos = request.result;
+                produtos.forEach(p => {
+                    const optCod = document.createElement('option');
+                    optCod.value = p.codigo;
+                    listCodigos.appendChild(optCod);
+
+                    const optNome = document.createElement('option');
+                    optNome.value = p.nome;
+                    listNomes.appendChild(optNome);
+                });
+            };
+
+            const inputCodigo = document.getElementById('codigo');
+            const inputNome = document.getElementById('nome');
+
+            inputCodigo.addEventListener('input', (e) => {
+                const tx = db.transaction(productStore, "readonly");
+                const store = tx.objectStore(productStore);
+                const getReq = store.get(e.target.value);
+                getReq.onsuccess = () => {
+                    if (getReq.result) inputNome.value = getReq.result.nome;
+                };
+            });
+
+            inputNome.addEventListener('input', (e) => {
+                const tx = db.transaction(productStore, "readonly");
+                const store = tx.objectStore(productStore);
+                const req = store.getAll();
+                req.onsuccess = () => {
+                    const p = req.result.find(prod => prod.nome.toLowerCase() === e.target.value.toLowerCase());
+                    if (p) inputCodigo.value = p.codigo;
+                };
+            });
+
+            // Lógica de Captura de Fotos (Original)
+            const setupPhoto = (inputId, previewId) => {
+                const input = document.getElementById(inputId);
+                const preview = document.getElementById(previewId);
+                
+                input.addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                            preview.src = event.target.result;
+                            preview.style.display = 'block';
+                            saveDraft(); // Salva no rascunho após tirar a foto
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+            };
+
+            setupPhoto('input-produto', 'prev-produto');
+            setupPhoto('input-balanca', 'prev-balanca');
+            setupPhoto('input-etiqueta', 'prev-etiqueta');
+        }
+
+        // Lógica OCR Avançada
+        const btnOcrStart = document.getElementById('btn-ocr-start');
+        const inputOcr = document.getElementById('input-ocr');
+        const modalOcr = document.getElementById('modal-ocr-results');
+        const ocrList = document.getElementById('ocr-items-list');
+        const ocrLoading = document.getElementById('ocr-loading');
+        const btnOcrManual = document.getElementById('btn-ocr-manual');
+
+        btnOcrStart.addEventListener('click', () => inputOcr.click());
+
+        // Função de Pré-processamento de Imagem (Cinza + Contraste)
+        async function preprocessImage(file) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.getElementById('ocr-canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    // Redimensionar se for muito grande para manter performance
+                    const maxDim = 1200;
+                    let width = img.width;
+                    let height = img.height;
+                    if (width > maxDim || height > maxDim) {
+                        if (width > height) {
+                            height *= maxDim / width;
+                            width = maxDim;
+                        } else {
+                            width *= maxDim / height;
+                            height = maxDim;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    // Aplicar Filtro de Tons de Cinza e Contraste
+                    const imageData = ctx.getImageData(0, 0, width, height);
+                    const data = imageData.data;
+                    for (let i = 0; i < data.length; i += 4) {
+                        // Cinza (luminosidade)
+                        const avg = (data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114);
+                        
+                        // Aumentar Contraste (limiar simples)
+                        const contrast = 1.2; // Fator de contraste
+                        let val = avg;
+                        val = ((val / 255 - 0.5) * contrast + 0.5) * 255;
+                        val = Math.min(255, Math.max(0, val));
+
+                        data[i] = val;     // R
+                        data[i + 1] = val; // G
+                        data[i + 2] = val; // B
+                    }
+                    ctx.putImageData(imageData, 0, 0);
+                    resolve(canvas.toDataURL('image/jpeg', 0.9));
+                };
+                img.src = URL.createObjectURL(file);
+            });
+        }
+
+        async function runOcr(file, callback) {
+            modalOcr.style.display = 'flex';
+            ocrList.innerHTML = '';
+            ocrLoading.style.display = 'block';
+            btnOcrManual.style.display = 'none';
+
+            try {
+                // 1. Pré-processar a imagem
+                const processedImage = await preprocessImage(file);
+
+                // 2. Configurar Tesseract com Robustez (por + fallback eng)
+                let worker;
+                try {
+                    worker = await Tesseract.createWorker('por');
+                } catch (e) {
+                    console.warn("Falha ao carregar idioma 'por', tentando 'eng'...", e);
+                    worker = await Tesseract.createWorker('eng');
+                }
+
+                // 3. Otimizar para Alfanuméricos (Whitelisting se possível)
+                await worker.setParameters({
+                    tessedit_char_whitelist: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzÀÁÂÃÉÊÍÓÔÕÚÇàáâãéêíóôõúç ',
+                });
+
+                const { data: { text } } = await worker.recognize(processedImage);
+                await worker.terminate();
+
+                callback(text);
+            } catch (err) {
+                console.error(err);
+                ocrList.innerHTML = '<p style="color: #ff4444; text-align: center; margin-top: 20px;">Ocorreu um erro ao processar a imagem.</p>';
+                btnOcrManual.style.display = 'block';
+            } finally {
+                ocrLoading.style.display = 'none';
+            }
+        }
+
+        inputOcr.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            await runOcr(file, processOcrText);
+        });
+
+        function processOcrText(text) {
+            // Regex para capturar padrões: "123 Batata" ou "Cód: 123 Produto: Batata"
+            // Procura por sequências de 3 ou mais dígitos seguidos de texto
+            const lines = text.split('\n');
+            const items = [];
+            
+            lines.forEach(line => {
+                const match = line.match(/(\d{3,})\s+([A-Za-zÀ-ÖØ-öø-ÿ\s]{3,})/);
+                if (match) {
+                    items.push({ codigo: match[1], nome: match[2].trim() });
+                }
+            });
+
+            if (items.length === 0) {
+                ocrList.innerHTML = '<p style="color: #ff4444; text-align: center; margin-top: 20px;">Nenhum produto identificado. Tente uma foto mais nítida ou da etiqueta de preço.</p>';
+                btnOcrManual.style.display = 'block';
+            } else {
+                items.forEach((item, index) => {
+                    const div = document.createElement('div');
+                    div.style.background = '#222';
+                    div.style.margin = '10px 0';
+                    div.style.padding = '15px';
+                    div.style.borderRadius = '8px';
+                    div.style.border = '1px solid #333';
+                    div.style.display = 'flex';
+                    div.style.justifyContent = 'space-between';
+                    div.style.alignItems = 'center';
+                    
+                    div.innerHTML = `
+                        <div>
+                            <span style="color: #ffcc00; font-weight: bold;">Cód: ${item.codigo}</span><br>
+                            <span style="color: white;">${item.nome}</span>
+                        </div>
+                        <button onclick="selectOcrItem('${item.codigo}', '${item.nome}')" class="btn" style="background: #28a745; padding: 8px 15px; font-size: 0.8rem;">USAR</button>
+                    `;
+                    ocrList.appendChild(div);
+                });
+            }
+        }
+
+        window.selectOcrItem = function(codigo, nome) {
+            document.getElementById('codigo').value = codigo;
+            document.getElementById('nome').value = nome;
+            closeOcrModal();
+            // Salvar rascunho automaticamente após preencher
+            saveDraft();
+        };
+
+        window.closeOcrModal = function() {
+            modalOcr.style.display = 'none';
+            inputOcr.value = ''; // Reset input
+        };
+
+        // Navegação entre telas
+        const menuScreen = document.getElementById('menu-screen');
+        const cadastroScreen = document.getElementById('cadastro-screen');
+        const historyScreen = document.getElementById('history-screen');
+        const reviewScreen = document.getElementById('review-screen');
+        const resultsScreen = document.getElementById('results-screen');
+        const productsScreen = document.getElementById('products-screen');
+
+        document.getElementById('btn-new-tratativa').addEventListener('click', () => {
+            menuScreen.classList.remove('active');
+            cadastroScreen.classList.add('active');
+        });
+
+        document.getElementById('btn-manage-products').addEventListener('click', () => {
+            menuScreen.classList.remove('active');
+            productsScreen.classList.add('active');
+            renderProductList();
+        });
+
+        document.getElementById('btn-voltar-products').addEventListener('click', () => {
+            productsScreen.classList.remove('active');
+            menuScreen.classList.add('active');
+        });
+
+        document.getElementById('btn-show-history').addEventListener('click', () => {
+            menuScreen.classList.remove('active');
+            historyScreen.classList.add('active');
+            renderHistory();
+        });
+
+        document.getElementById('btn-voltar-cadastro').addEventListener('click', () => {
+            cadastroScreen.classList.remove('active');
+            menuScreen.classList.add('active');
+        });
+
+        document.getElementById('btn-voltar-history').addEventListener('click', () => {
+            historyScreen.classList.remove('active');
+            menuScreen.classList.add('active');
+        });
+
+        document.getElementById('btn-voltar-review').addEventListener('click', () => {
+            reviewScreen.classList.remove('active');
+            cadastroScreen.classList.add('active');
+        });
+
+        document.getElementById('btn-show-results').addEventListener('click', () => {
+            menuScreen.classList.remove('active');
+            resultsScreen.classList.add('active');
+            updateResultsDashboard();
+        });
+
+        document.getElementById('btn-voltar-results').addEventListener('click', () => {
+            resultsScreen.classList.remove('active');
+            menuScreen.classList.add('active');
+        });
+
+        // Lógica de Gerenciamento de Produtos
+        const inputPreco = document.getElementById('prod-preco');
+        inputPreco.addEventListener('input', (e) => {
+            e.target.value = formatCurrency(e.target.value);
+        });
+
+        document.getElementById('btn-save-product').addEventListener('click', () => {
+            const codigo = document.getElementById('prod-codigo').value;
+            const nome = document.getElementById('prod-nome').value;
+            const preco = document.getElementById('prod-preco').value;
+
+            if (!codigo || !nome) {
+                alert("Código e Nome são obrigatórios!");
+                return;
+            }
+
+            const product = {
+                codigo: codigo,
+                nome: nome,
+                preco: parseCurrency(preco),
+                data_cadastro: new Date().toISOString()
+            };
+
+            const tx = db.transaction(productStore, "readwrite");
+            const store = tx.objectStore(productStore);
+            store.put(product);
+
+            tx.oncomplete = () => {
+                alert("Produto salvo com sucesso!");
+                clearProductForm();
+                renderProductList();
+                initAutocomplete(); // Atualiza auto-complete na tela de cadastro
+            };
+        });
+
+        function clearProductForm() {
+            document.getElementById('prod-codigo').value = '';
+            document.getElementById('prod-nome').value = '';
+            document.getElementById('prod-preco').value = '';
+            document.getElementById('edit-prod-id').value = '';
+        }
+
+        async function renderProductList() {
+            const container = document.getElementById('products-list-container');
+            container.innerHTML = '<p style="color: #888; text-align: center;">Carregando itens...</p>';
+
+            const tx = db.transaction(productStore, "readonly");
+            const store = tx.objectStore(productStore);
+            const request = store.getAll();
+
+            request.onsuccess = () => {
+                const produtos = request.result;
+                if (produtos.length === 0) {
+                    container.innerHTML = '<p style="color: #888; text-align: center;">Nenhum item cadastrado.</p>';
+                    return;
+                }
+
+                container.innerHTML = '';
+                produtos.sort((a, b) => a.nome.localeCompare(b.nome)).forEach(p => {
+                    const card = document.createElement('div');
+                    card.style.background = '#222';
+                    card.style.padding = '15px';
+                    card.style.borderRadius = '10px';
+                    card.style.borderLeft = '4px solid #007bff';
+                    card.style.display = 'flex';
+                    card.style.justifyContent = 'space-between';
+                    card.style.alignItems = 'center';
+                    card.style.marginBottom = '10px';
+
+                    card.innerHTML = `
+                        <div style="flex: 1;">
+                            <div style="font-weight: bold; color: #ffcc00; font-size: 0.9rem;">Cód: ${p.codigo}</div>
+                            <div style="color: white; font-size: 1rem; margin: 5px 0;">${p.nome}</div>
+                            <div style="color: #888; font-size: 0.8rem;">Preço: R$ ${formatCurrency(p.preco * 100)}</div>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button onclick="editProduct('${p.codigo}')" class="btn" style="background: #ffcc00; color: black; padding: 8px 12px; font-size: 0.75rem;">✏️</button>
+                            <button onclick="deleteProduct('${p.codigo}')" class="btn" style="background: #dc3545; color: white; padding: 8px 12px; font-size: 0.75rem;">🗑️</button>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+            };
+        }
+
+        window.editProduct = (codigo) => {
+            const tx = db.transaction(productStore, "readonly");
+            const store = tx.objectStore(productStore);
+            const request = store.get(codigo);
+            request.onsuccess = () => {
+                const p = request.result;
+                document.getElementById('prod-codigo').value = p.codigo;
+                document.getElementById('prod-nome').value = p.nome;
+                document.getElementById('prod-preco').value = formatCurrency(p.preco * 100);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            };
+        };
+
+        window.deleteProduct = (codigo) => {
+            if (confirm("Deseja realmente excluir este produto?")) {
+                const tx = db.transaction(productStore, "readwrite");
+                const store = tx.objectStore(productStore);
+                store.delete(codigo);
+                tx.oncomplete = () => {
+                    renderProductList();
+                    initAutocomplete();
+                };
+            }
+        };
+
+        // Integração OCR na tela de Produtos
+        const btnOcrCameraProd = document.getElementById('btn-ocr-camera-prod');
+        const btnOcrGalleryProd = document.getElementById('btn-ocr-gallery-prod');
+        const inputOcrCameraProd = document.getElementById('input-ocr-prod-camera');
+        const inputOcrGalleryProd = document.getElementById('input-ocr-prod-gallery');
+
+        btnOcrCameraProd.addEventListener('click', () => inputOcrCameraProd.click());
+        btnOcrGalleryProd.addEventListener('click', () => inputOcrGalleryProd.click());
+
+        const handleOcrProd = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            await runOcr(file, processOcrTextProd);
+        };
+
+        inputOcrCameraProd.addEventListener('change', handleOcrProd);
+        inputOcrGalleryProd.addEventListener('change', handleOcrProd);
+
+        function processOcrTextProd(text) {
+            const lines = text.split('\n');
+            const items = [];
+            lines.forEach(line => {
+                const match = line.match(/(\d{3,})\s+([A-Za-zÀ-ÖØ-öø-ÿ\s]{3,})/);
+                if (match) {
+                    items.push({ codigo: match[1], nome: match[2].trim() });
+                }
+            });
+
+            if (items.length === 0) {
+                ocrList.innerHTML = '<p style="color: #ff4444; text-align: center; margin-top: 20px;">Nenhum produto identificado. Tente uma foto mais nítida.</p>';
+                btnOcrManual.style.display = 'block';
+            } else {
+                items.forEach(item => {
+                    const div = document.createElement('div');
+                    div.style.background = '#222';
+                    div.style.margin = '10px 0';
+                    div.style.padding = '15px';
+                    div.style.borderRadius = '8px';
+                    div.style.display = 'flex';
+                    div.style.justifyContent = 'space-between';
+                    div.style.alignItems = 'center';
+                    div.innerHTML = `
+                        <div>
+                            <span style="color: #ffcc00; font-weight: bold;">Cód: ${item.codigo}</span><br>
+                            <span style="color: white;">${item.nome}</span>
+                        </div>
+                        <button onclick="selectOcrItemProd('${item.codigo}', '${item.nome}')" class="btn" style="background: #28a745; padding: 8px 15px;">USAR</button>
+                    `;
+                    ocrList.appendChild(div);
+                });
+            }
+        }
+
+        window.selectOcrItemProd = (codigo, nome) => {
+            document.getElementById('prod-codigo').value = codigo;
+            document.getElementById('prod-nome').value = nome;
+            closeOcrModal();
+        };
+
+        // Máscara de Moeda (BRL)
+        function formatCurrency(value) {
+            if (!value) return "0,00";
+            let cleanValue = value.toString().replace(/\D/g, "");
+            let floatValue = parseFloat(cleanValue) / 100;
+            return floatValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function parseCurrency(value) {
+            if (!value) return 0;
+            let cleanValue = value.toString().replace(/\D/g, "");
+            return parseFloat(cleanValue) / 100;
+        }
+
+        const inputVendaResults = document.getElementById('venda-dia-results');
+        const dashDateFilter = document.getElementById('dash-date-filter');
+
+        // Inicializar com a data de hoje
+        const today = new Date().toISOString().split('T')[0];
+        dashDateFilter.value = today;
+
+        dashDateFilter.addEventListener('change', () => {
+            loadVendaForDate();
+            updateResultsDashboard();
+        });
+
+        function loadVendaForDate() {
+            const selectedDate = dashDateFilter.value;
+            const savedVenda = localStorage.getItem(`venda_dia_${selectedDate}`);
+            inputVendaResults.value = savedVenda ? savedVenda : "0,00";
+        }
+
+        inputVendaResults.addEventListener('input', (e) => {
+            let value = e.target.value;
+            e.target.value = formatCurrency(value);
+            
+            const selectedDate = dashDateFilter.value;
+            localStorage.setItem(`venda_dia_${selectedDate}`, e.target.value);
+            updateResultsDashboard();
+        });
+
+        function updateResultsDashboard() {
+            const tx = db.transaction(historyStore, "readonly");
+            const store = tx.objectStore(historyStore);
+            const request = store.getAll();
+
+            request.onsuccess = () => {
+                const logs = request.result;
+                const selectedDateISO = dashDateFilter.value; // yyyy-mm-dd
+                const selectedDateBR = selectedDateISO.split('-').reverse().join('/'); // dd/mm/yyyy
+                
+                document.getElementById('dash-current-date').innerText = selectedDateBR;
+                
+                let quebraBruta = 0;
+                let valorSalvo = 0;
+
+                logs.forEach(item => {
+                    if (item.data === selectedDateBR) {
+                        const valor = parseFloat(item.qtd_quebra || 0);
+                        quebraBruta += valor;
+                        if (item.status === 'CONCLUÍDO') {
+                            valorSalvo += valor;
+                        }
+                    }
+                });
+
+                const quebraLiquida = quebraBruta - valorSalvo;
+                const vendaDia = parseCurrency(inputVendaResults.value);
+                const percentIG = vendaDia > 0 ? (quebraBruta / vendaDia) * 100 : 0;
+
+                // Atualizar Valores na Tela
+                document.getElementById('val-quebra-bruta').innerText = `R$ ${quebraBruta.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+                document.getElementById('val-economia-results').innerText = `R$ ${valorSalvo.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+                document.getElementById('val-quebra-liquida').innerText = `R$ ${quebraLiquida.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+                
+                // Atualizar IG % e Meta
+                const elIG = document.getElementById('val-ig-percent');
+                const elStatus = document.getElementById('status-ig');
+                const cardBox = document.getElementById('card-ig-box');
+                
+                elIG.innerText = `${percentIG.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}%`;
+
+                if (vendaDia > 0) {
+                    if (percentIG <= 2.43) {
+                        elIG.style.color = '#fff';
+                        elStatus.innerText = '✅ META BATIDA';
+                        elStatus.style.backgroundColor = '#28a745';
+                        elStatus.style.color = '#fff';
+                        cardBox.style.borderColor = '#28a745';
+                        cardBox.style.background = 'rgba(40, 167, 69, 0.1)';
+                    } else {
+                        elIG.style.color = '#fff';
+                        elStatus.innerText = '⚠️ ACIMA DA META';
+                        elStatus.style.backgroundColor = '#ff4444';
+                        elStatus.style.color = '#fff';
+                        cardBox.style.borderColor = '#ff4444';
+                        cardBox.style.background = 'rgba(255, 68, 68, 0.1)';
+                    }
+                } else {
+                    elIG.style.color = '#fff';
+                    elStatus.innerText = 'Insira a venda do dia';
+                    elStatus.style.backgroundColor = '#333';
+                    cardBox.style.borderColor = '#333';
+                    cardBox.style.background = '#1a1a1a';
+                }
+            };
+        }
+
+        document.getElementById('btn-print-results').addEventListener('click', () => {
+            const btn = document.getElementById('btn-print-results');
+            btn.style.display = 'none'; // Esconde o botão para o print
+            
+            setTimeout(() => {
+                alert("Dica: Tire o print agora! O relatório já está formatado com o cabeçalho 'FLV 1018' e a data selecionada.");
+                window.print();
+                btn.style.display = 'flex';
+            }, 500);
+        });
+
+        // Carregar venda inicial
+        loadVendaForDate();
+
+        // Funções do Histórico
+        let showOnlyPending = false;
+        
+        // Persistência da Venda Diária
+        document.getElementById('input-venda-dia').addEventListener('input', (e) => {
+            localStorage.setItem('trataflv_venda_dia', e.target.value);
+            renderHistory();
+        });
+
+        // Carregar venda salva
+        const vendaSalva = localStorage.getItem('trataflv_venda_dia');
+        if (vendaSalva) document.getElementById('input-venda-dia').value = vendaSalva;
+
+        document.getElementById('btn-filter-all').addEventListener('click', () => {
+            showOnlyPending = false;
+            document.getElementById('btn-filter-all').style.boxShadow = '0 0 10px #666';
+            document.getElementById('btn-filter-pending').style.boxShadow = 'none';
+            renderHistory();
+        });
+
+        document.getElementById('btn-filter-pending').addEventListener('click', () => {
+            showOnlyPending = true;
+            document.getElementById('btn-filter-pending').style.boxShadow = '0 0 10px #ffcc00';
+            document.getElementById('btn-filter-all').style.boxShadow = 'none';
+            renderHistory();
+        });
+
+        function renderHistory() {
+            const tx = db.transaction(historyStore, "readonly");
+            const store = tx.objectStore(historyStore);
+            const request = store.getAll();
+            const filterDate = document.getElementById('filter-date').value;
+
+            request.onsuccess = () => {
+                const historyList = document.getElementById('history-list');
+                historyList.innerHTML = '';
+                
+                let totalQuebraGeral = 0;
+                let totalEconomia = 0;
+                let totalPendente = 0;
+
+                // Ordenar por data/hora (mais recente primeiro)
+                const items = request.result.sort((a, b) => b.timestamp - a.timestamp);
+
+                items.forEach(item => {
+                    const itemDate = item.data.split('/').reverse().join('-');
+                    if (filterDate && itemDate !== filterDate) return;
+                    
+                    const valorQuebra = parseFloat(item.qtd_quebra || 0);
+                    
+                    // Cálculos para o painel financeiro (independente do filtro de exibição)
+                    if (item.status === 'PENDENTE') {
+                        totalPendente += valorQuebra;
+                    } else {
+                        totalEconomia += valorQuebra;
+                    }
+                    totalQuebraGeral += valorQuebra;
+
+                    if (showOnlyPending && item.status !== 'PENDENTE') return;
+
+                    const card = document.createElement('div');
+                    card.className = 'history-card';
+                    const isPendente = item.status === 'PENDENTE';
+                    
+                    // Estilo de borda conforme status
+                    card.style.borderLeft = isPendente ? '5px solid #ffcc00' : '5px solid #28a745';
+                    if (isPendente) card.style.boxShadow = '0 0 5px rgba(255, 204, 0, 0.1)';
+
+                    card.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                            <span style="font-size: 0.8rem; color: #888;">${item.data} - ${item.hora}</span>
+                            ${isPendente ? 
+                                '<span style="background: #ffcc00; color: black; font-size: 0.65rem; padding: 2px 8px; border-radius: 4px; font-weight: bold;">PENDENTE</span>' : 
+                                '<span style="background: #28a745; color: white; font-size: 0.65rem; padding: 2px 8px; border-radius: 4px; font-weight: bold;">CONCLUÍDO</span>'}
+                        </div>
+                        <div style="font-weight: bold; font-size: 1.1rem; color: var(--title-color); margin-bottom: 4px;">${item.nome}</div>
+                        <div style="color: #aaa; font-size: 0.95rem;">
+                            Cód: ${item.codigo} | Quebra: <span style="color: #ff4444; font-weight: bold;">R$ ${valorQuebra.toFixed(2)}</span>
+                            ${item.editado ? ' <small style="color: #666; font-style: italic;">(Editado)</small>' : ''}
+                        </div>
+                        
+                        <div style="margin-top: 15px; display: flex; gap: 8px;">
+                            <button class="btn-view" onclick="viewPhotos(${item.id})" title="Ver fotos" style="padding: 8px 12px;">👁️</button>
+                            ${isPendente ? `
+                                <button class="btn" style="background-color: #28a745; color: white; flex: 1; font-size: 0.8rem; padding: 8px;" onclick="openApprovalModal(${item.id})">✅ APROVAR</button>
+                            ` : ''}
+                            <button class="btn-delete" onclick="deleteItem(${item.id})" style="padding: 8px 12px;">🗑️</button>
+                        </div>
+                    `;
+                    historyList.appendChild(card);
+                });
+
+                // Atualizar Painel Financeiro
+                const vendaDia = parseFloat(document.getElementById('input-venda-dia').value || 0);
+                const percentQuebra = vendaDia > 0 ? (totalQuebraGeral / vendaDia) * 100 : 0;
+
+                document.getElementById('stat-quebra-total').innerText = `R$ ${totalQuebraGeral.toFixed(2)}`;
+                document.getElementById('stat-quebra-percent').innerText = `(${percentQuebra.toFixed(2)}%)`;
+                document.getElementById('stat-economia').innerText = `R$ ${totalEconomia.toFixed(2)}`;
+                document.getElementById('stat-pendente').innerText = `R$ ${totalPendente.toFixed(2)}`;
+            };
+        }
+
+        let currentApprovalId = null;
+
+        window.openApprovalModal = function(id) {
+            const tx = db.transaction(historyStore, "readonly");
+            const store = tx.objectStore(historyStore);
+            const request = store.get(id);
+
+            request.onsuccess = () => {
+                const item = request.result;
+                currentApprovalId = id;
+                document.getElementById('modal-product-name').innerText = item.nome;
+                document.getElementById('modal-edit-qty').value = item.qtd_quebra;
+                document.getElementById('modal-approval').style.display = 'flex';
+                document.getElementById('modal-edit-qty').focus();
+            };
+        };
+
+        window.closeApprovalModal = function() {
+            document.getElementById('modal-approval').style.display = 'none';
+            currentApprovalId = null;
+        };
+
+        document.getElementById('btn-confirm-approval').addEventListener('click', () => {
+            if (!currentApprovalId) return;
+            
+            const newQty = document.getElementById('modal-edit-qty').value;
+            if (newQty === "" || isNaN(newQty)) {
+                alert("Por favor, insira uma quantidade válida.");
+                return;
+            }
+
+            const tx = db.transaction(historyStore, "readwrite");
+            const store = tx.objectStore(historyStore);
+            const request = store.get(currentApprovalId);
+
+            request.onsuccess = () => {
+                const item = request.result;
+                const oldQty = item.qtd_quebra;
+                
+                // Marcar como editado se o valor mudou
+                if (parseFloat(oldQty) !== parseFloat(newQty)) {
+                    item.editado = true;
+                }
+                
+                item.qtd_quebra = newQty;
+                item.status = 'CONCLUÍDO';
+                
+                store.put(item);
+                tx.oncomplete = () => {
+                    closeApprovalModal();
+                    renderHistory();
+                    feedbackSucesso();
+                };
+            };
+        });
+
+        window.markAsApproved = function(id) {
+            // Função antiga mantida por segurança ou legada se necessário
+            openApprovalModal(id);
+        };
+
+        // Evento para o filtro de data
+        document.getElementById('filter-date').addEventListener('change', renderHistory);
+
+        // Exportação WhatsApp
+        document.getElementById('btn-export-whatsapp').addEventListener('click', () => {
+            const tx = db.transaction(historyStore, "readonly");
+            const store = tx.objectStore(historyStore);
+            const request = store.getAll();
+            const filterDate = document.getElementById('filter-date').value;
+
+            request.onsuccess = () => {
+                const logs = request.result;
+                if (logs.length === 0) {
+                    alert("Não há dados para exportar.");
+                    return;
+                }
+
+                const hoje = new Date().toLocaleDateString('pt-BR');
+                const dataFiltroFormatada = filterDate ? new Date(filterDate + 'T00:00:00').toLocaleDateString('pt-BR') : hoje;
+                
+                let texto = `*RELATÓRIO FLV 1018*\n`;
+                texto += `Data: ${dataFiltroFormatada}\n\n`;
+                
+                let totalGeral = 0;
+
+                logs.sort((a, b) => a.timestamp - b.timestamp);
+
+                logs.forEach(item => {
+                    if (item.data === dataFiltroFormatada) {
+                        texto += `Item: ${item.nome} - Quebra: ${item.qtd_quebra}\n`;
+                        totalGeral += parseFloat(item.qtd_quebra);
+                    }
+                });
+
+                if (totalGeral === 0) {
+                    alert("Não há lançamentos nesta data para exportar.");
+                    return;
+                }
+
+                texto += `\n*Total Geral: ${totalGeral.toFixed(2)}*`;
+                
+                const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(texto)}`;
+                window.open(url, '_blank');
+            };
+        });
+
+        // Limpar Tudo
+        document.getElementById('btn-clear-all').addEventListener('click', () => {
+            if (confirm("TEM CERTEZA? Isso apagará TODO o histórico permanentemente!")) {
+                const tx = db.transaction(historyStore, "readwrite");
+                const store = tx.objectStore(historyStore);
+                store.clear();
+                tx.oncomplete = () => {
+                    alert("Histórico limpo com sucesso!");
+                    renderHistory();
+                };
+            }
+        });
+
+        window.deleteItem = function(id) {
+            if (confirm("Deseja realmente excluir este lançamento?")) {
+                const tx = db.transaction(historyStore, "readwrite");
+                tx.objectStore(historyStore).delete(id);
+                tx.oncomplete = () => {
+                    renderHistory();
+                };
+            }
+        };
+
+        // Funções do Modal de Fotos
+        window.viewPhotos = function(id) {
+            const tx = db.transaction(historyStore, "readonly");
+            const store = tx.objectStore(historyStore);
+            const request = store.get(id);
+
+            request.onsuccess = () => {
+                const item = request.result;
+                const modal = document.getElementById('photo-modal');
+                const content = document.getElementById('modal-content');
+                content.innerHTML = '';
+
+                if (item.foto_produto) addPhotoToModal(item.foto_produto, "Produto", content);
+                if (item.foto_balanca) addPhotoToModal(item.foto_balanca, "Balança", content);
+                if (item.foto_etiqueta) addPhotoToModal(item.foto_etiqueta, "Etiqueta", content);
+
+                modal.style.display = 'flex';
+            };
+        };
+
+        function addPhotoToModal(src, label, container) {
+            const div = document.createElement('div');
+            div.innerHTML = `<label style="display:block; margin-bottom:5px; color:yellow;">${label}</label>`;
+            const img = document.createElement('img');
+            img.src = src;
+            img.className = 'modal-photo-item';
+            div.appendChild(img);
+            container.appendChild(div);
+        }
+
+        window.closeModal = function() {
+            document.getElementById('photo-modal').style.display = 'none';
+        };
+
+        // Fechar modal ao clicar fora
+        window.onclick = function(event) {
+            const modal = document.getElementById('photo-modal');
+            if (event.target == modal) {
+                closeModal();
+            }
+        };
+
+        // Salvar Rascunho Automaticamente
+        const form = document.getElementById('tratativa-form');
+        const inputs = form.querySelectorAll('input');
+
+        inputs.forEach(input => {
+            input.addEventListener('input', saveDraft);
+        });
+
+        function saveDraft() {
+            if (!db) return;
+            const draft = {
+                id: "current_draft",
+                codigo: document.getElementById('codigo').value,
+                nome: document.getElementById('nome').value,
+                qtd_chegou: document.getElementById('qtd_chegou').value,
+                qtd_quebra: document.getElementById('qtd_quebra').value,
+                foto_produto: document.getElementById('prev-produto').src || null,
+                foto_balanca: document.getElementById('prev-balanca').src || null,
+                foto_etiqueta: document.getElementById('prev-etiqueta').src || null,
+                timestamp: new Date().getTime()
+            };
+            const tx = db.transaction(draftStore, "readwrite");
+            tx.objectStore(draftStore).put(draft);
+        }
+
+        function loadDraft() {
+            if (!db) return;
+            const tx = db.transaction(draftStore, "readonly");
+            const request = tx.objectStore(draftStore).get("current_draft");
+            request.onsuccess = () => {
+                if (request.result) {
+                    const data = request.result;
+                    document.getElementById('codigo').value = data.codigo || '';
+                    document.getElementById('nome').value = data.nome || '';
+                    document.getElementById('qtd_chegou').value = data.qtd_chegou || '';
+                    document.getElementById('qtd_quebra').value = data.qtd_quebra || '';
+                    
+                    if (data.foto_produto) {
+                        const p = document.getElementById('prev-produto');
+                        p.src = data.foto_produto;
+                        p.style.display = 'block';
+                    }
+                    if (data.foto_balanca) {
+                        const p = document.getElementById('prev-balanca');
+                        p.src = data.foto_balanca;
+                        p.style.display = 'block';
+                    }
+                    if (data.foto_etiqueta) {
+                        const p = document.getElementById('prev-etiqueta');
+                        p.src = data.foto_etiqueta;
+                        p.style.display = 'block';
+                    }
+                }
+            };
+        }
+
+        // Feedback Sensorial (Vibração)
+        function feedbackSucesso() {
+            if ("vibrate" in navigator) {
+                navigator.vibrate([100, 50, 100]);
+            }
+            // Bip simples usando Audio Context (sem necessidade de arquivo externo)
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // Nota Lá
+                gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 0.2);
+            } catch (e) {
+                console.log("Audio feedback not supported");
+            }
+        }
+
+        // Finalizar Tratativa (Agora leva para Revisão)
+        let currentData = null;
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const agora = new Date();
+            let nomeLimpo = document.getElementById('nome').value;
+            // Limpeza agressiva de prefixos redundantes
+            nomeLimpo = nomeLimpo.replace(/^(produto|nome|item|tratativa)[:\s-]*/i, '').trim();
+
+            currentData = {
+                codigo: document.getElementById('codigo').value,
+                nome: nomeLimpo,
+                qtd_chegou: document.getElementById('qtd_chegou').value,
+                qtd_quebra: document.getElementById('qtd_quebra').value,
+                foto_produto: document.getElementById('prev-produto').src || null,
+                foto_balanca: document.getElementById('prev-balanca').src || null,
+                foto_etiqueta: document.getElementById('prev-etiqueta').src || null,
+                data: agora.toLocaleDateString('pt-BR'),
+                hora: agora.toLocaleTimeString('pt-BR'),
+                timestamp: agora.getTime(),
+                status: 'PENDENTE'
+            };
+
+            // Atualiza o formulário com o nome já limpo
+            document.getElementById('nome').value = nomeLimpo;
+
+            // Preencher tela de revisão (Formato Direto e Limpo)
+            const reviewContainer = document.getElementById('review-data');
+            reviewContainer.innerHTML = `
+                <p style="margin: 5px 0;"><strong>Cód:</strong> ${currentData.codigo}</p>
+                <p style="margin: 5px 0;"><strong>Produto:</strong> ${currentData.nome}</p>
+                <p style="margin: 5px 0;"><strong>Data:</strong> ${currentData.data}</p>
+                <p style="margin: 5px 0;"><strong>Chegou:</strong> ${currentData.qtd_chegou}</p>
+                <p style="margin: 5px 0;"><strong>Quebra:</strong> ${currentData.qtd_quebra}</p>
+                <p style="margin: 5px 0;"><strong>Status:</strong> <span style="color: #ffcc00; font-weight: bold;">PENDENTE</span></p>
+                <div style="display: flex; gap: 10px; margin-top: 15px; padding-top: 10px; border-top: 1px solid #333;">
+                    ${currentData.foto_produto && currentData.foto_produto.length > 100 ? '<span>🖼️ <small>Produto</small></span>' : ''}
+                    ${currentData.foto_balanca && currentData.foto_balanca.length > 100 ? '<span>⚖️ <small>Balança</small></span>' : ''}
+                    ${currentData.foto_etiqueta && currentData.foto_etiqueta.length > 100 ? '<span>🏷️ <small>Etiqueta</small></span>' : ''}
+                </div>
+            `;
+
+            cadastroScreen.classList.remove('active');
+            reviewScreen.classList.add('active');
+
+            // Resetar estados dos botões de envio na revisão
+            document.querySelectorAll('.btn-send-review').forEach(btn => {
+                btn.style.border = 'none';
+                if (btn.id === 'btn-send-text') {
+                    btn.style.backgroundColor = '#25D366';
+                    btn.innerHTML = '🟢 ENVIAR TEXTO';
+                } else {
+                    btn.style.backgroundColor = '#444';
+                    btn.innerHTML = btn.id === 'btn-send-photo-prod' ? '📸 ENVIAR FOTO PRODUTO' : 
+                                    btn.id === 'btn-send-photo-bal' ? '📸 ENVIAR FOTO BALANÇA' : '📸 ENVIAR FOTO ETIQUETA';
+                }
+            });
+            const btnFinal = document.getElementById('btn-finalizar-tudo');
+            btnFinal.disabled = true;
+            btnFinal.style.backgroundColor = '#333';
+            btnFinal.style.color = '#777';
+            btnFinal.style.cursor = 'not-allowed';
+        });
+
+        // Ações da Tela de Revisão
+        function markAsSent(btn) {
+            btn.style.backgroundColor = '#007bff'; // Azul
+            if (!btn.innerHTML.includes('✅')) {
+                btn.innerHTML += ' ✅';
+            }
+            const btnFinal = document.getElementById('btn-finalizar-tudo');
+            btnFinal.disabled = false;
+            btnFinal.style.backgroundColor = 'var(--btn-new-bg)';
+            btnFinal.style.color = 'black';
+            btnFinal.style.cursor = 'pointer';
+        }
+
+        document.getElementById('btn-send-text').addEventListener('click', function() {
+            if (!currentData) return;
+            const texto = `*TRATATIVA FLV 1018*\n\nCód: ${currentData.codigo}\nProduto: ${currentData.nome}\nData: ${currentData.data}\nChegou: ${currentData.qtd_chegou}\nQuebra: ${currentData.qtd_quebra}`;
+            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(texto)}`, '_blank');
+            markAsSent(this);
+        });
+
+        // Para fotos, como o WhatsApp API não permite enviar arquivos locais via URL diretamente,
+        // avisamos o usuário que o texto foi enviado e ele pode anexar as fotos manualmente se desejar,
+        // ou apenas mantemos os botões como lembrete visual do fluxo.
+        // Em um app real, o compartilhamento de arquivos requer a Web Share API (se suportado).
+        
+        const sharePhoto = async (btn, base64Data, title) => {
+            if (!base64Data || base64Data.length < 100) {
+                alert("Foto não disponível.");
+                return;
+            }
+            try {
+                const response = await fetch(base64Data);
+                const blob = await response.blob();
+                const file = new File([blob], `${title}.jpg`, { type: "image/jpeg" });
+                
+                if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                    await navigator.share({
+                        files: [file],
+                        title: title,
+                    });
+                    markAsSent(btn);
+                } else {
+                    alert("Seu navegador não suporta compartilhamento de arquivos. O texto já pode ser enviado!");
+                    markAsSent(btn); // Marca como enviado mesmo se falhar o share, pois o usuário tentou
+                }
+            } catch (err) {
+                console.error("Erro ao compartilhar:", err);
+            }
+        };
+
+        document.getElementById('btn-send-photo-prod').addEventListener('click', function() { sharePhoto(this, currentData.foto_produto, "Foto_Produto"); });
+        document.getElementById('btn-send-photo-bal').addEventListener('click', function() { sharePhoto(this, currentData.foto_balanca, "Foto_Balanca"); });
+        document.getElementById('btn-send-photo-etiq').addEventListener('click', function() { sharePhoto(this, currentData.foto_etiqueta, "Foto_Etiqueta"); });
+
+        // Botão Final de Salvamento
+        document.getElementById('btn-finalizar-tudo').addEventListener('click', () => {
+            if (!currentData) return;
+
+            const tx = db.transaction([historyStore, draftStore], "readwrite");
+            tx.objectStore(historyStore).add(currentData);
+            tx.objectStore(draftStore).delete("current_draft");
+
+            tx.oncomplete = () => {
+                feedbackSucesso();
+                alert("Lançamento salvo e finalizado!");
+                form.reset();
+                document.querySelectorAll('.photo-preview').forEach(img => {
+                    img.src = '';
+                    img.style.display = 'none';
+                });
+                currentData = null;
+                reviewScreen.classList.remove('active');
+                menuScreen.classList.add('active');
+            };
+        });
+    </script>
+
+</body>
+</html>
