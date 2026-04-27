@@ -498,7 +498,7 @@
             <div id="financial-panel" style="background: #1a1a1a; padding: 15px; border-radius: 12px; border: 1px solid #333; margin-bottom: 15px; width: 100%;">
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
                     <label style="color: #ffcc00; font-weight: bold; font-size: 0.9rem; white-space: nowrap;">Venda Diária:</label>
-                    <input type="number" id="input-venda-dia" placeholder="R$ 0,00" style="background: #000; color: #fff; border: 1px solid #444; padding: 8px; border-radius: 5px; flex: 1; font-size: 1rem;">
+                    <input type="text" id="input-venda-dia" inputmode="decimal" placeholder="R$ 0,00" style="background: #000; color: #fff; border: 1px solid #444; padding: 8px; border-radius: 5px; flex: 1; font-size: 1rem;">
                 </div>
                 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
@@ -559,7 +559,7 @@
         <!-- Entrada de Venda -->
         <div style="background: #1a1a1a; padding: 20px; border-radius: 15px; border: 1px solid #333; margin-bottom: 20px;">
             <label style="color: #ffcc00; font-weight: bold; display: block; margin-bottom: 10px;">Venda Total do Dia (R$):</label>
-            <input type="text" id="venda-dia-results" placeholder="R$ 0,00" class="input-field" style="width: 100%; font-size: 1.8rem; text-align: center; background: #000; color: #fff; border: 1px solid #444; font-weight: bold;">
+            <input type="text" id="venda-dia-results" inputmode="decimal" placeholder="R$ 0,00" class="input-field" style="width: 100%; font-size: 1.8rem; text-align: center; background: #000; color: #fff; border: 1px solid #444; font-weight: bold;">
         </div>
 
         <div id="capture-area" style="background: var(--bg-color); padding: 10px; border-radius: 15px;">
@@ -592,7 +592,7 @@
                         
                         <div style="display: flex; flex-direction: column; gap: 12px;">
                             <div style="background: #1a1a1a; padding: 12px; border-radius: 10px; border-left: 4px solid #fff;">
-                                <small style="color: #888; display: block; font-size: 0.7rem;">QUEBRA BRUTA TOTAL</small>
+                                <small style="color: #888; display: block; font-size: 0.7rem;">QUEBRA (TOTAL)</small>
                                 <span id="val-quebra-bruta" style="color: #fff; font-weight: bold; font-size: 1.3rem;">R$ 0,00</span>
                             </div>
                             
@@ -602,7 +602,7 @@
                             </div>
 
                             <div style="background: #1a1a1a; padding: 12px; border-radius: 10px; border-left: 4px solid #ff4444;">
-                                <small style="color: #888; display: block; font-size: 0.7rem;">QUEBRA LÍQUIDA (REAL)</small>
+                                <small style="color: #888; display: block; font-size: 0.7rem;">PERDA TOTAL CONCILIADA</small>
                                 <span id="val-quebra-liquida" style="color: #ff4444; font-weight: bold; font-size: 1.3rem;">R$ 0,00</span>
                             </div>
 
@@ -640,7 +640,7 @@
             
             <div style="margin-bottom: 20px;">
                 <label style="display: block; color: #aaa; font-size: 0.9rem; margin-bottom: 8px;">Quantidade de Quebra:</label>
-                <input type="number" id="modal-edit-qty" step="0.01" class="input-field" style="width: 100%; font-size: 1.5rem; text-align: center; color: #ff4444; background: #000; border: 1px solid #444;">
+                <input type="text" id="modal-edit-qty" inputmode="decimal" class="input-field" style="width: 100%; font-size: 1.5rem; text-align: center; color: #ff4444; background: #000; border: 1px solid #444;">
                 <small style="color: #666; display: block; margin-top: 5px; text-align: center;">(Você pode ajustar o valor antes de aprovar)</small>
             </div>
 
@@ -1083,7 +1083,7 @@
 
             input.addEventListener('input', (e) => {
                 // Se for o campo de quebra, aplica máscara de moeda
-                if (id === 'qtd_quebra') {
+                if (id === 'qtd_quebra' || id === 'modal-edit-qty') {
                     e.target.value = formatCurrency(e.target.value);
                 } else {
                     // Para outros campos (como chegou), mantém apenas números e uma vírgula
@@ -1101,9 +1101,30 @@
         // Inicializar campos numéricos
         setupNumericInput('qtd_chegou');
         setupNumericInput('qtd_quebra');
+        setupNumericInput('modal-edit-qty');
 
         const inputVendaResults = document.getElementById('venda-dia-results');
         const dashDateFilter = document.getElementById('dash-date-filter');
+
+        // Configurar máscaras monetárias para os campos de venda
+        const setupVendaInput = (id) => {
+            const input = document.getElementById(id);
+            if (!input) return;
+            input.addEventListener('input', (e) => {
+                e.target.value = formatCurrency(e.target.value);
+                if (id === 'venda-dia-results') {
+                    const selectedDate = dashDateFilter.value;
+                    localStorage.setItem(`venda_dia_${selectedDate}`, e.target.value);
+                    updateResultsDashboard();
+                } else if (id === 'input-venda-dia') {
+                    localStorage.setItem('trataflv_venda_dia', e.target.value);
+                    renderHistory();
+                }
+            });
+        };
+
+        setupVendaInput('venda-dia-results');
+        setupVendaInput('input-venda-dia');
 
         // Inicializar com a data de hoje
         const today = new Date().toISOString().split('T')[0];
@@ -1123,16 +1144,8 @@
             inputVendaResults.value = savedVenda ? savedVenda : "0,00";
         }
 
-        if (inputVendaResults) {
-            inputVendaResults.addEventListener('input', (e) => {
-                let value = e.target.value;
-                e.target.value = formatCurrency(value);
-                
-                const selectedDate = dashDateFilter.value;
-                localStorage.setItem(`venda_dia_${selectedDate}`, e.target.value);
-                updateResultsDashboard();
-            });
-        }
+        loadVendaForDate();
+        updateResultsDashboard();
 
         function updateResultsDashboard() {
             if (!db) return;
@@ -1196,35 +1209,40 @@
                     pendingListEl.innerHTML = '<p style="color: #666; text-align: center; font-size: 0.9rem; margin: 20px 0;">Nenhuma tratativa pendente.</p>';
                 }
 
-                const quebraLiquida = quebraBruta - valorSalvo;
+                // LÓGICA OFICIAL DA PLANILHA DIA A DIA - FLV
+                // R$ Quebra = quebraBruta
+                // % Quebra = (R$ Quebra / Venda Total) * 100
+                // R$ Perda Total Conciliada = Quebra Líquida (Bruta - Economia)
+
                 const vendaDia = parseCurrency(inputVendaResults.value);
-                const percentIG = vendaDia > 0 ? (quebraBruta / vendaDia) * 100 : 0;
+                const percentQuebraOficial = vendaDia > 0 ? (quebraBruta / vendaDia) * 100 : 0;
+                const perdaTotalConciliada = quebraBruta - valorSalvo;
 
                 // Atualizar Valores na Tela
                 document.getElementById('val-quebra-tratativa').innerText = `R$ ${quebraTratativa.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
                 document.getElementById('val-quebra-geral').innerText = `R$ ${quebraGeral.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
                 document.getElementById('val-quebra-bruta').innerText = `R$ ${quebraBruta.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
                 document.getElementById('val-economia-results').innerText = `R$ ${valorSalvo.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-                document.getElementById('val-quebra-liquida').innerText = `R$ ${quebraLiquida.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+                document.getElementById('val-quebra-liquida').innerText = `R$ ${perdaTotalConciliada.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
                 
-                // Atualizar IG % e Meta
+                // Atualizar IG % e Meta (Baseado na Meta de 2,43%)
                 const elIG = document.getElementById('val-ig-percent');
                 const elStatus = document.getElementById('status-ig');
                 const cardBox = document.getElementById('card-ig-box');
                 
-                elIG.innerText = `${percentIG.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}%`;
+                elIG.innerText = `${percentQuebraOficial.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}%`;
 
                 if (vendaDia > 0) {
-                    if (percentIG <= 2.43) {
+                    if (percentQuebraOficial <= 2.43) {
                         elIG.style.color = '#fff';
-                        elStatus.innerText = '✅ META BATIDA';
+                        elStatus.innerText = '✅ BOM';
                         elStatus.style.backgroundColor = '#28a745';
                         elStatus.style.color = '#fff';
                         cardBox.style.borderColor = '#28a745';
                         cardBox.style.background = 'rgba(40, 167, 69, 0.1)';
                     } else {
                         elIG.style.color = '#fff';
-                        elStatus.innerText = '⚠️ ACIMA DA META';
+                        elStatus.innerText = '⚠️ ALERTA';
                         elStatus.style.backgroundColor = '#ff4444';
                         elStatus.style.color = '#fff';
                         cardBox.style.borderColor = '#ff4444';
@@ -1272,15 +1290,15 @@
                 let textoRelatorio = `*RELATÓRIO DE GESTÃO FLV 1018*\n`;
                 textoRelatorio += `Data: ${data}\n\n`;
                 textoRelatorio += `*RESUMO FINANCEIRO:*\n`;
-                textoRelatorio += `🔴 Quebra Bruta: ${quebraBruta}\n`;
+                textoRelatorio += `🔴 Quebra (Total): ${quebraBruta}\n`;
                 textoRelatorio += `🟢 Economia (Salva): ${economia}\n`;
-                textoRelatorio += `⚫ *Quebra Líquida: ${quebraLiquida}*\n\n`;
+                textoRelatorio += `⚫ *Perda Total Conciliada: ${quebraLiquida}*\n\n`;
                 textoRelatorio += `*DETALHAMENTO:*\n`;
                 textoRelatorio += `- Tratativas: ${quebraTratativa}\n`;
                 textoRelatorio += `- Geral/Limpeza: ${quebraGeral}\n\n`;
                 textoRelatorio += `*INDICADORES:*\n`;
                 textoRelatorio += `Venda Diária: R$ ${vendaDia}\n`;
-                textoRelatorio += `Índice de Quebra (IG): ${igPercent}`;
+                textoRelatorio += `Índice de Quebra (%): ${igPercent}`;
                 
                 window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(textoRelatorio)}`, '_blank');
             });
@@ -1485,9 +1503,9 @@
                 let texto = `*RELATÓRIO DE GESTÃO FLV 1018*\n`;
                 texto += `Data: ${filterDateBR}\n\n`;
                 texto += `*RESUMO FINANCEIRO:*\n`;
-                texto += `🔴 Quebra Bruta: R$ ${quebraBruta.toLocaleString('pt-BR', {minimumFractionDigits: 2})}\n`;
+                texto += `🔴 Quebra (Total): R$ ${quebraBruta.toLocaleString('pt-BR', {minimumFractionDigits: 2})}\n`;
                 texto += `🟢 Economia (Salva): R$ ${economia.toLocaleString('pt-BR', {minimumFractionDigits: 2})}\n`;
-                texto += `⚫ *Quebra Líquida: R$ ${quebraLiquida.toLocaleString('pt-BR', {minimumFractionDigits: 2})}*\n\n`;
+                texto += `⚫ *Perda Total Conciliada: R$ ${quebraLiquida.toLocaleString('pt-BR', {minimumFractionDigits: 2})}*\n\n`;
                 texto += `*DETALHAMENTO:*\n`;
                 texto += `- Tratativas: R$ ${quebraTratativa.toLocaleString('pt-BR', {minimumFractionDigits: 2})}\n`;
                 texto += `- Geral/Limpeza: R$ ${quebraGeral.toLocaleString('pt-BR', {minimumFractionDigits: 2})}\n`;
