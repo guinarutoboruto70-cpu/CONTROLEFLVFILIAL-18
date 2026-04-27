@@ -510,7 +510,7 @@
                 </div>
                 <div class="form-group" style="margin: 0;">
                     <label style="font-size: 0.75rem;">Produto</label>
-                    <input type="text" id="nome" required placeholder="Produto" list="lista-nomes" style="padding: 8px;">
+                    <input type="text" id="produto" required placeholder="Produto" list="lista-nomes" style="padding: 8px;">
                 </div>
             </div>
 
@@ -532,7 +532,7 @@
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
                 <div class="form-group" style="margin: 0;">
                     <label style="font-size: 0.75rem;">Qtd Quebra</label>
-                    <input type="text" id="qtd_quebra_kg" inputmode="decimal" required placeholder="0.00" style="padding: 8px;">
+                    <input type="text" id="quantidade" inputmode="decimal" required placeholder="0.00" style="padding: 8px;">
                 </div>
                 <div class="form-group" style="margin: 0;">
                     <label style="font-size: 0.75rem;">Custo (R$)</label>
@@ -561,7 +561,7 @@
                 </div>
             </div>
 
-            <input type="hidden" id="qtd_quebra" value="0,00">
+            <input type="hidden" id="valor" value="0,00">
             <input type="hidden" id="tipo_quebra" value="TRATATIVA">
             <input type="hidden" id="data-ocorrencia">
 
@@ -801,1407 +801,399 @@
     </div>
 
     <script>
-        // Banco de Dados Interno (Autocomplete) - Real
-        const produtosFLV = { 
-            '7028': {nome: 'TOMATE', uni: 'KG'}, 
-            '1125': {nome: 'CEBOLA', uni: 'KG'}, 
-            '2030': {nome: 'PIMENTÃO', uni: 'KG'} 
-        };
-
-        // Funções de Utilidade (Acesso Rápido)
-        window.setUnit = function(unit) {
-            const el = document.getElementById('unidade');
-            const btnKg = document.getElementById('unit-kg');
-            const btnUnd = document.getElementById('unit-und');
-            if (el) el.value = unit;
-            if (btnKg) btnKg.classList.toggle('active', unit === 'KG');
-            if (btnUnd) btnUnd.classList.toggle('active', unit === 'UND');
-            if (window.saveDraft) window.saveDraft();
-        };
-
-        window.setUnitGeral = function(unit) {
-            const el = document.getElementById('geral-unidade');
-            const btnKg = document.getElementById('geral-unit-kg');
-            const btnUnd = document.getElementById('geral-unit-und');
-            if (el) el.value = unit;
-            if (btnKg) btnKg.classList.toggle('active', unit === 'KG');
-            if (btnUnd) btnUnd.classList.toggle('active', unit === 'UND');
-        };
-
-        // Função de Automação (Carrega Primeiro)
-        function initAutocomplete() {
-            const inputCodigo = document.getElementById('codigo');
-            const inputNome = document.getElementById('nome');
-            const listNomes = document.getElementById('lista-nomes');
-
-            if (!inputCodigo || !inputNome || !listNomes) return;
-
-            // Popular datalist de nomes
-            listNomes.innerHTML = '';
-            for (const cod in produtosFLV) {
-                const opt = document.createElement('option');
-                opt.value = produtosFLV[cod].nome;
-                listNomes.appendChild(opt);
-            }
-
-            // Busca por Código
-            inputCodigo.addEventListener('input', () => {
-                const p = produtosFLV[inputCodigo.value];
-                if (p) {
-                    inputNome.value = p.nome;
-                    if (window.setUnit) window.setUnit(p.uni);
-                }
-                // Independência: Se o código for apagado ou não existir, 
-                // o usuário pode digitar o nome manualmente (o campo não é bloqueado).
-            });
-
-            // Busca por Nome (Datalist)
-            inputNome.addEventListener('input', () => {
-                const nomeDigitado = inputNome.value.toUpperCase();
-                let encontrado = false;
-                for (const cod in produtosFLV) {
-                    if (produtosFLV[cod].nome === nomeDigitado) {
-                        inputCodigo.value = cod;
-                        if (window.setUnit) window.setUnit(produtosFLV[cod].uni);
-                        encontrado = true;
-                        break;
-                    }
-                }
-                // Independência: Se não encontrar o nome no banco, 
-                // permite continuar digitando sem forçar um código.
-            });
-            
-            console.log("Automação de Tratativa Carregada!");
-
-            // Eventos manuais para os botões de unidade (Garantir que sempre funcionem)
-            document.getElementById('unit-kg').addEventListener('click', () => window.setUnit('KG'));
-            document.getElementById('unit-und').addEventListener('click', () => window.setUnit('UND'));
-            document.getElementById('geral-unit-kg').addEventListener('click', () => window.setUnitGeral('KG'));
-            document.getElementById('geral-unit-und').addEventListener('click', () => window.setUnitGeral('UND'));
-        }
-
-        // Executar imediatamente
-        document.addEventListener('DOMContentLoaded', initAutocomplete);
-
-        // Protocolo de Atualização Forçada (Garantia Mobile)
-        const APP_VERSION = '1.2';
-        const lastVersion = localStorage.getItem('app_version');
-        
-        if (lastVersion && lastVersion !== APP_VERSION) {
-            console.log("Versão antiga detectada. Limpando cache e forçando atualização...");
-            localStorage.setItem('app_version', APP_VERSION);
-            if ('caches' in window) {
-                caches.keys().then(names => {
-                    for (let name of names) caches.delete(name);
-                });
-            }
-            // Força um hard reload ignorando o cache
-            window.location.reload(true);
-        } else {
-            localStorage.setItem('app_version', APP_VERSION);
-        }
-
-        // Registrar Service Worker para PWA com Verificação de Atualização
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=' + APP_VERSION)
-                    .then(reg => {
-                        console.log("Service Worker registrado!");
-                        
-                        // Verifica atualizações a cada carregamento
-                        reg.update();
-
-                        reg.onupdatefound = () => {
-                            const installingWorker = reg.installing;
-                            installingWorker.onstatechange = () => {
-                                if (installingWorker.state === 'installed') {
-                                    if (navigator.serviceWorker.controller) {
-                                        // Nova versão disponível! Força o reload para o usuário
-                                        console.log("Nova versão detectada! Atualizando...");
-                                        window.location.reload();
-                                    }
-                                }
-                            };
-                        };
-                    })
-                    .catch(err => console.log("Erro ao registrar SW:", err));
-            });
-
-            // Detecta quando o novo SW assume o controle e recarrega
-            let refreshing = false;
-            navigator.serviceWorker.addEventListener('controllerchange', () => {
-                if (!refreshing) {
-                    window.location.reload();
-                    refreshing = true;
-                }
-            });
-        }
-
-        // Configuração do IndexedDB
-        const dbName = "TratativasFLV";
-        const draftStore = "rascunhos";
+        // --- 1. CONFIGURAÇÕES E BANCO DE DADOS ---
+        const APP_VERSION = '1.8';
+        const dbName = "FLVDatabase";
         const historyStore = "historico";
         const productStore = "produtos";
         let db;
 
+        // Banco de Dados Interno (Autocomplete) - Itens Reais
+        const produtosFLV = { 
+            '7028': {nome: 'TOMATE', uni: 'KG'}, 
+            '1125': {nome: 'CEBOLA', uni: 'KG'}, 
+            '2030': {nome: 'PIMENTÃO', uni: 'KG'},
+            '3560': {nome: 'MELANCIA', uni: 'UND'},
+            '1120': {nome: 'ALHO', uni: 'KG'},
+            '1540': {nome: 'BATATA', uni: 'KG'},
+            '2233': {nome: 'BANANA', uni: 'KG'}
+        };
+
         function initDB() {
             const request = indexedDB.open(dbName, 3);
-
             request.onupgradeneeded = (e) => {
                 const dbInstance = e.target.result;
-                if (!dbInstance.objectStoreNames.contains(draftStore)) {
-                    dbInstance.createObjectStore(draftStore, { keyPath: "id" });
-                }
                 if (!dbInstance.objectStoreNames.contains(historyStore)) {
                     dbInstance.createObjectStore(historyStore, { keyPath: "id", autoIncrement: true });
                 }
                 if (!dbInstance.objectStoreNames.contains(productStore)) {
                     dbInstance.createObjectStore(productStore, { keyPath: "codigo" });
                 }
-                console.log("Banco de dados atualizado/criado.");
             };
-
             request.onsuccess = (e) => {
                 db = e.target.result;
-                console.log("Conexão com IndexedDB estabelecida com sucesso.");
-                
-                // Inicializar automação e carregar dados
+                console.log("IndexedDB Conectado!");
                 initAutocomplete();
-                loadDraft();
-                renderProductList();
                 updateResultsDashboard();
-
-                const dateInput = document.getElementById('data-ocorrencia');
-                if (dateInput && !dateInput.value) {
-                    dateInput.value = new Date().toISOString().split('T')[0];
-                }
+                renderHistory();
             };
-
-            request.onerror = (e) => {
-                console.error("Erro crítico ao abrir IndexedDB:", e.target.error);
-                alert("Erro ao carregar o banco de dados. O app pode não salvar corretamente.");
-            };
+            request.onerror = (e) => console.error("Erro no DB:", e.target.error);
         }
 
-        // Chamar inicialização do banco
-        initDB();
+        // --- 2. AUTOMAÇÃO DE PRODUTOS ---
+        function initAutocomplete() {
+            const setups = [
+                { cod: 'codigo', nome: 'produto', unit: 'unidade', prefix: '' },
+                { cod: 'geral-codigo', nome: 'geral-nome', unit: 'geral-unidade', prefix: 'geral-' }
+            ];
 
-        // Lógica de Captura de Fotos (Original)
-        const setupPhoto = (inputId, previewId) => {
-            const input = document.getElementById(inputId);
-            const preview = document.getElementById(previewId);
+            const listNomes = document.getElementById('lista-nomes');
+            const listCodigos = document.getElementById('lista-codigos');
             
-            if (!input || !preview) return;
-            
-            input.addEventListener('change', (e) => {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = (event) => {
-                        preview.src = event.target.result;
-                        preview.style.display = 'block';
-                        if (window.saveDraft) window.saveDraft(); // Salva no rascunho após tirar a foto
-                    };
-                    reader.readAsDataURL(file);
+            if (listNomes) {
+                listNomes.innerHTML = '';
+                for (const cod in produtosFLV) {
+                    const opt = document.createElement('option');
+                    opt.value = produtosFLV[cod].nome;
+                    listNomes.appendChild(opt);
                 }
+            }
+
+            if (listCodigos) {
+                listCodigos.innerHTML = '';
+                for (const cod in produtosFLV) {
+                    const opt = document.createElement('option');
+                    opt.value = cod;
+                    listCodigos.appendChild(opt);
+                }
+            }
+
+            setups.forEach(setup => {
+                const inputCod = document.getElementById(setup.cod);
+                const inputNome = document.getElementById(setup.nome);
+
+                if (!inputCod || !inputNome) return;
+
+                // Busca por Código
+                inputCod.addEventListener('input', () => {
+                    const p = produtosFLV[inputCod.value];
+                    if (p) {
+                        inputNome.value = p.nome;
+                        if (setup.prefix === 'geral-') {
+                            window.setUnitGeral(p.uni);
+                        } else {
+                            window.setUnit(p.uni);
+                        }
+                    }
+                });
+
+                // Busca por Nome
+                inputNome.addEventListener('input', () => {
+                    const nomeDigitado = inputNome.value.toUpperCase();
+                    for (const cod in produtosFLV) {
+                        if (produtosFLV[cod].nome === nomeDigitado) {
+                            inputCod.value = cod;
+                            if (setup.prefix === 'geral-') {
+                                window.setUnitGeral(produtosFLV[cod].uni);
+                            } else {
+                                window.setUnit(produtosFLV[cod].uni);
+                            }
+                            break;
+                        }
+                    }
+                });
             });
-        };
+        }
 
-        setupPhoto('input-produto', 'prev-produto');
-        setupPhoto('input-balanca', 'prev-balanca');
-        setupPhoto('input-etiqueta-camera', 'prev-etiqueta');
-        setupPhoto('input-etiqueta-galeria', 'prev-etiqueta');
-
-        // Navegação entre telas (Abas e Botões)
-        const screens = ['results-screen', 'cadastro-screen', 'geral-screen', 'menu-screen', 'history-screen', 'products-screen', 'review-screen'];
-        const navButtons = {
-            'nav-dash': 'results-screen',
-            'nav-tratativa': 'cadastro-screen',
-            'nav-geral': 'geral-screen',
-            'nav-menu': 'menu-screen'
-        };
-
+        // --- 3. NAVEGAÇÃO ENTRE TELAS ---
+        const screens = ['results-screen', 'cadastro-screen', 'geral-screen', 'menu-screen', 'history-screen', 'review-screen'];
+        
         function showScreen(screenId) {
             screens.forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.classList.remove('active');
             });
-            const activeScreen = document.getElementById(screenId);
-            if (activeScreen) activeScreen.classList.add('active');
+            const target = document.getElementById(screenId);
+            if (target) target.classList.add('active');
 
-            // Atualizar botões de navegação
-            Object.keys(navButtons).forEach(btnId => {
+            // Ativar botões do menu superior
+            const navButtons = {
+                'nav-dash': 'results-screen',
+                'nav-tratativa': 'cadastro-screen',
+                'nav-geral': 'geral-screen',
+                'nav-menu': 'menu-screen'
+            };
+
+            for (const btnId in navButtons) {
                 const btn = document.getElementById(btnId);
                 if (btn) {
                     if (navButtons[btnId] === screenId) {
                         btn.classList.add('active');
-                        btn.style.background = '#007bff';
+                        btn.style.borderBottom = '2px solid yellow';
+                        btn.style.color = 'yellow';
                     } else {
                         btn.classList.remove('active');
-                        btn.style.background = '#1a1a1a';
+                        btn.style.borderBottom = '1px solid #333';
+                        btn.style.color = '#fff';
                     }
                 }
-            });
+            }
 
-            // Ações específicas ao abrir telas
             if (screenId === 'results-screen') updateResultsDashboard();
             if (screenId === 'history-screen') renderHistory();
-            if (screenId === 'products-screen') renderProductList();
         }
 
-        // Eventos de Navegação
-        Object.keys(navButtons).forEach(btnId => {
-            document.getElementById(btnId).addEventListener('click', () => showScreen(navButtons[btnId]));
-        });
-
-        // Botões Internos de Navegação
-        document.getElementById('btn-manage-products').addEventListener('click', () => showScreen('products-screen'));
-        document.getElementById('btn-show-history').addEventListener('click', () => showScreen('history-screen'));
-        document.getElementById('btn-voltar-products').addEventListener('click', () => showScreen('menu-screen'));
-        document.getElementById('btn-voltar-history').addEventListener('click', () => showScreen('menu-screen'));
-        document.getElementById('btn-voltar-results').addEventListener('click', () => showScreen('menu-screen'));
-        document.getElementById('btn-voltar-cadastro').addEventListener('click', () => showScreen('menu-screen'));
-        document.getElementById('btn-voltar-review').addEventListener('click', () => showScreen('cadastro-screen'));
-
-        // Lógica do Formulário de Quebra Geral
-        document.getElementById('geral-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            
-            if (!db) {
-                alert("Erro: Banco de dados não inicializado. Tente recarregar a página.");
-                return;
-            }
-
-            const codigo = document.getElementById('geral-codigo').value.trim();
-            const nome = document.getElementById('geral-nome').value.trim();
-            const unidade = document.getElementById('geral-unidade').value;
-            const qtd = document.getElementById('geral-qtd').value;
-            const custo = document.getElementById('geral-custo').value;
-            const valorTotalStr = document.getElementById('geral-valor-total').innerText.replace('R$ ', '').trim();
-            const valorTotal = parseCurrency(valorTotalStr);
-
-            if (!nome || !qtd || !custo) {
-                alert("Por favor, preencha Produto, Quantidade e Custo!");
-                return;
-            }
-
-            const agora = new Date();
-            const item = {
-                codigo: codigo || 'S/C',
-                nome: nome.toUpperCase(),
-                unidade: unidade,
-                qtd_quebra_kg: qtd,
-                preco_custo: custo,
-                qtd_quebra: valorTotalStr, // Salva o valor formatado (ex: 10,00)
-                tipo_quebra: 'GERAL',
-                data: getTodayBR(), // Usa função padronizada
-                hora: agora.toLocaleTimeString('pt-BR'),
-                timestamp: agora.getTime(),
-                status: 'CONCLUÍDO',
-                fotos: []
-            };
-
-            const tx = db.transaction(historyStore, "readwrite");
-            const store = tx.objectStore(historyStore);
-            const request = store.add(item);
-
-            request.onsuccess = () => {
-                feedbackSucesso();
-                e.target.reset();
-                document.getElementById('geral-valor-total').innerText = 'R$ 0,00';
-                updateResultsDashboard(); // Atualiza o dashboard imediatamente
-                setTimeout(() => showScreen('results-screen'), 1000);
-            };
-
-            request.onerror = (err) => {
-                console.error("Erro ao salvar Quebra Geral:", err);
-                alert("Erro ao salvar registro. Tente novamente.");
-            };
-        });
-
-        // Auto-complete para Quebra Geral (Removido conforme solicitado para manter simples)
-        // Apenas mantemos o preenchimento manual para rapidez e flexibilidade.
-
-        // Inicializa na tela de dashboard por padrão
-        window.addEventListener('load', () => {
-            setTimeout(() => showScreen('results-screen'), 500);
-        });
-
-        function feedbackSucesso() {
-            const div = document.createElement('div');
-            div.style = 'position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #28a745; color: white; padding: 15px 30px; border-radius: 30px; font-weight: bold; z-index: 2000; box-shadow: 0 4px 15px rgba(0,0,0,0.3); animation: slideDown 0.3s ease-out;';
-            div.innerText = '✅ REGISTRADO COM SUCESSO!';
-            document.body.appendChild(div);
-            setTimeout(() => div.remove(), 2500);
-        }
-
-        // Lógica de Gerenciamento de Produtos
-        const inputPreco = document.getElementById('prod-preco');
-        if (inputPreco) {
-            inputPreco.addEventListener('input', (e) => {
-                e.target.value = formatCurrency(e.target.value);
-            });
-        }
-
-        document.getElementById('btn-save-product').addEventListener('click', () => {
-            if (!db) {
-                alert("Erro: Banco de dados não inicializado.");
-                return;
-            }
-
-            const codigo = document.getElementById('prod-codigo').value.trim();
-            const nome = document.getElementById('prod-nome').value.trim();
-            const preco = document.getElementById('prod-preco').value;
-
-            if (!codigo || !nome) {
-                alert("Código e Nome são obrigatórios!");
-                return;
-            }
-
-            const product = {
-                codigo: codigo,
-                nome: nome.toUpperCase(),
-                preco: parseCurrency(preco),
-                data_cadastro: new Date().toISOString()
-            };
-
-            const tx = db.transaction(productStore, "readwrite");
-            const store = tx.objectStore(productStore);
-            const request = store.put(product);
-
-            request.onsuccess = () => {
-                feedbackSucesso();
-                alert("Produto salvo com sucesso!");
-                clearProductForm();
-                renderProductList();
-                initAutocomplete(); // Atualiza auto-complete na tela de cadastro
-            };
-
-            request.onerror = (err) => {
-                console.error("Erro ao salvar produto:", err);
-                alert("Erro ao salvar produto no banco.");
-            };
-        });
-
-        function clearProductForm() {
-            document.getElementById('prod-codigo').value = '';
-            document.getElementById('prod-nome').value = '';
-            document.getElementById('prod-preco').value = '';
-            document.getElementById('edit-prod-id').value = '';
-        }
-
-        async function renderProductList() {
-            const container = document.getElementById('products-list-container');
-            if (!container) return;
-            container.innerHTML = '<p style="color: #888; text-align: center;">Carregando itens...</p>';
-
-            const tx = db.transaction(productStore, "readonly");
-            const store = tx.objectStore(productStore);
-            const request = store.getAll();
-
-            request.onsuccess = () => {
-                const produtos = request.result;
-                if (produtos.length === 0) {
-                    container.innerHTML = '<p style="color: #888; text-align: center;">Nenhum item cadastrado.</p>';
-                    return;
-                }
-
-                container.innerHTML = '';
-                produtos.sort((a, b) => a.nome.localeCompare(b.nome)).forEach(p => {
-                    const card = document.createElement('div');
-                    card.style.background = '#222';
-                    card.style.padding = '15px';
-                    card.style.borderRadius = '10px';
-                    card.style.borderLeft = '4px solid #007bff';
-                    card.style.display = 'flex';
-                    card.style.justifyContent = 'space-between';
-                    card.style.alignItems = 'center';
-                    card.style.marginBottom = '10px';
-
-                    card.innerHTML = `
-                        <div style="flex: 1;">
-                            <div style="font-weight: bold; color: #ffcc00; font-size: 0.9rem;">Cód: ${p.codigo}</div>
-                            <div style="color: white; font-size: 1rem; margin: 5px 0;">${p.nome}</div>
-                            <div style="color: #888; font-size: 0.8rem;">Preço: R$ ${formatCurrency(p.preco * 100)}</div>
-                        </div>
-                        <div style="display: flex; gap: 8px;">
-                            <button onclick="editProduct('${p.codigo}')" class="btn" style="background: #ffcc00; color: black; padding: 8px 12px; font-size: 0.75rem;">✏️</button>
-                            <button onclick="deleteProduct('${p.codigo}')" class="btn" style="background: #dc3545; color: white; padding: 8px 12px; font-size: 0.75rem;">🗑️</button>
-                        </div>
-                    `;
-                    container.appendChild(card);
-                });
-            };
-        }
-
-        window.editProduct = (codigo) => {
-            const tx = db.transaction(productStore, "readonly");
-            const store = tx.objectStore(productStore);
-            const request = store.get(codigo);
-            request.onsuccess = () => {
-                const p = request.result;
-                document.getElementById('prod-codigo').value = p.codigo;
-                document.getElementById('prod-nome').value = p.nome;
-                document.getElementById('prod-preco').value = formatCurrency(p.preco * 100);
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            };
-        };
-
-        window.deleteProduct = (codigo) => {
-            if (confirm("Deseja realmente excluir este produto?")) {
-                const tx = db.transaction(productStore, "readwrite");
-                const store = tx.objectStore(productStore);
-                store.delete(codigo);
-                tx.oncomplete = () => {
-                    renderProductList();
-                    initAutocomplete();
-                };
-            }
-        };
-
-        // Funções de Conversão e Formatação
-        function formatCurrency(value) {
-            if (!value && value !== 0) return "0,00";
-            let cleanValue = value.toString().replace(/\D/g, "");
-            if (cleanValue === "") return "0,00";
-            let floatValue = parseFloat(cleanValue) / 100;
-            return floatValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        }
-
+        // --- 4. CÁLCULOS E FORMATAÇÃO ---
         function parseCurrency(value) {
             if (!value) return 0;
-            let cleanValue = value.toString().replace(/[^\d]/g, "");
-            return parseFloat(cleanValue) / 100;
+            let clean = value.toString().replace(/[^\d]/g, "");
+            return parseFloat(clean) / 100;
         }
 
         function parseCommaFloat(value) {
             if (!value) return 0;
-            if (typeof value === 'number') return value;
-            // Remove R$, espaços, pontos de milhar e troca vírgula por ponto
-            const cleanStr = value.toString()
-                .replace(/R\$/g, '')
-                .replace(/\s/g, '')
-                .replace(/\./g, '')
-                .replace(',', '.');
-            const parsed = parseFloat(cleanStr);
-            return isNaN(parsed) ? 0 : parsed;
+            return parseFloat(value.toString().replace(',', '.')) || 0;
         }
 
-        function getTodayBR() {
-            const now = new Date();
-            const d = String(now.getDate()).padStart(2, '0');
-            const m = String(now.getMonth() + 1).padStart(2, '0');
-            const y = now.getFullYear();
-            return `${d}/${m}/${y}`;
-        }
-
-        function formatDateToBR(dateStrISO) {
-            if (!dateStrISO) return getTodayBR();
-            const [y, m, d] = dateStrISO.split('-');
-            return `${d}/${m}/${y}`;
-        }
-
-        // Funções Globais de UI
-        window.setQuebraType = function(type) {
-            document.getElementById('tipo_quebra').value = type;
-            document.getElementById('type-tratativa').classList.toggle('active', type === 'TRATATIVA');
-            document.getElementById('type-geral').classList.toggle('active', type === 'GERAL');
-            
-            // Ajustar obrigatoriedade de fotos
-            const containerFotos = document.getElementById('container-fotos');
-            if (type === 'GERAL') {
-                containerFotos.style.display = 'none';
-                // Limpar fotos ao mudar para Geral
-                document.querySelectorAll('.photo-preview').forEach(img => {
-                    img.src = '';
-                    img.style.display = 'none';
-                });
-            } else {
-                containerFotos.style.display = 'block';
-            }
-            saveDraft();
-        };
-
-        const setupNumericInput = (id) => {
+        function setupNumericInput(id) {
             const input = document.getElementById(id);
             if (!input) return;
 
             input.addEventListener('input', (e) => {
-                // Se for o campo de quebra (valor total) ou preço de custo, aplica máscara de moeda
-                if (id === 'qtd_quebra' || id === 'preco_custo' || id === 'geral-custo') {
-                    e.target.value = formatCurrency(e.target.value);
-                } else {
-                    // Para outros campos (como chegou, qtd quebra kg, ou modal-edit-qty), mantém apenas números e uma vírgula
-                    let value = e.target.value.replace(/[^0-9,]/g, '');
-                    const parts = value.split(',');
-                    if (parts.length > 2) {
-                        value = parts[0] + ',' + parts.slice(1).join('');
+                // Máscara de Moeda para Preços
+                if (id === 'preco_custo' || id === 'geral-custo' || id === 'venda-dia-results' || id === 'input-venda-dia') {
+                    let val = e.target.value.replace(/\D/g, "");
+                    let float = parseFloat(val) / 100;
+                    e.target.value = float.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+                    
+                    // Sincronizar inputs de venda
+                    if (id === 'venda-dia-results') {
+                        const other = document.getElementById('input-venda-dia');
+                        if (other) other.value = e.target.value;
+                    } else if (id === 'input-venda-dia') {
+                        const other = document.getElementById('venda-dia-results');
+                        if (other) other.value = e.target.value;
                     }
-                    e.target.value = value;
-                }
-
-                // Cálculo Automático Tratativa
-                if (id === 'qtd_quebra_kg' || id === 'preco_custo') {
-                    const qtd = parseCommaFloat(document.getElementById('qtd_quebra_kg').value);
-                    const custo = parseCurrency(document.getElementById('preco_custo').value);
-                    const total = qtd * custo;
                     
-                    document.getElementById('qtd_quebra').value = total.toLocaleString('pt-BR', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                    });
-                }
-
-                // Cálculo Automático Quebra Geral
-                if (id === 'geral-qtd' || id === 'geral-custo') {
-                    const qtd = parseCommaFloat(document.getElementById('geral-qtd').value);
-                    const custo = parseCurrency(document.getElementById('geral-custo').value);
-                    const total = qtd * custo;
-                    
-                    document.getElementById('geral-valor-total').innerText = `R$ ${total.toLocaleString('pt-BR', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                    })}`;
-                }
-
-                saveDraft();
-            });
-        };
-
-        // Inicializar campos numéricos
-        setupNumericInput('qtd_chegou');
-        setupNumericInput('qtd_quebra_kg');
-        setupNumericInput('preco_custo');
-        setupNumericInput('qtd_quebra');
-        setupNumericInput('modal-edit-qty');
-        setupNumericInput('geral-qtd');
-        setupNumericInput('geral-custo');
-
-        const inputVendaResults = document.getElementById('venda-dia-results');
-        const dashDateFilter = document.getElementById('dash-date-filter');
-
-        // Configurar máscaras monetárias para os campos de venda
-        const setupVendaInput = (id) => {
-            const input = document.getElementById(id);
-            if (!input) return;
-            input.addEventListener('input', (e) => {
-                e.target.value = formatCurrency(e.target.value);
-                if (id === 'venda-dia-results') {
-                    const selectedDate = dashDateFilter.value;
-                    localStorage.setItem(`venda_dia_${selectedDate}`, e.target.value);
+                    // Atualizar dashboard se estiver no dashboard
                     updateResultsDashboard();
-                } else if (id === 'input-venda-dia') {
-                    localStorage.setItem('trataflv_venda_dia', e.target.value);
-                    renderHistory();
+                } else {
+                    // Apenas números e vírgula para quantidades
+                    e.target.value = e.target.value.replace(/[^0-9,]/g, '');
+                }
+
+                // Cálculo Quebra Geral Automático
+                if (id === 'geral-qtd' || id === 'geral-custo') {
+                    const q = parseCommaFloat(document.getElementById('geral-qtd').value);
+                    const c = parseCurrency(document.getElementById('geral-custo').value);
+                    const total = q * c;
+                    document.getElementById('geral-valor-total').innerText = `R$ ${total.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
                 }
             });
-        };
-
-        setupVendaInput('venda-dia-results');
-        setupVendaInput('input-venda-dia');
-
-        // Inicializar com a data de hoje
-        const today = new Date().toISOString().split('T')[0];
-        if (dashDateFilter) dashDateFilter.value = today;
-
-        if (dashDateFilter) {
-            dashDateFilter.addEventListener('change', () => {
-                loadVendaForDate();
-                updateResultsDashboard();
-            });
         }
 
-        function loadVendaForDate() {
-            if (!dashDateFilter || !inputVendaResults) return;
-            const selectedDate = dashDateFilter.value;
-            const savedVenda = localStorage.getItem(`venda_dia_${selectedDate}`);
-            inputVendaResults.value = savedVenda ? savedVenda : "0,00";
+        // --- 5. FUNÇÕES DE SALVAMENTO ---
+        function salvarQuebraGeral(e) {
+            if (e) e.preventDefault();
+            if (!db) return alert("Banco não pronto!");
+
+            const item = {
+                codigo: document.getElementById('geral-codigo').value || 'S/C',
+                nome: document.getElementById('geral-nome').value.toUpperCase(),
+                unidade: document.getElementById('geral-unidade').value,
+                qtd_quebra_kg: document.getElementById('geral-qtd').value,
+                preco_custo: document.getElementById('geral-custo').value,
+                qtd_quebra: document.getElementById('geral-valor-total').innerText.replace('R$ ', ''),
+                tipo_quebra: 'GERAL',
+                data: new Date().toLocaleDateString('pt-BR'),
+                timestamp: Date.now(),
+                status: 'CONCLUÍDO'
+            };
+
+            const tx = db.transaction(historyStore, "readwrite");
+            tx.objectStore(historyStore).add(item).onsuccess = () => {
+                alert("✅ Quebra Geral Salva com Sucesso!");
+                document.getElementById('geral-form').reset();
+                document.getElementById('geral-valor-total').innerText = "R$ 0,00";
+                showScreen('results-screen');
+            };
         }
 
-        loadVendaForDate();
-        updateResultsDashboard();
+        let currentTratativaData = null;
+        function salvarTratativa() {
+            if (!db || !currentTratativaData) return;
+            
+            const tx = db.transaction(historyStore, "readwrite");
+            tx.objectStore(historyStore).add(currentTratativaData).onsuccess = () => {
+                alert("✅ Tratativa Salva com Sucesso!");
+                document.getElementById('tratativa-form').reset();
+                showScreen('results-screen');
+            };
+        }
 
+        // --- 6. EVENTOS E INICIALIZAÇÃO ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initDB();
+
+            // Menu Superior
+            document.getElementById('nav-dash').onclick = () => showScreen('results-screen');
+            document.getElementById('nav-tratativa').onclick = () => showScreen('cadastro-screen');
+            document.getElementById('nav-geral').onclick = () => showScreen('geral-screen');
+            document.getElementById('nav-menu').onclick = () => showScreen('menu-screen');
+
+            // Formulários
+            document.getElementById('geral-form').onsubmit = salvarQuebraGeral;
+            
+            document.getElementById('tratativa-form').onsubmit = (e) => {
+                e.preventDefault();
+                const q = parseCommaFloat(document.getElementById('quantidade').value);
+                const c = parseCurrency(document.getElementById('preco_custo').value);
+                const total = q * c;
+
+                currentTratativaData = {
+                    codigo: document.getElementById('codigo').value || 'S/C',
+                    nome: document.getElementById('produto').value.toUpperCase(),
+                    unidade: document.getElementById('unidade').value,
+                    qtd_chegou: document.getElementById('qtd_chegou').value,
+                    qtd_quebra_kg: document.getElementById('quantidade').value,
+                    preco_custo: document.getElementById('preco_custo').value,
+                    qtd_quebra: total.toLocaleString('pt-BR', {minimumFractionDigits: 2}),
+                    tipo_quebra: 'TRATATIVA',
+                    data: new Date().toLocaleDateString('pt-BR'),
+                    timestamp: Date.now(),
+                    status: 'PENDENTE'
+                };
+
+                // Tela de Revisão
+                document.getElementById('review-data').innerHTML = `
+                    <p style="margin: 5px 0;"><strong>PRODUTO:</strong> ${currentTratativaData.nome}</p>
+                    <p style="margin: 5px 0;"><strong>CÓDIGO:</strong> ${currentTratativaData.codigo}</p>
+                    <p style="margin: 5px 0;"><strong>QUANTIDADE:</strong> ${currentTratativaData.qtd_quebra_kg} ${currentTratativaData.unidade}</p>
+                    <p style="margin: 5px 0; font-size: 1.2rem; color: #ff4444;"><strong>VALOR:</strong> R$ ${currentTratativaData.qtd_quebra}</p>
+                `;
+                
+                // Habilitar botão de finalizar na revisão
+                const btnFinalizar = document.getElementById('btn-finalizar-tudo');
+                if (btnFinalizar) {
+                    btnFinalizar.disabled = false;
+                    btnFinalizar.style.background = 'lime';
+                    btnFinalizar.style.color = 'black';
+                    btnFinalizar.style.cursor = 'pointer';
+                }
+                
+                showScreen('review-screen');
+            };
+
+            document.getElementById('btn-finalizar-tudo').onclick = salvarTratativa;
+            document.getElementById('btn-voltar-review').onclick = () => showScreen('cadastro-screen');
+            document.getElementById('btn-voltar-results').onclick = () => showScreen('menu-screen');
+
+            // Unidades
+            window.setUnit = (u) => {
+                document.getElementById('unidade').value = u;
+                document.getElementById('unit-kg').classList.toggle('active', u === 'KG');
+                document.getElementById('unit-und').classList.toggle('active', u === 'UND');
+            };
+            window.setUnitGeral = (u) => {
+                document.getElementById('geral-unidade').value = u;
+                document.getElementById('geral-unit-kg').classList.toggle('active', u === 'KG');
+                document.getElementById('geral-unit-und').classList.toggle('active', u === 'UND');
+            };
+
+            document.getElementById('unit-kg').onclick = () => setUnit('KG');
+            document.getElementById('unit-und').onclick = () => setUnit('UND');
+            document.getElementById('geral-unit-kg').onclick = () => setUnitGeral('KG');
+            document.getElementById('geral-unit-und').onclick = () => setUnitGeral('UND');
+
+            // Inputs Numéricos
+            ['quantidade', 'preco_custo', 'geral-qtd', 'geral-custo', 'venda-dia-results', 'input-venda-dia'].forEach(setupNumericInput);
+            
+            // Dashboard Date
+            const df = document.getElementById('dash-date-filter');
+            if (df) {
+                df.value = new Date().toISOString().split('T')[0];
+                df.onchange = updateResultsDashboard;
+            }
+
+            // Iniciar na tela do Dashboard
+            showScreen('results-screen');
+        });
+
+        // --- 7. DASHBOARD E HISTÓRICO ---
         function updateResultsDashboard() {
             if (!db) return;
             const tx = db.transaction(historyStore, "readonly");
-            const store = tx.objectStore(historyStore);
-            const request = store.getAll();
-
-            request.onsuccess = () => {
-                const logs = request.result;
-                const selectedDateISO = dashDateFilter.value; // yyyy-mm-dd
-                const selectedDateBR = selectedDateISO.split('-').reverse().join('/'); // dd/mm/yyyy
+            tx.objectStore(historyStore).getAll().onsuccess = (e) => {
+                const logs = e.target.result;
+                const filterDate = document.getElementById('dash-date-filter').value;
+                const filterDateBR = filterDate.split('-').reverse().join('/');
                 
-                document.getElementById('dash-current-date').innerText = selectedDateBR;
-                
-                let quebraTratativa = 0;
-                let quebraGeral = 0;
-                let quebraBruta = 0;
-                let valorSalvo = 0;
+                document.getElementById('dash-current-date').innerText = filterDateBR;
 
-                const pendingListEl = document.getElementById('dash-pending-list');
-                pendingListEl.innerHTML = '';
-                let hasPending = false;
+                let tGeral = 0, tTrat = 0;
+                const pendingList = document.getElementById('dash-pending-list');
+                pendingList.innerHTML = '';
 
                 logs.forEach(item => {
-                    if (item.data === selectedDateBR) {
-                        const valorOriginal = parseCommaFloat(item.qtd_quebra || 0);
-                        
+                    if (item.data === filterDateBR) {
+                        const val = parseFloat(item.qtd_quebra.replace('.', '').replace(',', '.'));
                         if (item.tipo_quebra === 'GERAL') {
-                            quebraGeral += valorOriginal;
-                            quebraBruta += valorOriginal;
+                            tGeral += val;
                         } else {
-                            // Se for TRATATIVA
-                            quebraTratativa += valorOriginal;
-                            quebraBruta += valorOriginal;
-                            
-                            if (item.status === 'CONCLUÍDO') {
-                                // Se aprovado, a economia é o valor_salvo (calculado na aprovação)
-                                // E o saldo não aprovado vai para Quebra Geral
-                                valorSalvo += (item.valor_salvo || 0);
-                                quebraGeral += (item.valor_saldo_geral || 0);
-                            } else {
-                                // Adicionar à lista de pendentes
-                                hasPending = true;
-                                const pItem = document.createElement('div');
-                                pItem.className = 'pending-item-dash';
-                                pItem.style = 'background: #1a1a1a; padding: 10px; border-radius: 8px; border-left: 3px solid #ffcc00; display: flex; justify-content: space-between; align-items: center;';
-                                pItem.innerHTML = `
-                                    <div style="flex: 1; display: flex; align-items: center; gap: 8px;">
-                                        <div style="color: #fff; font-weight: bold; font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;">${item.nome}</div>
-                                        <div style="color: #aaa; font-size: 0.75rem;">${item.qtd_quebra_kg}${item.unidade}</div>
-                                        <div style="color: #ffcc00; font-weight: bold; font-size: 0.8rem; margin-left: auto; margin-right: 10px;">R$ ${valorOriginal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
+                            tTrat += val;
+                            if (item.status === 'PENDENTE') {
+                                const div = document.createElement('div');
+                                div.className = 'pending-item-dash';
+                                div.style = 'background: #222; padding: 8px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; border-left: 3px solid yellow;';
+                                div.innerHTML = `
+                                    <div style="font-size: 0.8rem;">
+                                        <strong>${item.nome}</strong><br>
+                                        <small>${item.qtd_quebra_kg} ${item.unidade}</small>
                                     </div>
-                                    <button onclick="approveFromDashboard(${item.id})" style="background: #28a745; border: none; color: white; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.7rem; font-weight: bold; white-space: nowrap;">
-                                        ✅ OK
-                                    </button>
+                                    <div style="color: yellow; font-weight: bold; font-size: 0.9rem;">R$ ${item.qtd_quebra}</div>
                                 `;
-                                pendingListEl.appendChild(pItem);
+                                pendingList.appendChild(div);
                             }
                         }
                     }
                 });
 
-                if (!hasPending) {
-                    pendingListEl.innerHTML = '<p style="color: #666; text-align: center; font-size: 0.9rem; margin: 20px 0;">Nenhuma tratativa pendente.</p>';
+                if (pendingList.innerHTML === '') {
+                    pendingList.innerHTML = '<p style="color: #666; text-align: center; font-size: 0.75rem;">Nenhuma tratativa pendente.</p>';
                 }
 
-                // LÓGICA OFICIAL DA PLANILHA DIA A DIA - FLV
-                // R$ Quebra = quebraBruta
-                // % Quebra = (R$ Quebra / Venda Total) * 100
-                // R$ Perda Total Conciliada = Quebra Líquida (Bruta - Economia)
-
-                const vendaDia = parseCurrency(inputVendaResults.value);
-                const percentQuebraOficial = vendaDia > 0 ? (quebraBruta / vendaDia) * 100 : 0;
-                const perdaTotalConciliada = quebraBruta - valorSalvo;
-
-                // Atualizar Valores na Tela
-                document.getElementById('val-quebra-tratativa').innerText = `R$ ${quebraTratativa.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-                document.getElementById('val-quebra-geral').innerText = `R$ ${quebraGeral.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-                document.getElementById('val-quebra-bruta').innerText = `R$ ${quebraBruta.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-                document.getElementById('val-economia-results').innerText = `R$ ${valorSalvo.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-                document.getElementById('val-quebra-liquida').innerText = `R$ ${perdaTotalConciliada.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+                document.getElementById('val-quebra-geral').innerText = `R$ ${tGeral.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+                document.getElementById('val-quebra-tratativa').innerText = `R$ ${tTrat.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+                document.getElementById('val-quebra-bruta').innerText = `R$ ${(tGeral + tTrat).toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
                 
-                // Atualizar IG % e Meta (Baseado na Meta de 2,43%)
-                const elIG = document.getElementById('val-ig-percent');
-                const elStatus = document.getElementById('status-ig');
-                const cardBox = document.getElementById('card-ig-box');
-                
-                elIG.innerText = `${percentQuebraOficial.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}%`;
-
-                if (vendaDia > 0) {
-                    if (percentQuebraOficial <= 2.43) {
-                        elIG.style.color = '#fff';
-                        elStatus.innerText = '✅ BOM';
-                        elStatus.style.backgroundColor = '#28a745';
-                        elStatus.style.color = '#fff';
-                        cardBox.style.borderColor = '#28a745';
-                        cardBox.style.background = 'rgba(40, 167, 69, 0.1)';
-                    } else {
-                        elIG.style.color = '#fff';
-                        elStatus.innerText = '⚠️ ALERTA';
-                        elStatus.style.backgroundColor = '#ff4444';
-                        elStatus.style.color = '#fff';
-                        cardBox.style.borderColor = '#ff4444';
-                        cardBox.style.background = 'rgba(255, 68, 68, 0.1)';
-                    }
-                } else {
-                    elIG.style.color = '#fff';
-                    elStatus.innerText = 'Insira a venda do dia';
-                    elStatus.style.backgroundColor = '#333';
-                    cardBox.style.borderColor = '#333';
-                    cardBox.style.background = '#1a1a1a';
+                // Cálculo de Índice (IG) se houver venda
+                const vendaStr = document.getElementById('venda-dia-results').value;
+                const venda = parseCurrency(vendaStr);
+                if (venda > 0) {
+                    const ig = ((tGeral + tTrat) / venda) * 100;
+                    document.getElementById('val-ig-percent').innerText = `${ig.toLocaleString('pt-BR', {minimumFractionDigits: 2})}%`;
                 }
             };
         }
-
-        window.approveFromDashboard = function(id) {
-            const tx = db.transaction(historyStore, "readonly");
-            const store = tx.objectStore(historyStore);
-            const request = store.get(id);
-
-            request.onsuccess = () => {
-                const item = request.result;
-                if (!item) return;
-
-                const modal = document.getElementById('modal-approval');
-                const nameEl = document.getElementById('modal-product-name');
-                const infoEl = document.getElementById('modal-original-info');
-                const qtyInput = document.getElementById('modal-edit-qty');
-                const valSalvoEl = document.getElementById('modal-calc-salvo');
-                const valSaldoEl = document.getElementById('modal-calc-saldo');
-                const btnConfirm = document.getElementById('btn-confirm-approval');
-
-                nameEl.innerText = item.nome;
-                infoEl.innerText = `Original: ${item.qtd_quebra_kg} ${item.unidade} (Custo: ${item.preco_custo})`;
-                
-                // Preenche com a quantidade original
-                qtyInput.value = item.qtd_quebra_kg;
-
-                const updateModalCalcs = () => {
-                    const originalQty = parseCommaFloat(item.qtd_quebra_kg);
-                    const approvedQty = parseCommaFloat(qtyInput.value);
-                    const custo = parseCurrency(item.preco_custo);
-
-                    const valorSalvo = approvedQty * custo;
-                    const valorSaldo = (originalQty - approvedQty) * custo;
-
-                    valSalvoEl.innerText = `R$ ${valorSalvo.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-                    valSaldoEl.innerText = `R$ ${valorSaldo.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-                };
-
-                qtyInput.oninput = () => {
-                    let value = qtyInput.value.replace(/[^0-9,]/g, '');
-                    const parts = value.split(',');
-                    if (parts.length > 2) value = parts[0] + ',' + parts.slice(1).join('');
-                    qtyInput.value = value;
-                    updateModalCalcs();
-                };
-
-                updateModalCalcs();
-
-                btnConfirm.onclick = () => {
-                    const approvedQty = parseCommaFloat(qtyInput.value);
-                    const originalQty = parseCommaFloat(item.qtd_quebra_kg);
-                    const custo = parseCurrency(item.preco_custo);
-
-                    const valorSalvo = approvedQty * custo;
-                    const valorSaldo = (originalQty - approvedQty) * custo;
-
-                    // Atualiza o item
-                    item.status = 'CONCLUÍDO';
-                    item.qtd_aprovada_kg = qtyInput.value;
-                    item.valor_salvo = valorSalvo;
-                    item.valor_saldo_geral = valorSaldo;
-                    
-                    // O Valor da Quebra (Original) se mantém o mesmo para o cálculo de Quebra Bruta
-                    // Mas a economia gerada é apenas o valor_salvo
-
-                    const updateTx = db.transaction(historyStore, "readwrite");
-                    const updateStore = updateTx.objectStore(historyStore);
-                    updateStore.put(item);
-
-                    updateTx.oncomplete = () => {
-                        closeApprovalModal();
-                        updateResultsDashboard();
-                        feedbackSucesso();
-                    };
-                };
-
-                modal.style.display = 'flex';
-            };
-        };
-
-        window.closeApprovalModal = function() {
-            document.getElementById('modal-approval').style.display = 'none';
-        };
-
-        const btnRelatorioDiario = document.getElementById('btn-relatorio-diario');
-        if (btnRelatorioDiario) {
-            btnRelatorioDiario.addEventListener('click', () => {
-                const data = document.getElementById('dash-current-date').innerText;
-                const quebraBruta = document.getElementById('val-quebra-bruta').innerText;
-                const economia = document.getElementById('val-economia-results').innerText;
-                const quebraLiquida = document.getElementById('val-quebra-liquida').innerText;
-                const quebraTratativa = document.getElementById('val-quebra-tratativa').innerText;
-                const quebraGeral = document.getElementById('val-quebra-geral').innerText;
-                const vendaDia = inputVendaResults.value;
-                const igPercent = document.getElementById('val-ig-percent').innerText;
-
-                let textoRelatorio = `*RELATÓRIO DE GESTÃO FLV 1018*\n`;
-                textoRelatorio += `Data: ${data}\n\n`;
-                textoRelatorio += `*RESUMO FINANCEIRO:*\n`;
-                textoRelatorio += `🔴 Quebra (Total): ${quebraBruta}\n`;
-                textoRelatorio += `🟢 Economia (Salva): ${economia}\n`;
-                textoRelatorio += `⚫ *Perda Total Conciliada: ${quebraLiquida}*\n\n`;
-                textoRelatorio += `*DETALHAMENTO:*\n`;
-                textoRelatorio += `- Tratativas: ${quebraTratativa}\n`;
-                textoRelatorio += `- Geral/Limpeza: ${quebraGeral}\n\n`;
-                textoRelatorio += `*INDICADORES:*\n`;
-                textoRelatorio += `Venda Diária: R$ ${vendaDia}\n`;
-                textoRelatorio += `Índice de Quebra (%): ${igPercent}`;
-                
-                window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(textoRelatorio)}`, '_blank');
-            });
-        }
-
-        const btnPrintResults = document.getElementById('btn-print-results');
-        if (btnPrintResults) {
-            btnPrintResults.addEventListener('click', () => {
-                btnPrintResults.style.display = 'none'; // Esconde o botão para o print
-                
-                setTimeout(() => {
-                    alert("Dica: Tire o print agora! O relatório já está formatado com o cabeçalho 'FLV 1018' e a data selecionada.");
-                    window.print();
-                    btnPrintResults.style.display = 'flex';
-                }, 500);
-            });
-        }
-
-        // Carregar venda inicial
-        loadVendaForDate();
-
-        // Funções do Histórico
-        let showOnlyPending = false;
-        
-        // Persistência da Venda Diária
-        const inputVendaDia = document.getElementById('input-venda-dia');
-        if (inputVendaDia) {
-            inputVendaDia.addEventListener('input', (e) => {
-                localStorage.setItem('trataflv_venda_dia', e.target.value);
-                renderHistory();
-            });
-        }
-
-        // Carregar venda salva
-        const vendaSalvaHist = localStorage.getItem('trataflv_venda_dia');
-        if (vendaSalvaHist && inputVendaDia) inputVendaDia.value = vendaSalvaHist;
-
-        document.getElementById('btn-filter-all').addEventListener('click', () => {
-            showOnlyPending = false;
-            document.getElementById('btn-filter-all').style.boxShadow = '0 0 10px #666';
-            document.getElementById('btn-filter-pending').style.boxShadow = 'none';
-            renderHistory();
-        });
-
-        document.getElementById('btn-filter-pending').addEventListener('click', () => {
-            showOnlyPending = true;
-            document.getElementById('btn-filter-pending').style.boxShadow = '0 0 10px #ffcc00';
-            document.getElementById('btn-filter-all').style.boxShadow = 'none';
-            renderHistory();
-        });
 
         function renderHistory() {
             if (!db) return;
             const tx = db.transaction(historyStore, "readonly");
-            const store = tx.objectStore(historyStore);
-            const request = store.getAll();
-            const filterDate = document.getElementById('filter-date').value;
-
-            request.onsuccess = () => {
-                const historyList = document.getElementById('history-list');
-                historyList.innerHTML = '';
-                
-                let totalQuebraGeral = 0;
-                let totalEconomia = 0;
-                let totalPendente = 0;
-
-                // Ordenar por data/hora (mais recente primeiro)
-                const items = request.result.sort((a, b) => b.timestamp - a.timestamp);
-
-                items.forEach(item => {
-                    const itemDate = item.data.split('/').reverse().join('-');
-                    if (filterDate && itemDate !== filterDate) return;
-                    
-                    const valorQuebra = parseCommaFloat(item.qtd_quebra || 0);
-                    
-                    // Cálculos para o painel financeiro (independente do filtro de exibição)
-                    if (item.status === 'PENDENTE') {
-                        totalPendente += valorQuebra;
-                    } else {
-                        totalEconomia += valorQuebra;
-                    }
-                    totalQuebraGeral += valorQuebra;
-
-                    if (showOnlyPending && item.status !== 'PENDENTE') return;
-
-                    const card = document.createElement('div');
-                    card.className = 'history-card';
-                    const isPendente = item.status === 'PENDENTE';
-                    
-                    // Estilo de borda conforme status
-                    card.style.borderLeft = isPendente ? '5px solid #ffcc00' : '5px solid #28a745';
-                    if (isPendente) card.style.boxShadow = '0 0 5px rgba(255, 204, 0, 0.1)';
-
-                    card.innerHTML = `
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
-                            <span style="font-size: 0.8rem; color: #888;">${item.data} - ${item.hora}</span>
-                            ${isPendente ? 
-                                '<span style="background: #ffcc00; color: black; font-size: 0.65rem; padding: 2px 8px; border-radius: 4px; font-weight: bold;">PENDENTE</span>' : 
-                                '<span style="background: #28a745; color: white; font-size: 0.65rem; padding: 2px 8px; border-radius: 4px; font-weight: bold;">CONCLUÍDO</span>'}
+            tx.objectStore(historyStore).getAll().onsuccess = (e) => {
+                const list = document.getElementById('history-list');
+                if (!list) return;
+                const data = e.target.result.reverse();
+                list.innerHTML = data.length > 0 ? data.map(item => `
+                    <div class="history-card" style="border-left: 5px solid ${item.tipo_quebra === 'GERAL' ? '#007bff' : '#ffcc00'}; margin-bottom: 10px; background: #111; padding: 10px; border-radius: 8px;">
+                        <div style="flex: 1;">
+                            <strong style="color: #fff;">${item.nome}</strong><br>
+                            <small style="color: #888;">${item.data} - ${item.tipo_quebra}</small>
                         </div>
-                        <div style="font-weight: bold; font-size: 1.1rem; color: var(--title-color); margin-bottom: 4px;">${item.nome}</div>
-                        <div style="color: #aaa; font-size: 0.95rem;">
-                            Cód: ${item.codigo} | Quebra: <span style="color: #ff4444; font-weight: bold;">R$ ${valorQuebra.toFixed(2)}</span>
-                            ${item.editado ? ' <small style="color: #666; font-style: italic;">(Editado)</small>' : ''}
-                        </div>
-                        
-                        <div style="margin-top: 15px; display: flex; gap: 8px;">
-                            <button class="btn-view" onclick="viewPhotos(${item.id})" title="Ver fotos" style="padding: 8px 12px;">👁️</button>
-                            ${isPendente ? `
-                                <button class="btn" style="background-color: #28a745; color: white; flex: 1; font-size: 0.8rem; padding: 8px;" onclick="openApprovalModal(${item.id})">✅ APROVAR</button>
-                            ` : ''}
-                            <button class="btn-delete" onclick="deleteItem(${item.id})" style="padding: 8px 12px;">🗑️</button>
-                        </div>
-                    `;
-                    historyList.appendChild(card);
-                });
-
-                // Atualizar Painel Financeiro
-                const vendaDiaInput = document.getElementById('input-venda-dia');
-                const vendaDia = vendaDiaInput ? parseCurrency(vendaDiaInput.value) : 0;
-                const percentQuebra = vendaDia > 0 ? (totalQuebraGeral / vendaDia) * 100 : 0;
-
-                document.getElementById('stat-quebra-total').innerText = `R$ ${totalQuebraGeral.toFixed(2)}`;
-                document.getElementById('stat-quebra-percent').innerText = `(${percentQuebra.toFixed(2)}%)`;
-                document.getElementById('stat-economia').innerText = `R$ ${totalEconomia.toFixed(2)}`;
-                document.getElementById('stat-pendente').innerText = `R$ ${totalPendente.toFixed(2)}`;
+                        <div style="color: #ff4444; font-weight: bold;">R$ ${item.qtd_quebra}</div>
+                    </div>
+                `).join('') : '<p class="empty-msg">Nenhum registro encontrado.</p>';
             };
         }
-
-        let currentApprovalId = null;
-
-        window.openApprovalModal = function(id) {
-            const tx = db.transaction(historyStore, "readonly");
-            const store = tx.objectStore(historyStore);
-            const request = store.get(id);
-
-            request.onsuccess = () => {
-                const item = request.result;
-                currentApprovalId = id;
-                document.getElementById('modal-product-name').innerText = item.nome;
-                document.getElementById('modal-edit-qty').value = item.qtd_quebra;
-                document.getElementById('modal-approval').style.display = 'flex';
-            };
-        };
-
-        window.closeApprovalModal = function() {
-            document.getElementById('modal-approval').style.display = 'none';
-            currentApprovalId = null;
-        };
-
-        document.getElementById('btn-confirm-approval').addEventListener('click', () => {
-            if (!currentApprovalId) return;
-            
-            const newQty = document.getElementById('modal-edit-qty').value;
-            const tx = db.transaction(historyStore, "readwrite");
-            const store = tx.objectStore(historyStore);
-            
-            const request = store.get(currentApprovalId);
-            request.onsuccess = () => {
-                const item = request.result;
-                item.status = 'CONCLUÍDO';
-                item.qtd_quebra = newQty;
-                item.editado = true;
-                store.put(item);
-                
-                tx.oncomplete = () => {
-                    closeApprovalModal();
-                    renderHistory();
-                    updateResultsDashboard(); // Atualiza painel financeiro imediatamente
-                };
-            };
-        });
-
-        document.getElementById('btn-export-whatsapp').addEventListener('click', () => {
-            const tx = db.transaction(historyStore, "readonly");
-            const store = tx.objectStore(historyStore);
-            const request = store.getAll();
-            const filterDate = document.getElementById('filter-date').value;
-            const filterDateBR = filterDate ? filterDate.split('-').reverse().join('/') : new Date().toLocaleDateString('pt-BR');
-
-            request.onsuccess = () => {
-                const logs = request.result;
-                let quebraTratativa = 0;
-                let quebraGeral = 0;
-                let economia = 0;
-                
-                logs.forEach(item => {
-                    if (!filterDate || item.data === filterDateBR) {
-                        const valor = parseCommaFloat(item.qtd_quebra || 0);
-                        if (item.tipo_quebra === 'GERAL') {
-                            quebraGeral += valor;
-                        } else {
-                            quebraTratativa += valor;
-                            if (item.status === 'CONCLUÍDO') economia += valor;
-                        }
-                    }
-                });
-
-                const quebraBruta = quebraTratativa + quebraGeral;
-                const quebraLiquida = quebraBruta - economia;
-
-                let texto = `*RELATÓRIO DE GESTÃO FLV 1018*\n`;
-                texto += `Data: ${filterDateBR}\n\n`;
-                texto += `*RESUMO FINANCEIRO:*\n`;
-                texto += `🔴 Quebra (Total): R$ ${quebraBruta.toLocaleString('pt-BR', {minimumFractionDigits: 2})}\n`;
-                texto += `🟢 Economia (Salva): R$ ${economia.toLocaleString('pt-BR', {minimumFractionDigits: 2})}\n`;
-                texto += `⚫ *Perda Total Conciliada: R$ ${quebraLiquida.toLocaleString('pt-BR', {minimumFractionDigits: 2})}*\n\n`;
-                texto += `*DETALHAMENTO:*\n`;
-                texto += `- Tratativas: R$ ${quebraTratativa.toLocaleString('pt-BR', {minimumFractionDigits: 2})}\n`;
-                texto += `- Geral/Limpeza: R$ ${quebraGeral.toLocaleString('pt-BR', {minimumFractionDigits: 2})}\n`;
-                
-                if (quebraBruta === 0) {
-                    alert("Não há lançamentos nesta data para exportar.");
-                    return;
-                }
-                
-                const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(texto)}`;
-                window.open(url, '_blank');
-            };
-        });
-
-        // Limpar Tudo
-        document.getElementById('btn-clear-all').addEventListener('click', () => {
-            if (confirm("TEM CERTEZA? Isso apagará TODO o histórico permanentemente!")) {
-                const tx = db.transaction(historyStore, "readwrite");
-                const store = tx.objectStore(historyStore);
-                store.clear();
-                tx.oncomplete = () => {
-                    alert("Histórico limpo com sucesso!");
-                    renderHistory();
-                    updateResultsDashboard();
-                };
-            }
-        });
-
-        window.deleteItem = function(id) {
-            if (confirm("Deseja realmente excluir este lançamento?")) {
-                const tx = db.transaction(historyStore, "readwrite");
-                tx.objectStore(historyStore).delete(id);
-                tx.oncomplete = () => {
-                    renderHistory();
-                    updateResultsDashboard();
-                };
-            }
-        };
-
-        // Funções do Modal de Fotos
-        window.viewPhotos = function(id) {
-            const tx = db.transaction(historyStore, "readonly");
-            const store = tx.objectStore(historyStore);
-            const request = store.get(id);
-
-            request.onsuccess = () => {
-                const item = request.result;
-                const modal = document.getElementById('photo-modal');
-                const content = document.getElementById('modal-content');
-                content.innerHTML = '';
-
-                if (item.foto_produto) addPhotoToModal(item.foto_produto, "Produto", content);
-                if (item.foto_balanca) addPhotoToModal(item.foto_balanca, "Balança", content);
-                if (item.foto_etiqueta) addPhotoToModal(item.foto_etiqueta, "Etiqueta", content);
-
-                modal.style.display = 'flex';
-            };
-        };
-
-        function addPhotoToModal(src, label, container) {
-            const div = document.createElement('div');
-            div.innerHTML = `<label style="display:block; margin-bottom:5px; color:yellow;">${label}</label>`;
-            const img = document.createElement('img');
-            img.src = src;
-            img.className = 'modal-photo-item';
-            div.appendChild(img);
-            container.appendChild(div);
-        }
-
-        window.closeModal = function() {
-            document.getElementById('photo-modal').style.display = 'none';
-        };
-
-        // Fechar modal ao clicar fora
-        window.onclick = function(event) {
-            const modal = document.getElementById('photo-modal');
-            if (event.target == modal) {
-                closeModal();
-            }
-        };
-
-        // Salvar Rascunho Automaticamente
-        const formTratativa = document.getElementById('tratativa-form');
-        const inputsForm = formTratativa.querySelectorAll('input, select, textarea');
-
-        inputsForm.forEach(input => {
-            input.addEventListener('input', saveDraft);
-            input.addEventListener('change', saveDraft); // Importante para campos de data
-        });
-
-        function saveDraft() {
-            if (!db) return;
-            const draft = {
-                id: "current_draft",
-                tipo_quebra: document.getElementById('tipo_quebra').value,
-                data_ocorrencia: document.getElementById('data-ocorrencia').value,
-                codigo: document.getElementById('codigo').value,
-                nome: document.getElementById('nome').value,
-                unidade: document.getElementById('unidade').value,
-                qtd_chegou: document.getElementById('qtd_chegou').value,
-                qtd_quebra_kg: document.getElementById('qtd_quebra_kg').value,
-                preco_custo: document.getElementById('preco_custo').value,
-                qtd_quebra: document.getElementById('qtd_quebra').value,
-                foto_produto: document.getElementById('prev-produto').src || null,
-                foto_balanca: document.getElementById('prev-balanca').src || null,
-                foto_etiqueta: document.getElementById('prev-etiqueta').src || null,
-                timestamp: new Date().getTime()
-            };
-            const tx = db.transaction(draftStore, "readwrite");
-            tx.objectStore(draftStore).put(draft);
-        }
-
-        function loadDraft() {
-            if (!db) return;
-            const tx = db.transaction(draftStore, "readonly");
-            const request = tx.objectStore(draftStore).get("current_draft");
-            request.onsuccess = () => {
-                if (request.result) {
-                    const data = request.result;
-                    if (data.tipo_quebra) {
-                        setQuebraType(data.tipo_quebra);
-                    }
-                    if (data.data_ocorrencia) document.getElementById('data-ocorrencia').value = data.data_ocorrencia;
-                    document.getElementById('codigo').value = data.codigo || '';
-                    document.getElementById('nome').value = data.nome || '';
-                    if (data.unidade) {
-                        setUnit(data.unidade);
-                    }
-                    document.getElementById('qtd_chegou').value = data.qtd_chegou || '';
-                    document.getElementById('qtd_quebra_kg').value = data.qtd_quebra_kg || '';
-                    document.getElementById('preco_custo').value = data.preco_custo || '';
-                    document.getElementById('qtd_quebra').value = data.qtd_quebra || '';
-                    
-                    if (data.foto_produto) {
-                        const p = document.getElementById('prev-produto');
-                        p.src = data.foto_produto;
-                        p.style.display = 'block';
-                    }
-                    if (data.foto_balanca) {
-                        const p = document.getElementById('prev-balanca');
-                        p.src = data.foto_balanca;
-                        p.style.display = 'block';
-                    }
-                    if (data.foto_etiqueta) {
-                        const p = document.getElementById('prev-etiqueta');
-                        p.src = data.foto_etiqueta;
-                        p.style.display = 'block';
-                    }
-                }
-            };
-        }
-
-        // Feedback Sensorial (Vibração)
-        function feedbackSucesso() {
-            if ("vibrate" in navigator) {
-                navigator.vibrate([100, 50, 100]);
-            }
-            try {
-                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                const oscillator = audioCtx.createOscillator();
-                const gainNode = audioCtx.createGain();
-                oscillator.connect(gainNode);
-                gainNode.connect(audioCtx.destination);
-                oscillator.type = 'sine';
-                oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); 
-                gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-                oscillator.start();
-                oscillator.stop(audioCtx.currentTime + 0.2);
-            } catch (e) {
-                console.log("Audio feedback not supported");
-            }
-        }
-
-        // Finalizar Tratativa (Agora leva para Revisão)
-        let currentData = null;
-
-        formTratativa.addEventListener('submit', (e) => {
-            e.preventDefault();
-            
-            if (!db) {
-                alert("Erro: Banco de dados não inicializado.");
-                return;
-            }
-
-            const tipoQuebra = document.getElementById('tipo_quebra').value;
-            const selectedDate = document.getElementById('data-ocorrencia').value;
-            const formattedDate = formatDateToBR(selectedDate);
-
-            const agora = new Date();
-            let nomeLimpo = document.getElementById('nome').value;
-            nomeLimpo = nomeLimpo.replace(/^(produto|nome|item|tratativa)[:\s-]*/i, '').trim();
-
-            currentData = {
-                tipo_quebra: tipoQuebra,
-                codigo: document.getElementById('codigo').value.trim() || 'S/C',
-                nome: nomeLimpo.toUpperCase(),
-                unidade: document.getElementById('unidade').value,
-                qtd_chegou: document.getElementById('qtd_chegou').value,
-                qtd_quebra_kg: document.getElementById('qtd_quebra_kg').value,
-                preco_custo: document.getElementById('preco_custo').value,
-                qtd_quebra: document.getElementById('qtd_quebra').value,
-                foto_produto: document.getElementById('prev-produto').src || null,
-                foto_balanca: document.getElementById('prev-balanca').src || null,
-                foto_etiqueta: document.getElementById('prev-etiqueta').src || null,
-                data: formattedDate,
-                hora: agora.toLocaleTimeString('pt-BR'),
-                timestamp: agora.getTime(),
-                status: 'PENDENTE'
-            };
-
-            document.getElementById('nome').value = nomeLimpo;
-
-            const reviewContainer = document.getElementById('review-data');
-            reviewContainer.innerHTML = `
-                <p style="margin: 5px 0;"><strong>Tipo:</strong> ${currentData.tipo_quebra === 'TRATATIVA' ? 'Item para Tratativa' : 'Quebra Geral/Limpeza'}</p>
-                <p style="margin: 5px 0;"><strong>Cód:</strong> ${currentData.codigo}</p>
-                <p style="margin: 5px 0;"><strong>Produto:</strong> ${currentData.nome}</p>
-                <p style="margin: 5px 0;"><strong>Data:</strong> ${currentData.data}</p>
-                <p style="margin: 5px 0;"><strong>Chegou:</strong> ${currentData.qtd_chegou} ${currentData.unidade}</p>
-                <p style="margin: 5px 0;"><strong>Quantidade Quebra:</strong> ${currentData.qtd_quebra_kg} ${currentData.unidade}</p>
-                <p style="margin: 5px 0;"><strong>Preço de Custo:</strong> ${currentData.preco_custo}</p>
-                <p style="margin: 5px 0;"><strong>Valor Total Quebra:</strong> <span style="color: #ff4444; font-weight: bold;">R$ ${currentData.qtd_quebra}</span></p>
-                <p style="margin: 5px 0;"><strong>Status:</strong> <span style="color: #ffcc00; font-weight: bold;">PENDENTE</span></p>
-            `;
-
-            cadastroScreen.classList.remove('active');
-            reviewScreen.classList.add('active');
-
-            // Habilitar o botão de finalizar imediatamente conforme pedido
-            const btnFinal = document.getElementById('btn-finalizar-tudo');
-            btnFinal.disabled = false;
-            btnFinal.style.backgroundColor = '#28a745';
-            btnFinal.style.color = 'white';
-            btnFinal.style.cursor = 'pointer';
-            btnFinal.style.fontWeight = 'bold';
-            btnFinal.innerText = '✅ CONFIRMAR E SALVAR AGORA';
-            
-            // Ajustar botões de compartilhamento
-            document.querySelectorAll('.btn-send-review').forEach(btn => {
-                btn.style.border = 'none';
-                if (btn.id === 'btn-send-text') {
-                    btn.style.backgroundColor = '#25D366';
-                    btn.innerHTML = '🟢 ENVIAR TEXTO WHATSAPP';
-                } else {
-                    if (tipoQuebra === 'GERAL') {
-                        btn.style.display = 'none';
-                    } else {
-                        btn.style.display = 'block';
-                        btn.style.backgroundColor = '#444';
-                        btn.innerHTML = btn.id === 'btn-send-photo-prod' ? '📸 FOTO PRODUTO' : 
-                                        btn.id === 'btn-send-photo-bal' ? '📸 FOTO BALANÇA' : '📸 FOTO ETIQUETA';
-                    }
-                }
-            });
-        });
-
-        function markAsSent(btn) {
-            btn.style.backgroundColor = '#007bff'; // Azul
-            if (!btn.innerHTML.includes('✅')) {
-                btn.innerHTML += ' ✅';
-            }
-            const btnFinal = document.getElementById('btn-finalizar-tudo');
-            btnFinal.disabled = false;
-            btnFinal.style.backgroundColor = 'var(--btn-new-bg)';
-            btnFinal.style.color = 'black';
-            btnFinal.style.cursor = 'pointer';
-        }
-
-        document.getElementById('btn-send-text').addEventListener('click', function() {
-            if (!currentData) return;
-            // Remover Título: mensagem começa direto com Data e informações.
-            // Sequência: Data, Cód, Produto, Chegou, Quebra.
-            const texto = `${currentData.data}\nCód: ${currentData.codigo}\nProduto: ${currentData.nome}\nChegou: ${currentData.qtd_chegou} ${currentData.unidade}\nQtd Quebra: ${currentData.qtd_quebra_kg} ${currentData.unidade}\nCusto: ${currentData.preco_custo}\nValor Total: ${currentData.qtd_quebra}`;
-            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(texto)}`, '_blank');
-            markAsSent(this);
-        });
-
-        const sharePhoto = async (btn, base64Data, title) => {
-            if (!base64Data || base64Data.length < 100) {
-                alert("Foto não disponível.");
-                return;
-            }
-            try {
-                const response = await fetch(base64Data);
-                const blob = await response.blob();
-                const file = new File([blob], `${title}.jpg`, { type: "image/jpeg" });
-                
-                if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-                    await navigator.share({
-                        files: [file],
-                        title: title,
-                    });
-                    markAsSent(btn);
-                } else {
-                    alert("Seu navegador não suporta compartilhamento de arquivos. O texto já pode ser enviado!");
-                    markAsSent(btn);
-                }
-            } catch (err) {
-                console.error("Erro ao compartilhar:", err);
-            }
-        };
-
-        document.getElementById('btn-send-photo-prod').addEventListener('click', function() { sharePhoto(this, currentData.foto_produto, "Foto_Produto"); });
-        document.getElementById('btn-send-photo-bal').addEventListener('click', function() { sharePhoto(this, currentData.foto_balanca, "Foto_Balanca"); });
-        document.getElementById('btn-send-photo-etiq').addEventListener('click', function() { sharePhoto(this, currentData.foto_etiqueta, "Foto_Etiqueta"); });
-
-        document.getElementById('btn-finalizar-tudo').addEventListener('click', () => {
-            if (!currentData) {
-                alert("Nenhum dado para salvar.");
-                return;
-            }
-
-            if (!db) {
-                alert("Erro: Banco de dados não disponível.");
-                return;
-            }
-
-            const tx = db.transaction([historyStore, draftStore], "readwrite");
-            const histStore = tx.objectStore(historyStore);
-            const drfStore = tx.objectStore(draftStore);
-            
-            const request = histStore.add(currentData);
-            drfStore.delete("current_draft");
-
-            request.onsuccess = () => {
-                feedbackSucesso();
-                formTratativa.reset();
-                
-                // Resetar data para hoje após o reset do form
-                const dateInput = document.getElementById('data-ocorrencia');
-                if (dateInput) {
-                    dateInput.value = new Date().toISOString().split('T')[0];
-                }
-
-                // Resetar botões de unidade
-                document.getElementById('unit-kg').classList.add('active');
-                document.getElementById('unit-und').classList.remove('active');
-                document.getElementById('unidade').value = 'KG';
-
-                document.querySelectorAll('.photo-preview').forEach(img => {
-                    img.src = '';
-                    img.style.display = 'none';
-                });
-                
-                currentData = null;
-                updateResultsDashboard(); // Garante atualização do dashboard
-                reviewScreen.classList.remove('active');
-                showScreen('results-screen'); // Volta para o painel
-            };
-
-            request.onerror = (err) => {
-                console.error("Erro ao finalizar Tratativa:", err);
-                alert("Erro ao salvar no banco de dados.");
-            };
-        });
     </script>
 </body>
 </html>
