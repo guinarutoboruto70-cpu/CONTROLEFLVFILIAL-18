@@ -292,14 +292,45 @@
         const historyStore = "historico";
         let db;
 
-        const produtosFLV = { 
-            '7028': {nome: 'TOMATE', uni: 'KG'}, 
-            '1125': {nome: 'CEBOLA', uni: 'KG'}, 
-            '2030': {nome: 'PIMENTÃO', uni: 'KG'},
-            '3560': {nome: 'MELANCIA', uni: 'UND'},
-            '1120': {nome: 'ALHO', uni: 'KG'},
-            '1540': {nome: 'BATATA', uni: 'KG'},
-            '2233': {nome: 'BANANA', uni: 'KG'}
+        const LISTA_PRODUTOS = { 
+            "1124": { nome: "ABACATE", unidade: "KG" }, 
+            "1125": { nome: "ABACAXI", unidade: "UND" }, 
+            "1129": { nome: "ABOBORA ITALIA", unidade: "KG" }, 
+            "242":  { nome: "ALHO", unidade: "KG" }, 
+            "744":  { nome: "AMEIXA BDJ 500G", unidade: "UND" }, 
+            "739":  { nome: "AMEIXA", unidade: "KG" }, 
+            "537":  { nome: "BANANA MACA", unidade: "KG" }, 
+            "538":  { nome: "BANANA NANICA", unidade: "KG" }, 
+            "541":  { nome: "BANANA PRATA", unidade: "KG" }, 
+            "543":  { nome: "BANANA TERRA", unidade: "KG" }, 
+            "681":  { nome: "BATATA DOCE", unidade: "KG" }, 
+            "7714": { nome: "BETERRABA", unidade: "KG" }, 
+            "8459": { nome: "CAQUI BDJ 500G", unidade: "UND" }, 
+            "8461": { nome: "CARA", unidade: "KG" }, 
+            "8574": { nome: "CEBOLA ROXA", unidade: "KG" }, 
+            "7547": { nome: "CHUCHU", unidade: "KG" }, 
+            "7620": { nome: "COCO SECO", unidade: "KG" }, 
+            "7622": { nome: "COCO VERDE", unidade: "UND" }, 
+            "5558": { nome: "LARANJA PERA", unidade: "KG" }, 
+            "4362": { nome: "LIMAO", unidade: "KG" }, 
+            "10750":{ nome: "MACA FUJI", unidade: "KG" }, 
+            "3280": { nome: "MACA GALA NAC", unidade: "KG" }, 
+            "3284": { nome: "MACA PCT 1KG", unidade: "UND" }, 
+            "3343": { nome: "MAMAO FORMOSA", unidade: "KG" }, 
+            "3369": { nome: "MANGA PALMER", unidade: "KG" }, 
+            "3370": { nome: "MANGA TOMMY", unidade: "KG" }, 
+            "3582": { nome: "MEXERICA PONKAN", unidade: "KG" }, 
+            "3585": { nome: "MILHO VERDE BDJ 5UN", unidade: "UND" }, 
+            "1766": { nome: "PEPINO COMUM", unidade: "KG" }, 
+            "1768": { nome: "PEPINO JAPONES", unidade: "KG" }, 
+            "1327": { nome: "REPOLHO BCO", unidade: "KG" }, 
+            "1329": { nome: "REPOLHO ROXO", unidade: "KG" }, 
+            "7018": { nome: "TOMATE GRAPE 180G", unidade: "UND" }, 
+            "7021": { nome: "TOMATE GRAPE", unidade: "KG" }, 
+            "7028": { nome: "TOMATE", unidade: "KG" }, 
+            "7090": { nome: "UVA PTA 500G S/S", unidade: "UND" }, 
+            "7089": { nome: "UVA VERDE 500G S/S", unidade: "UND" }, 
+            "7088": { nome: "UVA VERM 500G S/S", unidade: "UND" } 
         };
 
         // --- 2. INICIALIZAÇÃO DO BANCO ---
@@ -323,13 +354,13 @@
             const listCod = document.getElementById('lista-codigos');
             const listNom = document.getElementById('lista-nomes');
             
-            for (const cod in produtosFLV) {
+            for (const cod in LISTA_PRODUTOS) {
                 const optCod = document.createElement('option');
                 optCod.value = cod;
                 listCod.appendChild(optCod);
                 
                 const optNom = document.createElement('option');
-                optNom.value = produtosFLV[cod].nome;
+                optNom.value = LISTA_PRODUTOS[cod].nome;
                 listNom.appendChild(optNom);
             }
 
@@ -343,17 +374,17 @@
         }
 
         function preencher(cod, nomeId, unitId) {
-            if (produtosFLV[cod]) {
-                document.getElementById(nomeId).value = produtosFLV[cod].nome;
-                document.getElementById(unitId).value = produtosFLV[cod].uni;
+            if (LISTA_PRODUTOS[cod]) {
+                document.getElementById(nomeId).value = LISTA_PRODUTOS[cod].nome;
+                document.getElementById(unitId).value = LISTA_PRODUTOS[cod].unidade;
             }
         }
 
         function preencherPorNome(nome, codId, unitId) {
-            for (const cod in produtosFLV) {
-                if (produtosFLV[cod].nome === nome.toUpperCase()) {
+            for (const cod in LISTA_PRODUTOS) {
+                if (LISTA_PRODUTOS[cod].nome === nome.toUpperCase()) {
                     document.getElementById(codId).value = cod;
-                    document.getElementById(unitId).value = produtosFLV[cod].uni;
+                    document.getElementById(unitId).value = LISTA_PRODUTOS[cod].unidade;
                     break;
                 }
             }
