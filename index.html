@@ -645,18 +645,29 @@
     <!-- Modal de Aprovação/Edição -->
     <div id="modal-approval" class="screen" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; padding: 20px;">
         <div style="background: #1a1a1a; width: 100%; max-width: 400px; padding: 25px; border-radius: 15px; border: 1px solid #333; box-shadow: 0 0 20px rgba(0,0,0,0.5);">
-            <h3 style="color: #ffcc00; margin-top: 0; text-align: center;">Aprovar Tratativa</h3>
-            <p id="modal-product-name" style="font-weight: bold; color: white; text-align: center; margin-bottom: 20px;"></p>
+            <h3 style="color: #ffcc00; margin-top: 0; text-align: center;">Aprovação Parcial</h3>
+            <p id="modal-product-name" style="font-weight: bold; color: white; text-align: center; margin-bottom: 5px;"></p>
+            <p id="modal-original-info" style="color: #888; text-align: center; font-size: 0.85rem; margin-bottom: 20px;"></p>
             
             <div style="margin-bottom: 20px;">
-                <label style="display: block; color: #aaa; font-size: 0.9rem; margin-bottom: 8px;">Quantidade de Quebra:</label>
-                <input type="text" id="modal-edit-qty" inputmode="decimal" class="input-field" style="width: 100%; font-size: 1.5rem; text-align: center; color: #ff4444; background: #000; border: 1px solid #444;">
-                <small style="color: #666; display: block; margin-top: 5px; text-align: center;">(Você pode ajustar o valor antes de aprovar)</small>
+                <label style="display: block; color: #aaa; font-size: 0.9rem; margin-bottom: 8px;">Quantidade Aprovada (Salva):</label>
+                <input type="text" id="modal-edit-qty" inputmode="decimal" class="input-field" style="width: 100%; font-size: 1.5rem; text-align: center; color: #28a745; background: #000; border: 1px solid #444;">
+                <div style="display: flex; justify-content: space-between; margin-top: 10px; padding: 10px; background: #000; border-radius: 8px;">
+                    <div style="text-align: center; flex: 1;">
+                        <small style="color: #28a745; display: block; font-size: 0.7rem;">VALOR SALVO</small>
+                        <span id="modal-calc-salvo" style="color: #28a745; font-weight: bold; font-size: 1rem;">R$ 0,00</span>
+                    </div>
+                    <div style="width: 1px; background: #333; margin: 0 10px;"></div>
+                    <div style="text-align: center; flex: 1;">
+                        <small style="color: #ff4444; display: block; font-size: 0.7rem;">SALDO QUEBRA</small>
+                        <span id="modal-calc-saldo" style="color: #ff4444; font-weight: bold; font-size: 1rem;">R$ 0,00</span>
+                    </div>
+                </div>
             </div>
 
             <div style="display: flex; gap: 10px;">
                 <button onclick="closeApprovalModal()" class="btn" style="background: #444; color: white; flex: 1;">CANCELAR</button>
-                <button id="btn-confirm-approval" class="btn" style="background: #28a745; color: white; flex: 2; font-weight: bold;">✅ CONFIRMAR E APROVAR</button>
+                <button id="btn-confirm-approval" class="btn" style="background: #28a745; color: white; flex: 2; font-weight: bold;">✅ APROVAR</button>
             </div>
         </div>
     </div>
@@ -1199,15 +1210,23 @@
 
                 logs.forEach(item => {
                     if (item.data === selectedDateBR) {
-                        const valor = parseCommaFloat(item.qtd_quebra || 0);
+                        const valorOriginal = parseCommaFloat(item.qtd_quebra || 0);
                         
                         if (item.tipo_quebra === 'GERAL') {
-                            quebraGeral += valor;
+                            quebraGeral += valorOriginal;
+                            quebraBruta += valorOriginal;
                         } else {
-                            quebraTratativa += valor;
+                            // Se for TRATATIVA
+                            quebraTratativa += valorOriginal;
+                            quebraBruta += valorOriginal;
                             
-                            // Adicionar à lista de pendentes se não estiver concluído
-                            if (item.status !== 'CONCLUÍDO') {
+                            if (item.status === 'CONCLUÍDO') {
+                                // Se aprovado, a economia é o valor_salvo (calculado na aprovação)
+                                // E o saldo não aprovado vai para Quebra Geral
+                                valorSalvo += (item.valor_salvo || 0);
+                                quebraGeral += (item.valor_saldo_geral || 0);
+                            } else {
+                                // Adicionar à lista de pendentes
                                 hasPending = true;
                                 const pItem = document.createElement('div');
                                 pItem.className = 'pending-item-dash';
@@ -1215,7 +1234,7 @@
                                 pItem.innerHTML = `
                                     <div style="flex: 1;">
                                         <div style="color: #fff; font-weight: bold; font-size: 0.85rem;">${item.nome}</div>
-                                        <div style="color: #ffcc00; font-size: 0.8rem;">R$ ${valor.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
+                                        <div style="color: #ffcc00; font-size: 0.8rem;">R$ ${valorOriginal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
                                     </div>
                                     <button onclick="approveFromDashboard(${item.id})" style="background: #28a745; border: none; color: white; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 0.75rem; font-weight: bold;">
                                         ✅ APROVAR
@@ -1223,12 +1242,6 @@
                                 `;
                                 pendingListEl.appendChild(pItem);
                             }
-                        }
-                        
-                        quebraBruta += valor;
-                        
-                        if (item.status === 'CONCLUÍDO') {
-                            valorSalvo += valor;
                         }
                     }
                 });
@@ -1287,20 +1300,84 @@
         }
 
         window.approveFromDashboard = function(id) {
-            const tx = db.transaction(historyStore, "readwrite");
+            const tx = db.transaction(historyStore, "readonly");
             const store = tx.objectStore(historyStore);
             const request = store.get(id);
 
             request.onsuccess = () => {
                 const item = request.result;
-                item.status = 'CONCLUÍDO';
-                store.put(item);
+                if (!item) return;
+
+                const modal = document.getElementById('modal-approval');
+                const nameEl = document.getElementById('modal-product-name');
+                const infoEl = document.getElementById('modal-original-info');
+                const qtyInput = document.getElementById('modal-edit-qty');
+                const valSalvoEl = document.getElementById('modal-calc-salvo');
+                const valSaldoEl = document.getElementById('modal-calc-saldo');
+                const btnConfirm = document.getElementById('btn-confirm-approval');
+
+                nameEl.innerText = item.nome;
+                infoEl.innerText = `Original: ${item.qtd_quebra_kg} ${item.unidade} (Custo: ${item.preco_custo})`;
                 
-                tx.oncomplete = () => {
-                    updateResultsDashboard();
-                    // Opcional: mostrar um feedback visual rápido
+                // Preenche com a quantidade original
+                qtyInput.value = item.qtd_quebra_kg;
+
+                const updateModalCalcs = () => {
+                    const originalQty = parseCommaFloat(item.qtd_quebra_kg);
+                    const approvedQty = parseCommaFloat(qtyInput.value);
+                    const custo = parseCurrency(item.preco_custo);
+
+                    const valorSalvo = approvedQty * custo;
+                    const valorSaldo = (originalQty - approvedQty) * custo;
+
+                    valSalvoEl.innerText = `R$ ${valorSalvo.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+                    valSaldoEl.innerText = `R$ ${valorSaldo.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
                 };
+
+                qtyInput.oninput = () => {
+                    let value = qtyInput.value.replace(/[^0-9,]/g, '');
+                    const parts = value.split(',');
+                    if (parts.length > 2) value = parts[0] + ',' + parts.slice(1).join('');
+                    qtyInput.value = value;
+                    updateModalCalcs();
+                };
+
+                updateModalCalcs();
+
+                btnConfirm.onclick = () => {
+                    const approvedQty = parseCommaFloat(qtyInput.value);
+                    const originalQty = parseCommaFloat(item.qtd_quebra_kg);
+                    const custo = parseCurrency(item.preco_custo);
+
+                    const valorSalvo = approvedQty * custo;
+                    const valorSaldo = (originalQty - approvedQty) * custo;
+
+                    // Atualiza o item
+                    item.status = 'CONCLUÍDO';
+                    item.qtd_aprovada_kg = qtyInput.value;
+                    item.valor_salvo = valorSalvo;
+                    item.valor_saldo_geral = valorSaldo;
+                    
+                    // O Valor da Quebra (Original) se mantém o mesmo para o cálculo de Quebra Bruta
+                    // Mas a economia gerada é apenas o valor_salvo
+
+                    const updateTx = db.transaction(historyStore, "readwrite");
+                    const updateStore = updateTx.objectStore(historyStore);
+                    updateStore.put(item);
+
+                    updateTx.oncomplete = () => {
+                        closeApprovalModal();
+                        updateResultsDashboard();
+                        feedbackSucesso();
+                    };
+                };
+
+                modal.style.display = 'flex';
             };
+        };
+
+        window.closeApprovalModal = function() {
+            document.getElementById('modal-approval').style.display = 'none';
         };
 
         const btnRelatorioDiario = document.getElementById('btn-relatorio-diario');
