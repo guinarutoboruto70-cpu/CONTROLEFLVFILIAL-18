@@ -232,6 +232,23 @@
             justify-content: center;
         }
 
+        .btn-wa-photo {
+            position: absolute;
+            bottom: 2px;
+            left: 2px;
+            background: rgba(37, 211, 102, 0.8);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            width: 18px;
+            height: 18px;
+            font-size: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
         .actions-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -639,20 +656,26 @@
                         </button>
                         
                         <div style="border-top: 1px solid #333; margin: 5px 0; padding-top: 10px;">
-                            <button id="btn-send-prod" class="btn-wa-action" onclick="sendWhatsAppMedia('preview-produto', 'PRODUTO')">
-                                📸 ENVIAR FOTOS DO PRODUTO
+                            <label style="font-size: 0.7rem; color: #888; display: block; margin-bottom: 5px;">FOTOS DO PRODUTO</label>
+                            <div id="rev-preview-produto" class="preview-container"></div>
+                            <button id="btn-send-prod" class="btn-wa-action" style="margin-top: 5px;" onclick="sendWhatsAppMedia('preview-produto', 'PRODUTO')">
+                                📸 ENVIAR TODAS DO PRODUTO
                             </button>
                         </div>
                         
-                        <div>
-                            <button id="btn-send-bal" class="btn-wa-action" onclick="sendWhatsAppMedia('preview-balanca', 'BALANÇA')">
-                                ⚖️ ENVIAR FOTOS DA BALANÇA
+                        <div style="margin-top: 10px;">
+                            <label style="font-size: 0.7rem; color: #888; display: block; margin-bottom: 5px;">FOTOS DA BALANÇA</label>
+                            <div id="rev-preview-balanca" class="preview-container"></div>
+                            <button id="btn-send-bal" class="btn-wa-action" style="margin-top: 5px;" onclick="sendWhatsAppMedia('preview-balanca', 'BALANÇA')">
+                                ⚖️ ENVIAR TODAS DA BALANÇA
                             </button>
                         </div>
                         
-                        <div>
-                            <button id="btn-send-etiq" class="btn-wa-action" onclick="sendWhatsAppMedia('preview-etiqueta', 'ETIQUETA')">
-                                🏷️ ENVIAR FOTO DA ETIQUETA
+                        <div style="margin-top: 10px;">
+                            <label style="font-size: 0.7rem; color: #888; display: block; margin-bottom: 5px;">FOTO DA ETIQUETA</label>
+                            <div id="rev-preview-etiqueta" class="preview-container"></div>
+                            <button id="btn-send-etiq" class="btn-wa-action" style="margin-top: 5px;" onclick="sendWhatsAppMedia('preview-etiqueta', 'ETIQUETA')">
+                                🏷️ ENVIAR ETIQUETA
                             </button>
                         </div>
                     </div>
@@ -1013,6 +1036,11 @@
             document.getElementById('btn-send-bal').disabled = selectedMedia['preview-balanca'].length === 0;
             document.getElementById('btn-send-etiq').disabled = selectedMedia['preview-etiqueta'].length === 0;
 
+            // Renderiza as prévias na tela de revisão
+            renderPreview('preview-produto');
+            renderPreview('preview-balanca');
+            renderPreview('preview-etiqueta');
+
             showScreen('review-screen');
         }
 
@@ -1101,12 +1129,16 @@
                         ${item.media ? `
                             <div style="margin-top: 8px; display: flex; gap: 5px; flex-wrap: wrap;">
                                 ${Object.keys(item.media).map(key => 
-                                    item.media[key].map((img, i) => `
-                                        <div style="position: relative; width: 40px; height: 40px; border: 1px solid #444; border-radius: 4px; overflow: hidden;" onclick="downloadPhoto('${img}', '${key}_${i}.jpg')">
-                                            <img src="${img}" style="width: 100%; height: 100%; object-fit: cover;">
-                                            <div style="position: absolute; bottom: 0; right: 0; background: rgba(0,0,0,0.5); color: #ffcc00; font-size: 8px; padding: 1px;">💾</div>
-                                        </div>
-                                    `).join('')
+                                    item.media[key].map((img, i) => {
+                                        const category = key === 'preview-produto' ? 'PRODUTO' : (key === 'preview-balanca' ? 'BALANÇA' : 'ETIQUETA');
+                                        return `
+                                            <div style="position: relative; width: 45px; height: 45px; border: 1px solid #444; border-radius: 4px; overflow: hidden;">
+                                                <img src="${img}" style="width: 100%; height: 100%; object-fit: cover;">
+                                                <div style="position: absolute; bottom: 0; right: 0; background: rgba(0,0,0,0.5); color: #ffcc00; font-size: 8px; padding: 2px; cursor: pointer;" onclick="downloadPhoto('${img}', '${key}_${i}.jpg')">💾</div>
+                                                <div style="position: absolute; bottom: 0; left: 0; background: rgba(37,211,102,0.7); color: #fff; font-size: 8px; padding: 2px; cursor: pointer;" onclick="sendIndividualPhotoWA('${img}', '${category}', ${i})">�</div>
+                                            </div>
+                                        `;
+                                    }).join('')
                                 ).join('')}
                             </div>
                         ` : ''}
@@ -1188,17 +1220,32 @@
 
         function renderPreview(previewId) {
             const container = document.getElementById(previewId);
-            container.innerHTML = '';
+            const reviewContainer = document.getElementById('rev-' + previewId);
+            
+            if (container) container.innerHTML = '';
+            if (reviewContainer) reviewContainer.innerHTML = '';
+
+            const categoryMap = {
+                'preview-produto': 'PRODUTO',
+                'preview-balanca': 'BALANÇA',
+                'preview-etiqueta': 'ETIQUETA'
+            };
 
             selectedMedia[previewId].forEach((base64, index) => {
-                const item = document.createElement('div');
-                item.className = 'preview-item';
-                item.innerHTML = `
-                    <img src="${base64}">
-                    <button type="button" class="btn-remove-photo" onclick="removePhoto('${previewId}', ${index})">&times;</button>
-                    <button type="button" class="btn-download-photo" onclick="downloadPhoto('${base64}', 'foto_${previewId}_${index}.jpg')">⬇️</button>
-                `;
-                container.appendChild(item);
+                const createItem = (isReview = false) => {
+                    const item = document.createElement('div');
+                    item.className = 'preview-item';
+                    item.innerHTML = `
+                        <img src="${base64}">
+                        ${!isReview ? `<button type="button" class="btn-remove-photo" onclick="removePhoto('${previewId}', ${index})">&times;</button>` : ''}
+                        <button type="button" class="btn-download-photo" onclick="downloadPhoto('${base64}', 'foto_${previewId}_${index}.jpg')" title="Baixar Foto">⬇️</button>
+                        <button type="button" class="btn-wa-photo" onclick="sendIndividualPhotoWA('${base64}', '${categoryMap[previewId]}', ${index})" title="Enviar via WhatsApp">📱</button>
+                    `;
+                    return item;
+                };
+
+                if (container) container.appendChild(createItem(false));
+                if (reviewContainer) reviewContainer.appendChild(createItem(true));
             });
         }
 
@@ -1214,6 +1261,24 @@
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+        }
+
+        async function sendIndividualPhotoWA(base64, category, index) {
+            const prodName = document.getElementById('produto').value.toUpperCase() || 'PRODUTO';
+            const filename = `AUDITORIA_${category}_${index + 1}.jpg`;
+            
+            // 1. Baixa a foto individualmente
+            downloadPhoto(base64, filename);
+
+            // 2. Pequeno delay para garantir o início do download e abre o WhatsApp
+            setTimeout(() => {
+                const texto = `*FOTO DA ${category}*\n` +
+                              `Produto: ${prodName}\n` +
+                              `_Anexe a foto que acabou de ser baixada._`;
+                
+                const encodedText = encodeURIComponent(texto);
+                window.open(`https://wa.me/?text=${encodedText}`, '_blank');
+            }, 500);
         }
 
         // --- 9. INTEGRAÇÃO WHATSAPP ---
