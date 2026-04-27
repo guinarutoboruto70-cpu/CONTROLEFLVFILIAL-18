@@ -573,58 +573,59 @@
         </div>
 
         <div id="capture-area" style="background: var(--bg-color); padding: 10px; border-radius: 15px;">
-            <div style="text-align: center; margin-bottom: 15px;">
-                <h3 style="color: #ffcc00; margin: 0; font-size: 1.2rem;">GESTÃO UNIFICADA FLV</h3>
-                <h4 style="color: #fff; margin: 5px 0; font-size: 1rem;">Performance - <span id="dash-current-date">--/--/----</span></h4>
+            <div style="text-align: center; margin-bottom: 12px;">
+                <h3 style="color: #ffcc00; margin: 0; font-size: 1rem;">GESTÃO UNIFICADA FLV</h3>
+                <h4 style="color: #fff; margin: 3px 0; font-size: 0.85rem;">Performance - <span id="dash-current-date">--/--/----</span></h4>
             </div>
 
-            <div class="dashboard-grid" style="display: flex; flex-direction: column; gap: 20px;">
+            <div class="dashboard-grid" style="display: flex; flex-direction: column; gap: 15px;">
                 <!-- Seção Superior: Indicador IG -->
-                <div id="card-ig-box" style="background: #1a1a1a; padding: 20px; border-radius: 15px; border: 2px solid #333; text-align: center;">
-                    <small style="color: #888; display: block; font-size: 0.8rem; margin-bottom: 5px;">ÍNDICE DE QUEBRA (IG %)</small>
-                    <div id="val-ig-percent" style="font-size: 2.8rem; font-weight: bold; color: #fff;">0,00%</div>
-                    <div id="status-ig" style="font-size: 0.85rem; font-weight: bold; margin-top: 5px; padding: 4px 15px; border-radius: 20px; display: inline-block;">-</div>
+                <div id="card-ig-box" style="background: #1a1a1a; padding: 15px; border-radius: 15px; border: 2px solid #333; text-align: center;">
+                    <small style="color: #888; display: block; font-size: 0.7rem; margin-bottom: 2px;">ÍNDICE DE QUEBRA (IG %)</small>
+                    <div id="val-ig-percent" style="font-size: 2.2rem; font-weight: bold; color: #fff;">0,00%</div>
+                    <div id="status-ig" style="font-size: 0.75rem; font-weight: bold; margin-top: 2px; padding: 2px 12px; border-radius: 20px; display: inline-block;">-</div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+                <div style="display: grid; grid-template-columns: 1fr; gap: 15px;">
                     <!-- Coluna 1: Pendentes -->
-                    <div style="background: #111; padding: 15px; border-radius: 15px; border: 1px solid #333;">
-                        <h3 style="color: #ffcc00; font-size: 1rem; margin: 0 0 15px 0; text-align: center; border-bottom: 1px solid #333; padding-bottom: 10px;">ITENS PENDENTES</h3>
-                        <div id="dash-pending-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 300px; overflow-y: auto; padding-right: 5px;">
+                    <div style="background: #111; padding: 12px; border-radius: 15px; border: 1px solid #333;">
+                        <h3 style="color: #ffcc00; font-size: 0.9rem; margin: 0 0 10px 0; text-align: center; border-bottom: 1px solid #333; padding-bottom: 8px;">ITENS PENDENTES</h3>
+                        <div id="dash-pending-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 180px; overflow-y: auto; padding-right: 5px;">
                             <!-- Itens pendentes via JS -->
-                            <p style="color: #666; text-align: center; font-size: 0.9rem;">Nenhuma tratativa pendente.</p>
+                            <p style="color: #666; text-align: center; font-size: 0.8rem;">Nenhuma tratativa pendente.</p>
                         </div>
                     </div>
 
                     <!-- Coluna 2: Resumo Financeiro -->
-                    <div style="background: #111; padding: 15px; border-radius: 15px; border: 1px solid #333;">
-                        <h3 style="color: #007bff; font-size: 1rem; margin: 0 0 15px 0; text-align: center; border-bottom: 1px solid #333; padding-bottom: 10px;">RESUMO FINANCEIRO</h3>
+                    <div style="background: #111; padding: 12px; border-radius: 15px; border: 1px solid #333;">
+                        <h3 style="color: #007bff; font-size: 0.9rem; margin: 0 0 12px 0; text-align: center; border-bottom: 1px solid #333; padding-bottom: 8px;">RESUMO FINANCEIRO</h3>
                         
-                        <div style="display: flex; flex-direction: column; gap: 12px;">
-                            <div style="background: #1a1a1a; padding: 12px; border-radius: 10px; border-left: 4px solid #fff;">
-                                <small style="color: #888; display: block; font-size: 0.7rem;">QUEBRA (TOTAL)</small>
-                                <span id="val-quebra-bruta" style="color: #fff; font-weight: bold; font-size: 1.3rem;">R$ 0,00</span>
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                <div style="background: #1a1a1a; padding: 10px; border-radius: 10px; border-left: 3px solid #fff;">
+                                    <small style="color: #888; display: block; font-size: 0.6rem;">QUEBRA (TOTAL)</small>
+                                    <span id="val-quebra-bruta" style="color: #fff; font-weight: bold; font-size: 1.1rem;">R$ 0,00</span>
+                                </div>
+                                
+                                <div style="background: #1a1a1a; padding: 10px; border-radius: 10px; border-left: 3px solid #28a745;">
+                                    <small style="color: #888; display: block; font-size: 0.6rem;">ECONOMIA (SALVA)</small>
+                                    <span id="val-economia-results" style="color: #28a745; font-weight: bold; font-size: 1.1rem;">R$ 0,00</span>
+                                </div>
+
+                                <div style="background: #1a1a1a; padding: 10px; border-radius: 10px; border-left: 3px solid #ff4444;">
+                                    <small style="color: #888; display: block; font-size: 0.6rem;">PERDA CONCILIADA</small>
+                                    <span id="val-quebra-liquida" style="color: #ff4444; font-weight: bold; font-size: 1.1rem;">R$ 0,00</span>
+                                </div>
+
+                                <div style="background: #1a1a1a; padding: 10px; border-radius: 10px; border-left: 3px solid #ffcc00;">
+                                    <small style="color: #888; display: block; font-size: 0.6rem;">TRATATIVAS</small>
+                                    <span id="val-quebra-tratativa" style="color: #ffcc00; font-weight: bold; font-size: 1.1rem;">R$ 0,00</span>
+                                </div>
                             </div>
                             
-                            <div style="background: #1a1a1a; padding: 12px; border-radius: 10px; border-left: 4px solid #28a745;">
-                                <small style="color: #888; display: block; font-size: 0.7rem;">ECONOMIA GERADA (SALVA)</small>
-                                <span id="val-economia-results" style="color: #28a745; font-weight: bold; font-size: 1.3rem;">R$ 0,00</span>
-                            </div>
-
-                            <div style="background: #1a1a1a; padding: 12px; border-radius: 10px; border-left: 4px solid #ff4444;">
-                                <small style="color: #888; display: block; font-size: 0.7rem;">PERDA TOTAL CONCILIADA</small>
-                                <span id="val-quebra-liquida" style="color: #ff4444; font-weight: bold; font-size: 1.3rem;">R$ 0,00</span>
-                            </div>
-
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 5px;">
-                                <div style="background: #1a1a1a; padding: 10px; border-radius: 8px; text-align: center; border: 1px solid #333;">
-                                    <small style="color: #888; display: block; font-size: 0.65rem;">TRATATIVAS</small>
-                                    <span id="val-quebra-tratativa" style="color: #ffcc00; font-weight: bold; font-size: 0.9rem;">R$ 0,00</span>
-                                </div>
-                                <div style="background: #1a1a1a; padding: 10px; border-radius: 8px; text-align: center; border: 1px solid #333;">
-                                    <small style="color: #888; display: block; font-size: 0.65rem;">GERAL/LIMPEZA</small>
-                                    <span id="val-quebra-geral" style="color: #007bff; font-weight: bold; font-size: 0.9rem;">R$ 0,00</span>
-                                </div>
+                            <div style="background: #1a1a1a; padding: 8px; border-radius: 8px; text-align: center; border: 1px solid #333;">
+                                <small style="color: #888; display: inline-block; font-size: 0.65rem; margin-right: 5px;">GERAL/LIMPEZA:</small>
+                                <span id="val-quebra-geral" style="color: #007bff; font-weight: bold; font-size: 0.9rem;">R$ 0,00</span>
                             </div>
                         </div>
                     </div>
@@ -1232,12 +1233,13 @@
                                 pItem.className = 'pending-item-dash';
                                 pItem.style = 'background: #1a1a1a; padding: 10px; border-radius: 8px; border-left: 3px solid #ffcc00; display: flex; justify-content: space-between; align-items: center;';
                                 pItem.innerHTML = `
-                                    <div style="flex: 1;">
-                                        <div style="color: #fff; font-weight: bold; font-size: 0.85rem;">${item.nome}</div>
-                                        <div style="color: #ffcc00; font-size: 0.8rem;">R$ ${valorOriginal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
+                                    <div style="flex: 1; display: flex; align-items: center; gap: 8px;">
+                                        <div style="color: #fff; font-weight: bold; font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;">${item.nome}</div>
+                                        <div style="color: #aaa; font-size: 0.75rem;">${item.qtd_quebra_kg}${item.unidade}</div>
+                                        <div style="color: #ffcc00; font-weight: bold; font-size: 0.8rem; margin-left: auto; margin-right: 10px;">R$ ${valorOriginal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
                                     </div>
-                                    <button onclick="approveFromDashboard(${item.id})" style="background: #28a745; border: none; color: white; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 0.75rem; font-weight: bold;">
-                                        ✅ APROVAR
+                                    <button onclick="approveFromDashboard(${item.id})" style="background: #28a745; border: none; color: white; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.7rem; font-weight: bold; white-space: nowrap;">
+                                        ✅ OK
                                     </button>
                                 `;
                                 pendingListEl.appendChild(pItem);
