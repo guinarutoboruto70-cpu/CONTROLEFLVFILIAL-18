@@ -112,6 +112,131 @@
             cursor: pointer;
             width: 100%;
             margin-top: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-whatsapp {
+            background: #25d366;
+            color: #fff;
+            margin-top: 10px;
+        }
+
+        .media-section {
+            background: #1f1f1f;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 10px;
+            border: 1px solid #333;
+        }
+
+        .media-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .media-title {
+            font-size: 0.8rem;
+            color: var(--primary);
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .media-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .media-input-wrapper input[type=file] {
+            font-size: 100px;
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .btn-media {
+            background: #333;
+            color: #fff;
+            border: 1px dashed #555;
+            padding: 8px;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 0.75rem;
+            width: 100%;
+            display: block;
+        }
+
+        .preview-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .preview-item {
+            position: relative;
+            width: 70px;
+            height: 70px;
+            border-radius: 4px;
+            overflow: hidden;
+            border: 1px solid #444;
+        }
+
+        .preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .btn-remove-photo {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            background: rgba(255, 0, 0, 0.7);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-download-photo {
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            background: rgba(0, 0, 0, 0.6);
+            color: var(--primary);
+            border: none;
+            border-radius: 4px;
+            width: 18px;
+            height: 18px;
+            font-size: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .actions-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
         }
 
         .history-card { 
@@ -309,7 +434,51 @@
                         <label>Preço Custo (R$)</label>
                         <input type="text" id="preco_custo" placeholder="0,00">
                     </div>
-                    <button type="submit" class="btn-save">✅ SALVAR TRATATIVA</button>
+
+                    <!-- SEÇÃO DE MÍDIA -->
+                    <div class="media-section">
+                        <div class="media-header">
+                            <span class="media-title">📸 FOTOS DO PRODUTO</span>
+                        </div>
+                        <div class="media-input-wrapper">
+                            <span class="btn-media">Selecionar Fotos (Galeria)</span>
+                            <input type="file" id="fotos_produto" accept="image/*" multiple onchange="handleMediaSelect(event, 'preview-produto')">
+                        </div>
+                        <div id="preview-produto" class="preview-container"></div>
+                    </div>
+
+                    <div class="media-section">
+                        <div class="media-header">
+                            <span class="media-title">⚖️ FOTOS DA BALANÇA</span>
+                        </div>
+                        <div class="media-input-wrapper">
+                            <span class="btn-media">Selecionar Fotos (Galeria)</span>
+                            <input type="file" id="fotos_balanca" accept="image/*" multiple onchange="handleMediaSelect(event, 'preview-balanca')">
+                        </div>
+                        <div id="preview-balanca" class="preview-container"></div>
+                    </div>
+
+                    <div class="media-section">
+                        <div class="media-header">
+                            <span class="media-title">🏷️ FOTO DA ETIQUETA</span>
+                        </div>
+                        <div class="row">
+                            <div class="media-input-wrapper">
+                                <span class="btn-media">📸 Câmera</span>
+                                <input type="file" id="foto_etiqueta_cam" accept="image/*" capture="environment" onchange="handleMediaSelect(event, 'preview-etiqueta', true)">
+                            </div>
+                            <div class="media-input-wrapper">
+                                <span class="btn-media">🖼️ Galeria</span>
+                                <input type="file" id="foto_etiqueta_gal" accept="image/*" onchange="handleMediaSelect(event, 'preview-etiqueta', true)">
+                            </div>
+                        </div>
+                        <div id="preview-etiqueta" class="preview-container"></div>
+                    </div>
+
+                    <div class="actions-row">
+                        <button type="submit" class="btn-save">✅ SALVAR</button>
+                        <button type="button" class="btn-save btn-whatsapp" onclick="sendWhatsApp()">📱 WHATSAPP</button>
+                    </div>
                 </form>
             </div>
         </div>
@@ -686,6 +855,7 @@
                 qtd_chegou: document.getElementById('qtd_chegou').value,
                 qtd_quebra: document.getElementById('qtd_quebra').value,
                 preco_custo: document.getElementById('preco_custo').value,
+                media: { ...selectedMedia }, // Salva as fotos
                 tipo: 'TRATATIVA',
                 data: new Date().toLocaleDateString('pt-BR'),
                 timestamp: Date.now()
@@ -717,6 +887,17 @@
                 document.getElementById('tratativa-form').reset();
                 document.getElementById('geral-form').reset();
                 document.getElementById('geral-valor-total').innerText = "R$ 0,00";
+                
+                // Limpar mídias
+                selectedMedia = {
+                    'preview-produto': [],
+                    'preview-balanca': [],
+                    'preview-etiqueta': []
+                };
+                document.getElementById('preview-produto').innerHTML = '';
+                document.getElementById('preview-balanca').innerHTML = '';
+                document.getElementById('preview-etiqueta').innerHTML = '';
+
                 showScreen('results-screen');
             };
         }
@@ -747,6 +928,18 @@
                         <div class="card-date">${item.data}</div>
                         <div class="card-chegou">Chegou: ${qChegou} ${unit}</div>
                         <div class="card-quebra">Quantidade da quebra: ${qQuebra} ${unit}</div>
+                        ${item.media ? `
+                            <div style="margin-top: 8px; display: flex; gap: 5px; flex-wrap: wrap;">
+                                ${Object.keys(item.media).map(key => 
+                                    item.media[key].map((img, i) => `
+                                        <div style="position: relative; width: 40px; height: 40px; border: 1px solid #444; border-radius: 4px; overflow: hidden;" onclick="downloadPhoto('${img}', '${key}_${i}.jpg')">
+                                            <img src="${img}" style="width: 100%; height: 100%; object-fit: cover;">
+                                            <div style="position: absolute; bottom: 0; right: 0; background: rgba(0,0,0,0.5); color: #ffcc00; font-size: 8px; padding: 1px;">💾</div>
+                                        </div>
+                                    `).join('')
+                                ).join('')}
+                            </div>
+                        ` : ''}
                     `;
                     list.appendChild(card);
                     cursor.continue();
@@ -787,6 +980,93 @@
                     document.getElementById('total-quebra-geral').innerText = `R$ ${totalQG.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
                 }
             };
+        }
+
+        // --- 8. GESTÃO DE MÍDIA ---
+        let selectedMedia = {
+            'preview-produto': [],
+            'preview-balanca': [],
+            'preview-etiqueta': []
+        };
+
+        async function handleMediaSelect(event, previewId, single = false) {
+            const files = Array.from(event.target.files);
+            const container = document.getElementById(previewId);
+            
+            if (single) {
+                selectedMedia[previewId] = [];
+                container.innerHTML = '';
+            }
+
+            for (const file of files) {
+                const base64 = await fileToBase64(file);
+                selectedMedia[previewId].push(base64);
+                renderPreview(previewId);
+            }
+            // Limpa o input para permitir selecionar o mesmo arquivo novamente se necessário
+            event.target.value = '';
+        }
+
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+            });
+        }
+
+        function renderPreview(previewId) {
+            const container = document.getElementById(previewId);
+            container.innerHTML = '';
+
+            selectedMedia[previewId].forEach((base64, index) => {
+                const item = document.createElement('div');
+                item.className = 'preview-item';
+                item.innerHTML = `
+                    <img src="${base64}">
+                    <button type="button" class="btn-remove-photo" onclick="removePhoto('${previewId}', ${index})">&times;</button>
+                    <button type="button" class="btn-download-photo" onclick="downloadPhoto('${base64}', 'foto_${previewId}_${index}.jpg')">⬇️</button>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function removePhoto(previewId, index) {
+            selectedMedia[previewId].splice(index, 1);
+            renderPreview(previewId);
+        }
+
+        function downloadPhoto(base64, filename) {
+            const link = document.createElement('a');
+            link.href = base64;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // --- 9. INTEGRAÇÃO WHATSAPP ---
+        function sendWhatsApp() {
+            const cod = document.getElementById('codigo').value || 'S/C';
+            const produto = document.getElementById('produto').value.toUpperCase();
+            const data = new Date().toLocaleDateString('pt-BR');
+            const qtdChegou = document.getElementById('qtd_chegou').value || '0';
+            const qtdQuebra = document.getElementById('qtd_quebra').value || '0';
+            const unidade = document.getElementById('unidade').value;
+
+            if (!produto) return alert("Selecione um produto primeiro!");
+
+            const texto = `*TRATATIVA FLV - V18*\n\n` +
+                          `*Cód:* ${cod}\n` +
+                          `*Produto:* ${produto}\n` +
+                          `*Data:* ${data}\n` +
+                          `*Qtd Chegou:* ${qtdChegou} ${unidade}\n` +
+                          `*Qtd Quebra:* ${qtdQuebra} ${unidade}\n\n` +
+                          `_Enviado via Sistema TrataFLV_`;
+
+            const encodedText = encodeURIComponent(texto);
+            window.open(`https://wa.me/?text=${encodedText}`, '_blank');
         }
 
         // Inicia tudo
