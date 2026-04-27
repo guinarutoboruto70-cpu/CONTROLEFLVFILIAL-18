@@ -16,8 +16,6 @@
     <!-- Manifesto Embutido (Data URI) para evitar 404 e Cache -->
     <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiRkxWIDEwMTggUHJvIiwic2hvcnRfbmFtZSI6IkZMVSAxMDE4IiwiZGVzY3JpcHRpb24iOiJTaXN0ZW1hIGRlIEdlc3TDo28gZGUgUXVlYnJhcyBGTFYiLCJzdGFydF91cmwiOiJpbmRleC5odG1sIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiIzAwMDAwMCIsInRoZW1lX2NvbG9yIjoiIzAwMDAwMCIsImljb25zIjpbeyJzcmMiOiJodHRwczovL2Nkbi1pY29ucy1wbmcuZmxhdGljb24uY29tLzUxMi8xMDQxLzEwNDEzODMucG5nIiwic2l6ZXMiOiI1MTJ4NTEyIiwidHlwZSI6ImltYWdlL3BuZyIsInB1cnBvc2UiOiJhbnkgbWFza2FibGUifV19">
     
-    <!-- Versão do Script para Cache Busting -->
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js?v=1.2"></script>
     <meta name="theme-color" content="#000000">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
@@ -152,9 +150,9 @@
         }
 
         .photo-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
         }
 
         .btn-photo {
@@ -336,15 +334,6 @@
     <div id="cadastro-screen" class="screen">
         <button id="btn-voltar-cadastro" class="btn btn-back">Voltar</button>
         
-        <!-- Botão OCR Avançado -->
-        <div style="margin: 15px 0; border: 1px dashed #444; padding: 10px; border-radius: 10px;">
-            <button id="btn-ocr-start" type="button" class="btn" style="background: #007bff; color: white; width: 100%; font-weight: bold; padding: 12px; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.9rem;">
-                📷 CADASTRAR VIA NOTA/LISTA
-            </button>
-            <input type="file" id="input-ocr" accept="image/*" style="display: none;">
-            <small style="color: #888; display: block; text-align: center; margin-top: 5px;">Tire foto ou escolha da galeria</small>
-        </div>
-
         <form id="tratativa-form">
             <div class="form-group">
                 <label>Código do Produto</label>
@@ -371,26 +360,36 @@
             <div class="form-group">
                 <label>Fotos</label>
                 <div class="photo-grid">
-                    <div class="photo-container">
-                        <img id="prev-produto" class="photo-preview">
-                        <button type="button" class="btn btn-photo" onclick="document.getElementById('input-produto').click()">
-                            <span>📷 Produto</span>
-                        </button>
-                        <input type="file" id="input-produto" accept="image/*" capture="environment" style="display: none;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div class="photo-container">
+                            <img id="prev-produto" class="photo-preview" style="height: 60px;">
+                            <button type="button" class="btn btn-photo" onclick="document.getElementById('input-produto').click()" style="width: 100%;">
+                                <span>🖼️ Selecionar da Galeria</span>
+                            </button>
+                            <input type="file" id="input-produto" accept="image/*" style="display: none;">
+                        </div>
+                        <div class="photo-container">
+                            <img id="prev-balanca" class="photo-preview" style="height: 60px;">
+                            <button type="button" class="btn btn-photo" onclick="document.getElementById('input-balanca').click()" style="width: 100%;">
+                                <span>🖼️ Selecionar da Galeria</span>
+                            </button>
+                            <input type="file" id="input-balanca" accept="image/*" style="display: none;">
+                        </div>
                     </div>
-                    <div class="photo-container">
-                        <img id="prev-balanca" class="photo-preview">
-                        <button type="button" class="btn btn-photo" onclick="document.getElementById('input-balanca').click()">
-                            <span>📷 Balança</span>
-                        </button>
-                        <input type="file" id="input-balanca" accept="image/*" capture="environment" style="display: none;">
-                    </div>
-                    <div class="photo-container">
-                        <img id="prev-etiqueta" class="photo-preview">
-                        <button type="button" class="btn btn-photo" onclick="document.getElementById('input-etiqueta').click()">
-                            <span>📷 Etiqueta</span>
-                        </button>
-                        <input type="file" id="input-etiqueta" accept="image/*" capture="environment" style="display: none;">
+                    
+                    <div class="photo-container" style="border: 1px solid #333; padding: 10px; border-radius: 8px;">
+                        <label style="color: #ffcc00; font-weight: bold; display: block; margin-bottom: 8px; text-align: center;">🏷️ Etiqueta</label>
+                        <img id="prev-etiqueta" class="photo-preview" style="height: 80px; margin-bottom: 10px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <button type="button" class="btn btn-photo" onclick="document.getElementById('input-etiqueta-camera').click()" style="background: #007bff;">
+                                <span>📷 Tirar Foto</span>
+                            </button>
+                            <button type="button" class="btn btn-photo" onclick="document.getElementById('input-etiqueta-galeria').click()" style="background: #6c757d;">
+                                <span>🖼️ Escolher da Galeria</span>
+                            </button>
+                        </div>
+                        <input type="file" id="input-etiqueta-camera" accept="image/*" capture="environment" style="display: none;">
+                        <input type="file" id="input-etiqueta-galeria" accept="image/*" style="display: none;">
                     </div>
                 </div>
             </div>
@@ -558,18 +557,6 @@
         <button id="btn-voltar-products" class="btn btn-back">⬅️ VOLTAR AO MENU</button>
         <h2 style="color: var(--title-color); font-size: 1.6rem; text-align: center; margin-bottom: 20px;">Cadastro de Itens</h2>
 
-        <!-- Opções de Captura Inteligente -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
-            <button id="btn-ocr-camera-prod" class="btn" style="background: #007bff; color: white; padding: 15px; border-radius: 10px; font-size: 0.8rem;">
-                📷 TIRAR FOTO<br>(NOTA/LISTA)
-            </button>
-            <button id="btn-ocr-gallery-prod" class="btn" style="background: #6c757d; color: white; padding: 15px; border-radius: 10px; font-size: 0.8rem;">
-                🖼️ GALERIA<br>(CELULAR)
-            </button>
-            <input type="file" id="input-ocr-prod-camera" accept="image/*" capture="environment" style="display: none;">
-            <input type="file" id="input-ocr-prod-gallery" accept="image/*" style="display: none;">
-        </div>
-
         <!-- Formulário Manual -->
         <div style="background: #1a1a1a; padding: 20px; border-radius: 15px; border: 1px solid #333; margin-bottom: 20px;">
             <h3 style="color: #fff; margin-top: 0; font-size: 1rem; margin-bottom: 15px;">Cadastro Manual</h3>
@@ -597,34 +584,6 @@
             <!-- Itens via JS -->
         </div>
     </div>
-
-    <!-- Modal de Confirmação OCR -->
-    <div id="modal-ocr-results" class="screen" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 2000; flex-direction: column; padding: 20px;">
-        <h3 style="color: #ffcc00; text-align: center;">Itens Detectados</h3>
-        <p style="color: #aaa; text-align: center; font-size: 0.9rem; margin-bottom: 15px;">Selecione o item que deseja cadastrar:</p>
-        
-        <div id="ocr-loading" style="display: none; text-align: center; margin: 20px 0;">
-            <div style="border: 4px solid #333; border-top: 4px solid #007bff; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto;"></div>
-            <p style="color: #007bff; margin-top: 10px; font-weight: bold;">Processando imagem, por favor aguarde...</p>
-            <small style="color: #888;">Aplicando filtros de nitidez...</small>
-        </div>
-
-        <div id="ocr-items-list" style="flex: 1; overflow-y: auto; background: #111; border-radius: 10px; padding: 10px; margin-bottom: 20px;">
-            <!-- Itens via JS -->
-        </div>
-
-        <div style="display: flex; flex-direction: column; gap: 10px;">
-            <button id="btn-ocr-manual" onclick="closeOcrModal()" class="btn" style="background: #ffcc00; color: black; font-weight: bold; display: none;">⌨️ CADASTRAR MANUALMENTE</button>
-            <button onclick="closeOcrModal()" class="btn" style="background: #444; color: white;">CANCELAR</button>
-        </div>
-    </div>
-
-    <!-- Canvas oculto para pré-processamento de imagem -->
-    <canvas id="ocr-canvas" style="display: none;"></canvas>
-
-    <style>
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    </style>
 
     <script>
         // Protocolo de Atualização Forçada (Garantia Mobile)
@@ -681,20 +640,6 @@
             });
         }
 
-        // Lista de Produtos FLV para Auto-completar
-        const produtosFLV = [
-            { codigo: 101, nome: "Tomate Italiano" },
-            { codigo: 102, nome: "Banana da Terra" },
-            { codigo: 103, nome: "Batata Lavada" },
-            { codigo: 104, nome: "Cebola Nacional" },
-            { codigo: 105, nome: "Maçã Gala" },
-            { codigo: 106, nome: "Alface Crespa" },
-            { codigo: 107, nome: "Pimentão Verde" },
-            { codigo: 108, nome: "Cenoura" },
-            { codigo: 109, nome: "Abóbora Cabotiá" },
-            { codigo: 110, nome: "Mamão Papaia" }
-        ];
-
         // Configuração do IndexedDB
         const dbName = "TratativasFLV";
         const draftStore = "rascunhos";
@@ -720,7 +665,6 @@
             // Lógica de compatibilidade (se necessário)
             if (oldVersion < 3) {
                 console.log("Atualizando estrutura do banco para v3...");
-                // Aqui poderiam ser adicionados índices novos se necessário
             }
         };
         request.onsuccess = (e) => {
@@ -799,164 +743,9 @@
 
             setupPhoto('input-produto', 'prev-produto');
             setupPhoto('input-balanca', 'prev-balanca');
-            setupPhoto('input-etiqueta', 'prev-etiqueta');
+            setupPhoto('input-etiqueta-camera', 'prev-etiqueta');
+            setupPhoto('input-etiqueta-galeria', 'prev-etiqueta');
         }
-
-        // Lógica OCR Avançada
-        const btnOcrStart = document.getElementById('btn-ocr-start');
-        const inputOcr = document.getElementById('input-ocr');
-        const modalOcr = document.getElementById('modal-ocr-results');
-        const ocrList = document.getElementById('ocr-items-list');
-        const ocrLoading = document.getElementById('ocr-loading');
-        const btnOcrManual = document.getElementById('btn-ocr-manual');
-
-        btnOcrStart.addEventListener('click', () => inputOcr.click());
-
-        // Função de Pré-processamento de Imagem (Cinza + Contraste)
-        async function preprocessImage(file) {
-            return new Promise((resolve) => {
-                const img = new Image();
-                img.onload = () => {
-                    const canvas = document.getElementById('ocr-canvas');
-                    const ctx = canvas.getContext('2d');
-                    
-                    // Redimensionar se for muito grande para manter performance
-                    const maxDim = 1200;
-                    let width = img.width;
-                    let height = img.height;
-                    if (width > maxDim || height > maxDim) {
-                        if (width > height) {
-                            height *= maxDim / width;
-                            width = maxDim;
-                        } else {
-                            width *= maxDim / height;
-                            height = maxDim;
-                        }
-                    }
-
-                    canvas.width = width;
-                    canvas.height = height;
-                    ctx.drawImage(img, 0, 0, width, height);
-
-                    // Aplicar Filtro de Tons de Cinza e Contraste
-                    const imageData = ctx.getImageData(0, 0, width, height);
-                    const data = imageData.data;
-                    for (let i = 0; i < data.length; i += 4) {
-                        // Cinza (luminosidade)
-                        const avg = (data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114);
-                        
-                        // Aumentar Contraste (limiar simples)
-                        const contrast = 1.2; // Fator de contraste
-                        let val = avg;
-                        val = ((val / 255 - 0.5) * contrast + 0.5) * 255;
-                        val = Math.min(255, Math.max(0, val));
-
-                        data[i] = val;     // R
-                        data[i + 1] = val; // G
-                        data[i + 2] = val; // B
-                    }
-                    ctx.putImageData(imageData, 0, 0);
-                    resolve(canvas.toDataURL('image/jpeg', 0.9));
-                };
-                img.src = URL.createObjectURL(file);
-            });
-        }
-
-        async function runOcr(file, callback) {
-            modalOcr.style.display = 'flex';
-            ocrList.innerHTML = '';
-            ocrLoading.style.display = 'block';
-            btnOcrManual.style.display = 'none';
-
-            try {
-                // 1. Pré-processar a imagem
-                const processedImage = await preprocessImage(file);
-
-                // 2. Configurar Tesseract com Robustez (por + fallback eng)
-                let worker;
-                try {
-                    worker = await Tesseract.createWorker('por');
-                } catch (e) {
-                    console.warn("Falha ao carregar idioma 'por', tentando 'eng'...", e);
-                    worker = await Tesseract.createWorker('eng');
-                }
-
-                // 3. Otimizar para Alfanuméricos (Whitelisting se possível)
-                await worker.setParameters({
-                    tessedit_char_whitelist: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzÀÁÂÃÉÊÍÓÔÕÚÇàáâãéêíóôõúç ',
-                });
-
-                const { data: { text } } = await worker.recognize(processedImage);
-                await worker.terminate();
-
-                callback(text);
-            } catch (err) {
-                console.error(err);
-                ocrList.innerHTML = '<p style="color: #ff4444; text-align: center; margin-top: 20px;">Ocorreu um erro ao processar a imagem.</p>';
-                btnOcrManual.style.display = 'block';
-            } finally {
-                ocrLoading.style.display = 'none';
-            }
-        }
-
-        inputOcr.addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            await runOcr(file, processOcrText);
-        });
-
-        function processOcrText(text) {
-            // Regex para capturar padrões: "123 Batata" ou "Cód: 123 Produto: Batata"
-            // Procura por sequências de 3 ou mais dígitos seguidos de texto
-            const lines = text.split('\n');
-            const items = [];
-            
-            lines.forEach(line => {
-                const match = line.match(/(\d{3,})\s+([A-Za-zÀ-ÖØ-öø-ÿ\s]{3,})/);
-                if (match) {
-                    items.push({ codigo: match[1], nome: match[2].trim() });
-                }
-            });
-
-            if (items.length === 0) {
-                ocrList.innerHTML = '<p style="color: #ff4444; text-align: center; margin-top: 20px;">Nenhum produto identificado. Tente uma foto mais nítida ou da etiqueta de preço.</p>';
-                btnOcrManual.style.display = 'block';
-            } else {
-                items.forEach((item, index) => {
-                    const div = document.createElement('div');
-                    div.style.background = '#222';
-                    div.style.margin = '10px 0';
-                    div.style.padding = '15px';
-                    div.style.borderRadius = '8px';
-                    div.style.border = '1px solid #333';
-                    div.style.display = 'flex';
-                    div.style.justifyContent = 'space-between';
-                    div.style.alignItems = 'center';
-                    
-                    div.innerHTML = `
-                        <div>
-                            <span style="color: #ffcc00; font-weight: bold;">Cód: ${item.codigo}</span><br>
-                            <span style="color: white;">${item.nome}</span>
-                        </div>
-                        <button onclick="selectOcrItem('${item.codigo}', '${item.nome}')" class="btn" style="background: #28a745; padding: 8px 15px; font-size: 0.8rem;">USAR</button>
-                    `;
-                    ocrList.appendChild(div);
-                });
-            }
-        }
-
-        window.selectOcrItem = function(codigo, nome) {
-            document.getElementById('codigo').value = codigo;
-            document.getElementById('nome').value = nome;
-            closeOcrModal();
-            // Salvar rascunho automaticamente após preencher
-            saveDraft();
-        };
-
-        window.closeOcrModal = function() {
-            modalOcr.style.display = 'none';
-            inputOcr.value = ''; // Reset input
-        };
 
         // Navegação entre telas
         const menuScreen = document.getElementById('menu-screen');
@@ -1016,9 +805,11 @@
 
         // Lógica de Gerenciamento de Produtos
         const inputPreco = document.getElementById('prod-preco');
-        inputPreco.addEventListener('input', (e) => {
-            e.target.value = formatCurrency(e.target.value);
-        });
+        if (inputPreco) {
+            inputPreco.addEventListener('input', (e) => {
+                e.target.value = formatCurrency(e.target.value);
+            });
+        }
 
         document.getElementById('btn-save-product').addEventListener('click', () => {
             const codigo = document.getElementById('prod-codigo').value;
@@ -1058,6 +849,7 @@
 
         async function renderProductList() {
             const container = document.getElementById('products-list-container');
+            if (!container) return;
             container.innerHTML = '<p style="color: #888; text-align: center;">Carregando itens...</p>';
 
             const tx = db.transaction(productStore, "readonly");
@@ -1124,65 +916,6 @@
             }
         };
 
-        // Integração OCR na tela de Produtos
-        const btnOcrCameraProd = document.getElementById('btn-ocr-camera-prod');
-        const btnOcrGalleryProd = document.getElementById('btn-ocr-gallery-prod');
-        const inputOcrCameraProd = document.getElementById('input-ocr-prod-camera');
-        const inputOcrGalleryProd = document.getElementById('input-ocr-prod-gallery');
-
-        btnOcrCameraProd.addEventListener('click', () => inputOcrCameraProd.click());
-        btnOcrGalleryProd.addEventListener('click', () => inputOcrGalleryProd.click());
-
-        const handleOcrProd = async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            await runOcr(file, processOcrTextProd);
-        };
-
-        inputOcrCameraProd.addEventListener('change', handleOcrProd);
-        inputOcrGalleryProd.addEventListener('change', handleOcrProd);
-
-        function processOcrTextProd(text) {
-            const lines = text.split('\n');
-            const items = [];
-            lines.forEach(line => {
-                const match = line.match(/(\d{3,})\s+([A-Za-zÀ-ÖØ-öø-ÿ\s]{3,})/);
-                if (match) {
-                    items.push({ codigo: match[1], nome: match[2].trim() });
-                }
-            });
-
-            if (items.length === 0) {
-                ocrList.innerHTML = '<p style="color: #ff4444; text-align: center; margin-top: 20px;">Nenhum produto identificado. Tente uma foto mais nítida.</p>';
-                btnOcrManual.style.display = 'block';
-            } else {
-                items.forEach(item => {
-                    const div = document.createElement('div');
-                    div.style.background = '#222';
-                    div.style.margin = '10px 0';
-                    div.style.padding = '15px';
-                    div.style.borderRadius = '8px';
-                    div.style.display = 'flex';
-                    div.style.justifyContent = 'space-between';
-                    div.style.alignItems = 'center';
-                    div.innerHTML = `
-                        <div>
-                            <span style="color: #ffcc00; font-weight: bold;">Cód: ${item.codigo}</span><br>
-                            <span style="color: white;">${item.nome}</span>
-                        </div>
-                        <button onclick="selectOcrItemProd('${item.codigo}', '${item.nome}')" class="btn" style="background: #28a745; padding: 8px 15px;">USAR</button>
-                    `;
-                    ocrList.appendChild(div);
-                });
-            }
-        }
-
-        window.selectOcrItemProd = (codigo, nome) => {
-            document.getElementById('prod-codigo').value = codigo;
-            document.getElementById('prod-nome').value = nome;
-            closeOcrModal();
-        };
-
         // Máscara de Moeda (BRL)
         function formatCurrency(value) {
             if (!value) return "0,00";
@@ -1202,29 +935,35 @@
 
         // Inicializar com a data de hoje
         const today = new Date().toISOString().split('T')[0];
-        dashDateFilter.value = today;
+        if (dashDateFilter) dashDateFilter.value = today;
 
-        dashDateFilter.addEventListener('change', () => {
-            loadVendaForDate();
-            updateResultsDashboard();
-        });
+        if (dashDateFilter) {
+            dashDateFilter.addEventListener('change', () => {
+                loadVendaForDate();
+                updateResultsDashboard();
+            });
+        }
 
         function loadVendaForDate() {
+            if (!dashDateFilter || !inputVendaResults) return;
             const selectedDate = dashDateFilter.value;
             const savedVenda = localStorage.getItem(`venda_dia_${selectedDate}`);
             inputVendaResults.value = savedVenda ? savedVenda : "0,00";
         }
 
-        inputVendaResults.addEventListener('input', (e) => {
-            let value = e.target.value;
-            e.target.value = formatCurrency(value);
-            
-            const selectedDate = dashDateFilter.value;
-            localStorage.setItem(`venda_dia_${selectedDate}`, e.target.value);
-            updateResultsDashboard();
-        });
+        if (inputVendaResults) {
+            inputVendaResults.addEventListener('input', (e) => {
+                let value = e.target.value;
+                e.target.value = formatCurrency(value);
+                
+                const selectedDate = dashDateFilter.value;
+                localStorage.setItem(`venda_dia_${selectedDate}`, e.target.value);
+                updateResultsDashboard();
+            });
+        }
 
         function updateResultsDashboard() {
+            if (!db) return;
             const tx = db.transaction(historyStore, "readonly");
             const store = tx.objectStore(historyStore);
             const request = store.getAll();
@@ -1291,16 +1030,18 @@
             };
         }
 
-        document.getElementById('btn-print-results').addEventListener('click', () => {
-            const btn = document.getElementById('btn-print-results');
-            btn.style.display = 'none'; // Esconde o botão para o print
-            
-            setTimeout(() => {
-                alert("Dica: Tire o print agora! O relatório já está formatado com o cabeçalho 'FLV 1018' e a data selecionada.");
-                window.print();
-                btn.style.display = 'flex';
-            }, 500);
-        });
+        const btnPrintResults = document.getElementById('btn-print-results');
+        if (btnPrintResults) {
+            btnPrintResults.addEventListener('click', () => {
+                btnPrintResults.style.display = 'none'; // Esconde o botão para o print
+                
+                setTimeout(() => {
+                    alert("Dica: Tire o print agora! O relatório já está formatado com o cabeçalho 'FLV 1018' e a data selecionada.");
+                    window.print();
+                    btnPrintResults.style.display = 'flex';
+                }, 500);
+            });
+        }
 
         // Carregar venda inicial
         loadVendaForDate();
@@ -1309,14 +1050,17 @@
         let showOnlyPending = false;
         
         // Persistência da Venda Diária
-        document.getElementById('input-venda-dia').addEventListener('input', (e) => {
-            localStorage.setItem('trataflv_venda_dia', e.target.value);
-            renderHistory();
-        });
+        const inputVendaDia = document.getElementById('input-venda-dia');
+        if (inputVendaDia) {
+            inputVendaDia.addEventListener('input', (e) => {
+                localStorage.setItem('trataflv_venda_dia', e.target.value);
+                renderHistory();
+            });
+        }
 
         // Carregar venda salva
-        const vendaSalva = localStorage.getItem('trataflv_venda_dia');
-        if (vendaSalva) document.getElementById('input-venda-dia').value = vendaSalva;
+        const vendaSalvaHist = localStorage.getItem('trataflv_venda_dia');
+        if (vendaSalvaHist && inputVendaDia) inputVendaDia.value = vendaSalvaHist;
 
         document.getElementById('btn-filter-all').addEventListener('click', () => {
             showOnlyPending = false;
@@ -1333,6 +1077,7 @@
         });
 
         function renderHistory() {
+            if (!db) return;
             const tx = db.transaction(historyStore, "readonly");
             const store = tx.objectStore(historyStore);
             const request = store.getAll();
@@ -1398,7 +1143,8 @@
                 });
 
                 // Atualizar Painel Financeiro
-                const vendaDia = parseFloat(document.getElementById('input-venda-dia').value || 0);
+                const vendaDiaInput = document.getElementById('input-venda-dia');
+                const vendaDia = vendaDiaInput ? parseFloat(vendaDiaInput.value || 0) : 0;
                 const percentQuebra = vendaDia > 0 ? (totalQuebraGeral / vendaDia) * 100 : 0;
 
                 document.getElementById('stat-quebra-total').innerText = `R$ ${totalQuebraGeral.toFixed(2)}`;
@@ -1421,7 +1167,6 @@
                 document.getElementById('modal-product-name').innerText = item.nome;
                 document.getElementById('modal-edit-qty').value = item.qtd_quebra;
                 document.getElementById('modal-approval').style.display = 'flex';
-                document.getElementById('modal-edit-qty').focus();
             };
         };
 
@@ -1434,45 +1179,24 @@
             if (!currentApprovalId) return;
             
             const newQty = document.getElementById('modal-edit-qty').value;
-            if (newQty === "" || isNaN(newQty)) {
-                alert("Por favor, insira uma quantidade válida.");
-                return;
-            }
-
             const tx = db.transaction(historyStore, "readwrite");
             const store = tx.objectStore(historyStore);
+            
             const request = store.get(currentApprovalId);
-
             request.onsuccess = () => {
                 const item = request.result;
-                const oldQty = item.qtd_quebra;
-                
-                // Marcar como editado se o valor mudou
-                if (parseFloat(oldQty) !== parseFloat(newQty)) {
-                    item.editado = true;
-                }
-                
-                item.qtd_quebra = newQty;
                 item.status = 'CONCLUÍDO';
-                
+                item.qtd_quebra = newQty;
+                item.editado = true;
                 store.put(item);
+                
                 tx.oncomplete = () => {
                     closeApprovalModal();
                     renderHistory();
-                    feedbackSucesso();
                 };
             };
         });
 
-        window.markAsApproved = function(id) {
-            // Função antiga mantida por segurança ou legada se necessário
-            openApprovalModal(id);
-        };
-
-        // Evento para o filtro de data
-        document.getElementById('filter-date').addEventListener('change', renderHistory);
-
-        // Exportação WhatsApp
         document.getElementById('btn-export-whatsapp').addEventListener('click', () => {
             const tx = db.transaction(historyStore, "readonly");
             const store = tx.objectStore(historyStore);
@@ -1481,23 +1205,13 @@
 
             request.onsuccess = () => {
                 const logs = request.result;
-                if (logs.length === 0) {
-                    alert("Não há dados para exportar.");
-                    return;
-                }
-
-                const hoje = new Date().toLocaleDateString('pt-BR');
-                const dataFiltroFormatada = filterDate ? new Date(filterDate + 'T00:00:00').toLocaleDateString('pt-BR') : hoje;
-                
-                let texto = `*RELATÓRIO FLV 1018*\n`;
-                texto += `Data: ${dataFiltroFormatada}\n\n`;
+                let texto = `*RELATÓRIO TRATAFLV 1018*\n`;
+                texto += `Data: ${filterDate || new Date().toLocaleDateString('pt-BR')}\n\n`;
                 
                 let totalGeral = 0;
-
-                logs.sort((a, b) => a.timestamp - b.timestamp);
-
                 logs.forEach(item => {
-                    if (item.data === dataFiltroFormatada) {
+                    const itemDate = item.data.split('/').reverse().join('-');
+                    if (!filterDate || itemDate === filterDate) {
                         texto += `Item: ${item.nome} - Quebra: ${item.qtd_quebra}\n`;
                         totalGeral += parseFloat(item.qtd_quebra);
                     }
@@ -1581,10 +1295,10 @@
         };
 
         // Salvar Rascunho Automaticamente
-        const form = document.getElementById('tratativa-form');
-        const inputs = form.querySelectorAll('input');
+        const formTratativa = document.getElementById('tratativa-form');
+        const inputsForm = formTratativa.querySelectorAll('input');
 
-        inputs.forEach(input => {
+        inputsForm.forEach(input => {
             input.addEventListener('input', saveDraft);
         });
 
@@ -1641,7 +1355,6 @@
             if ("vibrate" in navigator) {
                 navigator.vibrate([100, 50, 100]);
             }
-            // Bip simples usando Audio Context (sem necessidade de arquivo externo)
             try {
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 const oscillator = audioCtx.createOscillator();
@@ -1649,7 +1362,7 @@
                 oscillator.connect(gainNode);
                 gainNode.connect(audioCtx.destination);
                 oscillator.type = 'sine';
-                oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // Nota Lá
+                oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); 
                 gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
                 oscillator.start();
                 oscillator.stop(audioCtx.currentTime + 0.2);
@@ -1661,12 +1374,11 @@
         // Finalizar Tratativa (Agora leva para Revisão)
         let currentData = null;
 
-        form.addEventListener('submit', (e) => {
+        formTratativa.addEventListener('submit', (e) => {
             e.preventDefault();
             
             const agora = new Date();
             let nomeLimpo = document.getElementById('nome').value;
-            // Limpeza agressiva de prefixos redundantes
             nomeLimpo = nomeLimpo.replace(/^(produto|nome|item|tratativa)[:\s-]*/i, '').trim();
 
             currentData = {
@@ -1683,10 +1395,8 @@
                 status: 'PENDENTE'
             };
 
-            // Atualiza o formulário com o nome já limpo
             document.getElementById('nome').value = nomeLimpo;
 
-            // Preencher tela de revisão (Formato Direto e Limpo)
             const reviewContainer = document.getElementById('review-data');
             reviewContainer.innerHTML = `
                 <p style="margin: 5px 0;"><strong>Cód:</strong> ${currentData.codigo}</p>
@@ -1705,7 +1415,6 @@
             cadastroScreen.classList.remove('active');
             reviewScreen.classList.add('active');
 
-            // Resetar estados dos botões de envio na revisão
             document.querySelectorAll('.btn-send-review').forEach(btn => {
                 btn.style.border = 'none';
                 if (btn.id === 'btn-send-text') {
@@ -1724,7 +1433,6 @@
             btnFinal.style.cursor = 'not-allowed';
         });
 
-        // Ações da Tela de Revisão
         function markAsSent(btn) {
             btn.style.backgroundColor = '#007bff'; // Azul
             if (!btn.innerHTML.includes('✅')) {
@@ -1744,11 +1452,6 @@
             markAsSent(this);
         });
 
-        // Para fotos, como o WhatsApp API não permite enviar arquivos locais via URL diretamente,
-        // avisamos o usuário que o texto foi enviado e ele pode anexar as fotos manualmente se desejar,
-        // ou apenas mantemos os botões como lembrete visual do fluxo.
-        // Em um app real, o compartilhamento de arquivos requer a Web Share API (se suportado).
-        
         const sharePhoto = async (btn, base64Data, title) => {
             if (!base64Data || base64Data.length < 100) {
                 alert("Foto não disponível.");
@@ -1767,7 +1470,7 @@
                     markAsSent(btn);
                 } else {
                     alert("Seu navegador não suporta compartilhamento de arquivos. O texto já pode ser enviado!");
-                    markAsSent(btn); // Marca como enviado mesmo se falhar o share, pois o usuário tentou
+                    markAsSent(btn);
                 }
             } catch (err) {
                 console.error("Erro ao compartilhar:", err);
@@ -1778,7 +1481,6 @@
         document.getElementById('btn-send-photo-bal').addEventListener('click', function() { sharePhoto(this, currentData.foto_balanca, "Foto_Balanca"); });
         document.getElementById('btn-send-photo-etiq').addEventListener('click', function() { sharePhoto(this, currentData.foto_etiqueta, "Foto_Etiqueta"); });
 
-        // Botão Final de Salvamento
         document.getElementById('btn-finalizar-tudo').addEventListener('click', () => {
             if (!currentData) return;
 
@@ -1789,7 +1491,7 @@
             tx.oncomplete = () => {
                 feedbackSucesso();
                 alert("Lançamento salvo e finalizado!");
-                form.reset();
+                formTratativa.reset();
                 document.querySelectorAll('.photo-preview').forEach(img => {
                     img.src = '';
                     img.style.display = 'none';
@@ -1800,6 +1502,5 @@
             };
         });
     </script>
-
 </body>
 </html>
