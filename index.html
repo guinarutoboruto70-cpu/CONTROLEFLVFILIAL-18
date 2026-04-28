@@ -524,6 +524,7 @@
             <button id="nav-dash" class="nav-btn active" onclick="showScreen('results-screen')">📊 PAINEL</button>
             <button id="nav-tratativa" class="nav-btn" onclick="showScreen('cadastro-screen')">🍎 TRATATIVA</button>
             <button id="nav-geral" class="nav-btn" onclick="showScreen('geral-screen')">🗑️ GERAL</button>
+            <button id="nav-products" class="nav-btn" onclick="showScreen('product-management-screen')">📦 PRODUTOS</button>
             <button id="nav-history" class="nav-btn" onclick="showScreen('history-screen')">📜 LISTA</button>
         </div>
     </header>
@@ -691,6 +692,58 @@
                         </tr>
                     </thead>
                     <tbody id="recent-geral-body">
+                        <!-- JS preencherá -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- GESTÃO DE PRODUTOS -->
+        <div id="product-management-screen" class="screen">
+            <div class="form-card">
+                <h2 style="color: var(--primary); font-size: 1.1rem; margin-top: 0; text-align: center;">📦 CADASTRO DE PRODUTOS</h2>
+                <form id="product-mgmt-form">
+                    <input type="hidden" id="mgmt-edit-mode" value="false">
+                    <div class="row">
+                        <div class="form-group">
+                            <label>Cód. Produto</label>
+                            <input type="number" id="mgmt-prod-cod" placeholder="Ex: 1000">
+                        </div>
+                        <div class="form-group">
+                            <label>Unidade</label>
+                            <select id="mgmt-prod-uni">
+                                <option value="KG">KG</option>
+                                <option value="UND">UND</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Nome do Produto</label>
+                        <input type="text" id="mgmt-prod-nome" placeholder="NOME DO ITEM">
+                    </div>
+                    <div class="form-group">
+                        <label>Custo Unitário (R$)</label>
+                        <input type="text" id="mgmt-prod-custo" placeholder="0,00">
+                    </div>
+                    <button type="submit" class="btn-save" id="btn-save-mgmt">✅ SALVAR PRODUTO</button>
+                    <button type="button" class="btn-save" id="btn-cancel-mgmt" style="background: #444; margin-top: 10px; display: none;" onclick="cancelMgmtEdit()">❌ CANCELAR EDIÇÃO</button>
+                </form>
+            </div>
+
+            <div class="recent-list-container">
+                <div class="recent-title">
+                    <span>📋 LISTA DE PRODUTOS CADASTRADOS</span>
+                </div>
+                <table class="recent-table">
+                    <thead>
+                        <tr>
+                            <th>Cód</th>
+                            <th>Produto</th>
+                            <th>Custo</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="mgmt-product-table-body">
                         <!-- JS preencherá -->
                     </tbody>
                 </table>
@@ -917,7 +970,11 @@
                     } else {
                         PRODUTOS_CACHE = {};
                         results.forEach(p => {
-                            PRODUTOS_CACHE[p.codigo] = { nome: p.nome, unidade: p.unidade };
+                            PRODUTOS_CACHE[p.codigo] = { 
+                                nome: p.nome, 
+                                unidade: p.unidade,
+                                preco_custo: p.preco_custo || '0,00'
+                            };
                         });
                         initAutocomplete();
                         resolve();
@@ -969,6 +1026,15 @@
             if (PRODUTOS_CACHE[cod]) {
                 document.getElementById(nomeId).value = PRODUTOS_CACHE[cod].nome;
                 document.getElementById(unitId).value = PRODUTOS_CACHE[cod].unidade;
+                
+                // Preenche custo se o campo existir (Geral ou Tratativa)
+                const custoId = nomeId.startsWith('geral') ? 'geral-custo' : 'preco_custo';
+                const custoField = document.getElementById(custoId);
+                if (custoField) {
+                    custoField.value = PRODUTOS_CACHE[cod].preco_custo || '0,00';
+                    // Dispara evento de input para atualizar o total no Geral
+                    custoField.dispatchEvent(new Event('input'));
+                }
             }
         }
 
@@ -977,6 +1043,14 @@
                 if (PRODUTOS_CACHE[cod].nome === nome.toUpperCase()) {
                     document.getElementById(codId).value = cod;
                     document.getElementById(unitId).value = PRODUTOS_CACHE[cod].unidade;
+                    
+                    // Preenche custo se o campo existir
+                    const custoId = codId.startsWith('geral') ? 'geral-custo' : 'preco_custo';
+                    const custoField = document.getElementById(custoId);
+                    if (custoField) {
+                        custoField.value = PRODUTOS_CACHE[cod].preco_custo || '0,00';
+                        custoField.dispatchEvent(new Event('input'));
+                    }
                     break;
                 }
             }
@@ -1062,6 +1136,7 @@
                 'results-screen': 'nav-dash',
                 'cadastro-screen': 'nav-tratativa',
                 'geral-screen': 'nav-geral',
+                'product-management-screen': 'nav-products',
                 'history-screen': 'nav-history',
                 'review-screen': 'nav-tratativa'
             };
@@ -1069,6 +1144,7 @@
             
             if (screenId === 'history-screen') renderHistory();
             if (screenId === 'results-screen') updateResultsDashboard();
+            if (screenId === 'product-management-screen') renderMgmtProductTable();
             if (screenId === 'geral-screen') {
                 renderRecentGeral();
                 setTimeout(() => document.getElementById('geral-codigo').focus(), 100);
@@ -1108,6 +1184,7 @@
         setupNumericInput('rev-qtd-chegou');
         setupNumericInput('rev-qtd-quebra');
         setupNumericInput('rev-valor-aprovado', true);
+        setupNumericInput('mgmt-prod-custo', true);
 
         // --- 6. SALVAMENTO ---
         let currentQuebraId = null; // Para vincular quebra geral à tratativa
@@ -1259,6 +1336,83 @@
                     `;
                     tbody.appendChild(tr);
                 });
+            };
+        }
+
+        // --- 6.1 GESTÃO DE PRODUTOS (ABA DEDICADA) ---
+        document.getElementById('product-mgmt-form').onsubmit = (e) => {
+            e.preventDefault();
+            const cod = document.getElementById('mgmt-prod-cod').value;
+            const nome = document.getElementById('mgmt-prod-nome').value.toUpperCase();
+            const uni = document.getElementById('mgmt-prod-uni').value;
+            const custo = document.getElementById('mgmt-prod-custo').value;
+
+            if (!cod || !nome) return alert("Preencha código e nome!");
+
+            const product = { codigo: cod, nome: nome, unidade: uni, preco_custo: custo };
+            const tx = db.transaction(productStore, "readwrite");
+            tx.objectStore(productStore).put(product).onsuccess = () => {
+                alert("✅ Produto Salvo!");
+                cancelMgmtEdit(); // Limpa e reseta
+                loadProducts().then(() => renderMgmtProductTable());
+            };
+        };
+
+        function renderMgmtProductTable() {
+            const tbody = document.getElementById('mgmt-product-table-body');
+            tbody.innerHTML = '';
+            
+            const sortedCodes = Object.keys(PRODUTOS_CACHE).sort((a, b) => 
+                PRODUTOS_CACHE[a].nome.localeCompare(PRODUTOS_CACHE[b].nome)
+            );
+
+            sortedCodes.forEach(cod => {
+                const p = PRODUTOS_CACHE[cod];
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${cod}</td>
+                    <td>
+                        <div style="font-weight:bold;">${p.nome}</div>
+                        <div style="font-size:0.65rem; color:#888;">${p.unidade}</div>
+                    </td>
+                    <td style="color:var(--primary); font-weight:bold;">R$ ${p.preco_custo || '0,00'}</td>
+                    <td>
+                        <div style="display:flex; gap:5px;">
+                            <button class="btn-remove-temp" style="background:rgba(37,211,102,0.2); color:#25d366; border-color:#25d366;" onclick="editMgmtProduct('${cod}')">✏️</button>
+                            <button class="btn-remove-temp" onclick="deleteMgmtProduct('${cod}')">🗑️</button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function editMgmtProduct(cod) {
+            const p = PRODUTOS_CACHE[cod];
+            document.getElementById('mgmt-prod-cod').value = cod;
+            document.getElementById('mgmt-prod-nome').value = p.nome;
+            document.getElementById('mgmt-prod-uni').value = p.unidade;
+            document.getElementById('mgmt-prod-custo').value = p.preco_custo || '0,00';
+            
+            document.getElementById('mgmt-edit-mode').value = "true";
+            document.getElementById('btn-save-mgmt').innerText = "💾 ATUALIZAR PRODUTO";
+            document.getElementById('btn-cancel-mgmt').style.display = "block";
+            document.getElementById('mgmt-prod-nome').focus();
+        }
+
+        function cancelMgmtEdit() {
+            document.getElementById('product-mgmt-form').reset();
+            document.getElementById('mgmt-edit-mode').value = "false";
+            document.getElementById('btn-save-mgmt').innerText = "✅ SALVAR PRODUTO";
+            document.getElementById('btn-cancel-mgmt').style.display = "none";
+        }
+
+        function deleteMgmtProduct(cod) {
+            if (!confirm(`Deseja realmente excluir o produto ${PRODUTOS_CACHE[cod].nome}?`)) return;
+            
+            const tx = db.transaction(productStore, "readwrite");
+            tx.objectStore(productStore).delete(cod).onsuccess = () => {
+                loadProducts().then(() => renderMgmtProductTable());
             };
         }
 
