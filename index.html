@@ -365,6 +365,29 @@
             border-color: var(--danger);
         }
 
+        .btn-back-header {
+            background: none;
+            border: 1px solid #444;
+            color: #888;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s;
+            position: absolute;
+            top: 15px;
+            left: 15px;
+        }
+
+        .btn-back-header:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: rgba(37, 211, 102, 0.05);
+        }
+
         /* Review Screen Styles */
         .review-section {
             background: #1f1f1f;
@@ -722,7 +745,10 @@
 
         <!-- GESTÃO DE PRODUTOS -->
         <div id="product-management-screen" class="screen">
-            <div class="form-card">
+            <div class="form-card" style="position: relative; padding-top: 45px;">
+                <button class="btn-back-header" onclick="showScreen('results-screen')">
+                    ⬅️ VOLTAR
+                </button>
                 <h2 style="color: var(--primary); font-size: 1.1rem; margin-top: 0; text-align: center;">📦 CADASTRO DE PRODUTOS</h2>
                 <form id="product-mgmt-form">
                     <input type="hidden" id="mgmt-edit-mode" value="false">
