@@ -290,6 +290,81 @@
         .stat-value { font-size: 1.2rem; font-weight: bold; color: var(--primary); margin-top: 5px; }
         .stat-label { font-size: 0.7rem; color: #888; text-transform: uppercase; }
 
+        /* Estilos de Seleção e Exclusão */
+        .mass-delete-bar {
+            background: #1a1a1a;
+            padding: 10px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: none;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--danger);
+            margin-bottom: 10px;
+            border-radius: 0 0 10px 10px;
+        }
+
+        .btn-delete-mass {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        .card-checkbox-container {
+            position: absolute;
+            top: 10px;
+            right: 40px;
+            z-index: 10;
+        }
+
+        .card-checkbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .btn-delete-individual {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 5px;
+            transition: color 0.2s;
+        }
+
+        .btn-delete-individual:hover {
+            color: var(--danger);
+        }
+
+        .btn-reset-master {
+            background: none;
+            border: 1px solid #444;
+            color: #666;
+            padding: 10px;
+            width: 100%;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            margin-top: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-reset-master:hover {
+            background: rgba(231, 76, 60, 0.1);
+            color: var(--danger);
+            border-color: var(--danger);
+        }
+
         /* Review Screen Styles */
         .review-section {
             background: #1f1f1f;
@@ -489,6 +564,10 @@
                     <div id="dash-perc-quebra" class="stat-value" style="color: var(--danger);">0.00%</div>
                 </div>
             </div>
+
+            <button class="btn-reset-master" onclick="resetMonthData()">
+                ⚠️ RESETAR DADOS DO MÊS (QUEBRAS E TRATATIVAS)
+            </button>
         </div>
 
         <!-- FORM TRATATIVA -->
@@ -740,6 +819,10 @@
 
         <!-- HISTORY -->
         <div id="history-screen" class="screen">
+            <div id="mass-delete-bar" class="mass-delete-bar">
+                <span id="mass-delete-count" style="color: #fff; font-size: 0.9rem; font-weight: bold;">0 itens selecionados</span>
+                <button class="btn-delete-mass" onclick="deleteSelectedHistory()">🗑️ EXCLUIR SELECIONADOS</button>
+            </div>
             <div id="history-list">
                 <p style="text-align: center; color: #666; margin-top: 50px;">Carregando...</p>
             </div>
@@ -1489,15 +1572,22 @@
                     }
 
                     card.innerHTML = `
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                            <div class="card-cod">Cód ${item.codigo}</div>
-                            <div style="display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end;">${statusBadge}</div>
+                        <div style="position: relative;">
+                            <div class="card-checkbox-container">
+                                <input type="checkbox" class="card-checkbox" value="${item.id}" onchange="toggleMassDeleteBar()">
+                            </div>
+                            <button class="btn-delete-individual" onclick="deleteHistoryItem(${item.id})">🗑️</button>
+                            
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                <div class="card-cod">Cód ${item.codigo}</div>
+                                <div style="display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; padding-right: 60px;">${statusBadge}</div>
+                            </div>
+                            <div class="card-name">${item.nome}</div>
+                            <div class="card-date">${item.data}</div>
+                            <div class="card-chegou">Chegou: ${qChegou} ${unit}</div>
+                            <div class="card-quebra">Quantidade da quebra: ${qQuebra} ${unit}</div>
+                            ${actionBtn}
                         </div>
-                        <div class="card-name">${item.nome}</div>
-                        <div class="card-date">${item.data}</div>
-                        <div class="card-chegou">Chegou: ${qChegou} ${unit}</div>
-                        <div class="card-quebra">Quantidade da quebra: ${qQuebra} ${unit}</div>
-                        ${actionBtn}
                         ${item.media ? `
                             <div style="margin-top: 8px; display: flex; gap: 5px; flex-wrap: wrap;">
                                 ${Object.keys(item.media).map(key => 
@@ -1825,6 +1915,78 @@
         }
 
         // Inicia tudo
+        // --- 10. EXCLUSÃO E SELEÇÃO ---
+        function deleteHistoryItem(id) {
+            if (!confirm("Deseja excluir este registro?")) return;
+
+            const tx = db.transaction(historyStore, "readwrite");
+            const store = tx.objectStore(historyStore);
+            store.delete(id).onsuccess = () => {
+                renderHistory();
+                updateResultsDashboard();
+                alert("✅ Registro excluído!");
+            };
+        }
+
+        function toggleMassDeleteBar() {
+            const checkboxes = document.querySelectorAll('.card-checkbox:checked');
+            const bar = document.getElementById('mass-delete-bar');
+            const countLabel = document.getElementById('mass-delete-count');
+            
+            if (checkboxes.length > 0) {
+                bar.style.display = 'flex';
+                countLabel.innerText = `${checkboxes.length} itens selecionados`;
+            } else {
+                bar.style.display = 'none';
+            }
+        }
+
+        function deleteSelectedHistory() {
+            const checkboxes = document.querySelectorAll('.card-checkbox:checked');
+            if (checkboxes.length === 0) return;
+
+            if (!confirm(`Deseja excluir os ${checkboxes.length} itens selecionados?`)) return;
+
+            const tx = db.transaction(historyStore, "readwrite");
+            const store = tx.objectStore(historyStore);
+            
+            let deletedCount = 0;
+            checkboxes.forEach(cb => {
+                const id = parseInt(cb.value);
+                store.delete(id).onsuccess = () => {
+                    deletedCount++;
+                    if (deletedCount === checkboxes.length) {
+                        renderHistory();
+                        updateResultsDashboard();
+                        document.getElementById('mass-delete-bar').style.display = 'none';
+                        alert(`✅ ${deletedCount} registros excluídos!`);
+                    }
+                };
+            });
+        }
+
+        function resetMonthData() {
+            const confirmation = confirm("⚠️ ATENÇÃO: Isso apagará TODAS as Quebras e Tratativas cadastradas.\nO cadastro de produtos NÃO será afetado.\n\nDeseja continuar?");
+            if (!confirmation) return;
+
+            const secondConfirmation = confirm("Deseja REALMENTE apagar todos os registros do mês? Esta ação não pode ser desfeita.");
+            if (!secondConfirmation) return;
+
+            const tx = db.transaction([historyStore, salesStore], "readwrite");
+            const histStore = tx.objectStore(historyStore);
+            const slsStore = tx.objectStore(salesStore);
+
+            histStore.clear().onsuccess = () => {
+                slsStore.clear().onsuccess = () => {
+                    updateResultsDashboard();
+                    renderHistory();
+                    renderVendasTable();
+                    alert("✅ Dados resetados com sucesso!");
+                    showScreen('results-screen');
+                };
+            };
+        }
+
         window.onload = () => {
             initDB();
             setupAutocompleteListeners();
