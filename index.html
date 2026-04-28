@@ -630,7 +630,7 @@
                             <input type="number" id="mgmt-prod-cod" placeholder="Ex: 1000">
                         </div>
                         <div class="form-group">
-                            <label>Unidade</label>
+                            <label>Unidade de Venda</label>
                             <select id="mgmt-prod-uni">
                                 <option value="KG">KG</option>
                                 <option value="UND">UND</option>
@@ -641,9 +641,19 @@
                         <label>Nome do Produto</label>
                         <input type="text" id="mgmt-prod-nome" placeholder="NOME DO ITEM">
                     </div>
+                    <div class="row">
+                        <div class="form-group">
+                            <label>Unidade da Nota (Ex: CX20, KG)</label>
+                            <input type="text" id="mgmt-prod-unit-nota" placeholder="CX20" oninput="calculateUnitCost()">
+                        </div>
+                        <div class="form-group">
+                            <label>Preço da Nota (R$)</label>
+                            <input type="text" id="mgmt-prod-price-nota" placeholder="0,00" oninput="calculateUnitCost()">
+                        </div>
+                    </div>
                     <div class="form-group">
-                        <label>Custo Unitário (R$)</label>
-                        <input type="text" id="mgmt-prod-custo" placeholder="0,00">
+                        <label>Custo Unitário Calculado (R$)</label>
+                        <input type="text" id="mgmt-prod-custo" placeholder="0,00" readonly style="background: #1a1a1a; color: var(--primary); font-weight: bold;">
                     </div>
                     <button type="submit" class="btn-save" id="btn-save-mgmt">✅ SALVAR PRODUTO</button>
                     <button type="button" class="btn-save" id="btn-cancel-mgmt" style="background: #444; margin-top: 10px; display: none;" onclick="cancelMgmtEdit()">❌ CANCELAR EDIÇÃO</button>
@@ -839,6 +849,8 @@
                             PRODUTOS_CACHE[p.codigo] = { 
                                 nome: p.nome, 
                                 unidade: p.unidade,
+                                unidade_nota: p.unidade_nota || 'KG',
+                                preco_nota: p.preco_nota || '0,00',
                                 preco_custo: p.preco_custo || '0,00'
                             };
                         });
@@ -854,7 +866,15 @@
                 const tx = db.transaction(productStore, "readwrite");
                 const store = tx.objectStore(productStore);
                 for (const cod in LISTA_PRODUTOS) {
-                    store.put({ codigo: cod, ...LISTA_PRODUTOS[cod] });
+                    const p = LISTA_PRODUTOS[cod];
+                    store.put({ 
+                        codigo: cod, 
+                        nome: p.nome, 
+                        unidade: p.unidade,
+                        unidade_nota: 'KG',
+                        preco_nota: '0,00',
+                        preco_custo: '0,00'
+                    });
                 }
                 tx.oncomplete = () => loadProducts().then(resolve);
             });
@@ -970,6 +990,11 @@
                     const total = q * c;
                     document.getElementById('geral-valor-total').innerText = `R$ ${total.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
                 }
+
+                // Cálculo automático para Cadastro de Produtos
+                if (id === 'mgmt-prod-price-nota') {
+                    calculateUnitCost();
+                }
             });
         }
 
@@ -982,7 +1007,27 @@
         // Máscaras para a tela de revisão
         setupNumericInput('rev-qtd-chegou');
         setupNumericInput('rev-qtd-quebra');
-        setupNumericInput('mgmt-prod-custo', true);
+        setupNumericInput('mgmt-prod-price-nota', true);
+
+        function calculateUnitCost() {
+            const unitNota = document.getElementById('mgmt-prod-unit-nota').value.toUpperCase();
+            const priceNotaStr = document.getElementById('mgmt-prod-price-nota').value.replace(/\./g, '').replace(',', '.');
+            const priceNota = parseFloat(priceNotaStr) || 0;
+            
+            // Extrai o número da unidade da nota (ex: CX20 -> 20, KG -> 1)
+            let qtdUnidade = 1;
+            const match = unitNota.match(/\d+/);
+            if (match) {
+                qtdUnidade = parseFloat(match[0]);
+            } else if (unitNota.includes('KG') || unitNota.includes('UND') || unitNota.includes('UN')) {
+                qtdUnidade = 1;
+            }
+            
+            if (qtdUnidade > 0) {
+                const unitCost = priceNota / qtdUnidade;
+                document.getElementById('mgmt-prod-custo').value = unitCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+        }
 
         // --- 6. SALVAMENTO ---
         let currentQuebraId = null; // Para vincular quebra geral à tratativa
@@ -1142,11 +1187,20 @@
             const cod = document.getElementById('mgmt-prod-cod').value;
             const nome = document.getElementById('mgmt-prod-nome').value.toUpperCase();
             const uni = document.getElementById('mgmt-prod-uni').value;
+            const unitNota = document.getElementById('mgmt-prod-unit-nota').value.toUpperCase();
+            const priceNota = document.getElementById('mgmt-prod-price-nota').value;
             const custo = document.getElementById('mgmt-prod-custo').value;
 
             if (!cod || !nome) return alert("Preencha código e nome!");
 
-            const product = { codigo: cod, nome: nome, unidade: uni, preco_custo: custo };
+            const product = { 
+                codigo: cod, 
+                nome: nome, 
+                unidade: uni, 
+                unidade_nota: unitNota,
+                preco_nota: priceNota,
+                preco_custo: custo 
+            };
             const tx = db.transaction(productStore, "readwrite");
             tx.objectStore(productStore).put(product).onsuccess = () => {
                 alert("✅ Produto Salvo!");
@@ -1170,7 +1224,8 @@
                     <td>${cod}</td>
                     <td>
                         <div style="font-weight:bold;">${p.nome}</div>
-                        <div style="font-size:0.65rem; color:#888;">${p.unidade}</div>
+                        <div style="font-size:0.65rem; color:#888;">Nota: ${p.unidade_nota || 'N/A'} (R$ ${p.preco_nota || '0,00'})</div>
+                        <div style="font-size:0.65rem; color:#888;">Venda: ${p.unidade}</div>
                     </td>
                     <td style="color:var(--primary); font-weight:bold;">R$ ${p.preco_custo || '0,00'}</td>
                     <td>
@@ -1189,6 +1244,8 @@
             document.getElementById('mgmt-prod-cod').value = cod;
             document.getElementById('mgmt-prod-nome').value = p.nome;
             document.getElementById('mgmt-prod-uni').value = p.unidade;
+            document.getElementById('mgmt-prod-unit-nota').value = p.unidade_nota || '';
+            document.getElementById('mgmt-prod-price-nota').value = p.preco_nota || '0,00';
             document.getElementById('mgmt-prod-custo').value = p.preco_custo || '0,00';
             
             document.getElementById('mgmt-edit-mode').value = "true";
@@ -1289,7 +1346,8 @@
                         
                         if (isFinalized) {
                             const recuperado = item.valor_aprovado || '0,00';
-                            statusBadge += `<div class="badge status-aprovado">Recuperado: R$ ${recuperado}</div>`;
+                            const qAprovada = item.qtd_aprovada || '0';
+                            statusBadge += `<div class="badge status-aprovado">Aprovado: ${qAprovada} ${unit} (R$ ${recuperado})</div>`;
                         } else {
                             actionBtn = `<button class="btn-bridge" style="background: var(--primary); color: #000;" onclick="promptFinalizarTratativa(${item.id})">✅ FINALIZAR E INFORMAR VALOR</button>`;
                         }
@@ -1345,22 +1403,28 @@
         }
 
         function promptFinalizarTratativa(id) {
-            const valor = prompt("Informe o Valor Aprovado (R$):", "0,00");
-            if (valor === null) return;
-
-            // Formata o valor para o padrão do sistema
-            let cleanVal = valor.replace(/[^\d,]/g, '');
-            if (!cleanVal.includes(',')) cleanVal += ",00";
-
-            const tx = db.transaction(historyStore, "readwrite");
+            const tx = db.transaction(historyStore, "readonly");
             const store = tx.objectStore(historyStore);
             store.get(id).onsuccess = (e) => {
                 const item = e.target.result;
                 if (item) {
+                    const unit = (item.unidade || 'un').toLowerCase();
+                    const promptText = `Informe a QUANTIDADE APROVADA (${unit.toUpperCase()}):`;
+                    const qtdAprovada = prompt(promptText, "0.00");
+                    if (qtdAprovada === null) return;
+
+                    const q = parseFloat(qtdAprovada.replace(',', '.')) || 0;
+                    const custoUnit = parseFloat(item.preco_custo.replace(/\./g, '').replace(',', '.')) || 0;
+                    const valorAprovadoFinal = q * custoUnit;
+
                     item.status = 'Finalizado';
-                    item.valor_aprovado = cleanVal;
-                    store.put(item).onsuccess = () => {
-                        alert("✅ Tratativa Finalizada!");
+                    item.qtd_aprovada = q.toString();
+                    item.valor_aprovado = valorAprovadoFinal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    
+                    const updateTx = db.transaction(historyStore, "readwrite");
+                    const updateStore = updateTx.objectStore(historyStore);
+                    updateStore.put(item).onsuccess = () => {
+                        alert(`✅ Tratativa Finalizada!\nValor Recuperado: R$ ${item.valor_aprovado}`);
                         renderHistory();
                         updateResultsDashboard();
                     };
@@ -1387,7 +1451,7 @@
                         const qtd = parseFloat(item.qtd_quebra) || 0;
                         const valor = custo * qtd;
                         
-                        if (item.tipo === 'GERAL') {
+                        if (item.tipo === 'GERAL' || (item.tipo === 'TRATATIVA' && !item.quebra_origem_id)) {
                             totalQuebraGeralVal += valor;
                         }
                         
