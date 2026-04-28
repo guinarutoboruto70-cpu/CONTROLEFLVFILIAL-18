@@ -444,6 +444,7 @@
             <button id="nav-dash" class="nav-btn active" onclick="showScreen('results-screen')">📊 PAINEL</button>
             <button id="nav-tratativa" class="nav-btn" onclick="showScreen('cadastro-screen')">🍎 TRATATIVA</button>
             <button id="nav-geral" class="nav-btn" onclick="showScreen('geral-screen')">🗑️ GERAL</button>
+            <button id="nav-vendas" class="nav-btn" onclick="showScreen('vendas-screen')">💰 VENDAS</button>
             <button id="nav-products" class="nav-btn" onclick="showScreen('product-management-screen')">📦 PRODUTOS</button>
             <button id="nav-history" class="nav-btn" onclick="showScreen('history-screen')">📜 LISTA</button>
         </div>
@@ -472,6 +473,20 @@
                 <div class="stat-card">
                     <div class="stat-label">Total Aprovado Central</div>
                     <div id="total-aprovado" class="stat-value" style="color: #25d366;">R$ 0,00</div>
+                </div>
+                
+                <!-- Novos KPIs de Meta e Vendas -->
+                <div class="stat-card" style="grid-column: span 2; background: #1a1a1a; border: 1px dashed var(--primary);">
+                    <div class="stat-label">Venda Total Acumulada</div>
+                    <div id="dash-venda-total" class="stat-value" style="color: #fff;">R$ 0,00</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Meta Mensal (3.5%)</div>
+                    <div id="dash-meta-valor" class="stat-value" style="color: #888;">R$ 0,00</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">% Quebra Real</div>
+                    <div id="dash-perc-quebra" class="stat-value" style="color: var(--danger);">0.00%</div>
                 </div>
             </div>
         </div>
@@ -688,6 +703,41 @@
             </div>
         </div>
 
+        <!-- VENDAS DIÁRIAS -->
+        <div id="vendas-screen" class="screen">
+            <div class="form-card">
+                <form id="vendas-form">
+                    <div class="form-group">
+                        <label>Data da Venda</label>
+                        <input type="date" id="venda-data" style="border-color: var(--primary);">
+                    </div>
+                    <div class="form-group">
+                        <label>Valor da Venda (R$)</label>
+                        <input type="text" id="venda-valor" placeholder="0,00" class="numeric-input">
+                    </div>
+                    <button type="submit" class="btn-save">💰 SALVAR VENDA</button>
+                </form>
+            </div>
+
+            <div class="recent-list-container" style="margin-top: 15px;">
+                <div class="recent-title">
+                    <span>🕒 ÚLTIMAS VENDAS LANÇADAS</span>
+                </div>
+                <table class="recent-table">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Valor (R$)</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="vendas-table-body">
+                        <!-- JS preencherá -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <!-- HISTORY -->
         <div id="history-screen" class="screen">
             <div id="history-list">
@@ -777,6 +827,7 @@
         const dbName = "FLVDatabase";
         const historyStore = "historico";
         const productStore = "produtos";
+        const salesStore = "vendas";
         let db;
         let PRODUTOS_CACHE = {};
 
@@ -823,7 +874,7 @@
 
         // --- 2. INICIALIZAÇÃO DO BANCO ---
         function initDB() {
-            const request = indexedDB.open(dbName, 22);
+            const request = indexedDB.open(dbName, 23);
             request.onupgradeneeded = (e) => {
                 const db = e.target.result;
                 if (!db.objectStoreNames.contains(historyStore)) {
@@ -831,6 +882,9 @@
                 }
                 if (!db.objectStoreNames.contains(productStore)) {
                     db.createObjectStore(productStore, { keyPath: "codigo" });
+                }
+                if (!db.objectStoreNames.contains(salesStore)) {
+                    db.createObjectStore(salesStore, { keyPath: "id", autoIncrement: true });
                 }
             };
             request.onsuccess = (e) => {
@@ -963,6 +1017,7 @@
                 'results-screen': 'nav-dash',
                 'cadastro-screen': 'nav-tratativa',
                 'geral-screen': 'nav-geral',
+                'vendas-screen': 'nav-vendas',
                 'product-management-screen': 'nav-products',
                 'history-screen': 'nav-history',
                 'review-screen': 'nav-tratativa'
@@ -972,6 +1027,7 @@
             if (screenId === 'history-screen') renderHistory();
             if (screenId === 'results-screen') updateResultsDashboard();
             if (screenId === 'product-management-screen') renderMgmtProductTable();
+            if (screenId === 'vendas-screen') renderVendasTable();
             if (screenId === 'geral-screen') {
                 renderRecentGeral();
                 setTimeout(() => document.getElementById('geral-codigo').focus(), 100);
@@ -1016,6 +1072,7 @@
         setupNumericInput('rev-qtd-chegou');
         setupNumericInput('rev-qtd-quebra');
         setupNumericInput('mgmt-prod-price-nota', true);
+        setupNumericInput('venda-valor', true);
 
         function calculateUnitCost() {
             const unitNota = document.getElementById('mgmt-prod-unit-nota').value.toUpperCase();
@@ -1289,6 +1346,65 @@
             };
         }
 
+        // --- 6.2 GESTÃO DE VENDAS DIÁRIAS ---
+        document.getElementById('vendas-form').onsubmit = (e) => {
+            e.preventDefault();
+            const dataRaw = document.getElementById('venda-data').value;
+            const valorStr = document.getElementById('venda-valor').value;
+            
+            if (!dataRaw || !valorStr) return alert("Preencha data e valor!");
+
+            const formattedDate = new Date(dataRaw + 'T00:00:00').toLocaleDateString('pt-BR');
+            
+            const venda = {
+                data: formattedDate,
+                valor: valorStr,
+                timestamp: Date.now()
+            };
+
+            const tx = db.transaction(salesStore, "readwrite");
+            tx.objectStore(salesStore).add(venda).onsuccess = () => {
+                alert("✅ Venda Salva!");
+                document.getElementById('venda-valor').value = '';
+                renderVendasTable();
+                updateResultsDashboard();
+            };
+        };
+
+        function renderVendasTable() {
+            if (!db) return;
+            const tbody = document.getElementById('vendas-table-body');
+            tbody.innerHTML = '';
+
+            const tx = db.transaction(salesStore, "readonly");
+            const store = tx.objectStore(salesStore);
+            store.openCursor(null, "prev").onsuccess = (e) => {
+                const cursor = e.target.result;
+                if (cursor) {
+                    const v = cursor.value;
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${v.data}</td>
+                        <td style="color:var(--primary); font-weight:bold;">R$ ${v.valor}</td>
+                        <td>
+                            <button class="btn-remove-temp" onclick="deleteVenda(${v.id})">🗑️</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                    cursor.continue();
+                }
+            };
+        }
+
+        function deleteVenda(id) {
+            if (!confirm("Deseja excluir este lançamento de venda?")) return;
+            const tx = db.transaction(salesStore, "readwrite");
+            tx.objectStore(salesStore).delete(id).onsuccess = () => {
+                renderVendasTable();
+                updateResultsDashboard();
+            };
+        }
+
         function salvar(item) {
             if (!db) return alert("Banco de dados não carregado!");
             const tx = db.transaction(historyStore, "readwrite");
@@ -1458,15 +1574,18 @@
             
             let totalQuebraGeralVal = 0;
             let totalAprovadoVal = 0;
+            let totalVendaVal = 0;
 
-            const tx = db.transaction(historyStore, "readonly");
-            const store = tx.objectStore(historyStore);
-            store.openCursor().onsuccess = (e) => {
+            // 1. Calcular Quebras e Aprovados
+            const txHist = db.transaction(historyStore, "readonly");
+            const storeHist = txHist.objectStore(historyStore);
+            storeHist.openCursor().onsuccess = (e) => {
                 const cursor = e.target.result;
                 if (cursor) {
                     const item = cursor.value;
                     if (!formattedFilterDate || item.data === formattedFilterDate) {
-                        const custo = parseFloat(item.preco_custo.replace(/\./g, '').replace(',', '.')) || 0;
+                        const custoStr = (item.preco_custo || '0,00').replace(/\./g, '').replace(',', '.');
+                        const custo = parseFloat(custoStr) || 0;
                         const qtd = parseFloat(item.qtd_quebra) || 0;
                         const valor = custo * qtd;
                         
@@ -1475,17 +1594,50 @@
                         }
                         
                         if (item.tipo === 'TRATATIVA') {
-                            const aprovado = parseFloat((item.valor_aprovado || '0,00').replace(/\./g, '').replace(',', '.')) || 0;
+                            const aprovadoStr = (item.valor_aprovado || '0,00').replace(/\./g, '').replace(',', '.');
+                            const aprovado = parseFloat(aprovadoStr) || 0;
                             totalAprovadoVal += aprovado;
                         }
                     }
                     cursor.continue();
                 } else {
-                    const acumuladoReal = totalQuebraGeralVal - totalAprovadoVal;
-                    
-                    document.getElementById('total-quebra-geral').innerText = `R$ ${totalQuebraGeralVal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-                    document.getElementById('total-aprovado').innerText = `R$ ${totalAprovadoVal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-                    document.getElementById('total-acumulado-real').innerText = `R$ ${acumuladoReal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+                    // 2. Calcular Vendas
+                    const txSales = db.transaction(salesStore, "readonly");
+                    const storeSales = txSales.objectStore(salesStore);
+                    storeSales.openCursor().onsuccess = (ev) => {
+                        const cursorSales = ev.target.result;
+                        if (cursorSales) {
+                            const venda = cursorSales.value;
+                            if (!formattedFilterDate || venda.data === formattedFilterDate) {
+                                const valorVenda = parseFloat(venda.valor.replace(/\./g, '').replace(',', '.')) || 0;
+                                totalVendaVal += valorVenda;
+                            }
+                            cursorSales.continue();
+                        } else {
+                            // 3. Renderizar Resultados Finais
+                            const acumuladoReal = totalQuebraGeralVal - totalAprovadoVal;
+                            const meta35 = totalVendaVal * 0.035;
+                            const percQuebra = totalVendaVal > 0 ? (acumuladoReal / totalVendaVal) * 100 : 0;
+                            
+                            document.getElementById('total-quebra-geral').innerText = `R$ ${totalQuebraGeralVal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+                            document.getElementById('total-aprovado').innerText = `R$ ${totalAprovadoVal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+                            document.getElementById('total-acumulado-real').innerText = `R$ ${acumuladoReal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+                            
+                            document.getElementById('dash-venda-total').innerText = `R$ ${totalVendaVal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+                            document.getElementById('dash-meta-valor').innerText = `R$ ${meta35.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+                            
+                            const percElem = document.getElementById('dash-perc-quebra');
+                            percElem.innerText = `${percQuebra.toFixed(2)}%`;
+                            
+                            // Visual feedback for meta
+                            if (totalVendaVal > 0) {
+                                percElem.style.color = percQuebra <= 3.5 ? '#25d366' : 'var(--danger)';
+                            } else {
+                                percElem.style.color = '#888';
+                                percElem.innerText = "---";
+                            }
+                        }
+                    };
                 }
             };
         }
@@ -1681,6 +1833,7 @@
             document.getElementById('dash-date').value = hoje;
             document.getElementById('tratativa-data').value = hoje;
             document.getElementById('geral-data').value = hoje;
+            document.getElementById('venda-data').value = hoje;
         };
     </script>
 </body>
