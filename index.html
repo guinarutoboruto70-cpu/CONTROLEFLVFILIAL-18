@@ -463,8 +463,8 @@
             text-transform: uppercase;
         }
 
-        /* Estilos para Lista Temporária Quebra Geral */
-        .temp-list-container {
+        /* Estilos para Lista Recente Quebra Geral */
+        .recent-list-container {
             margin-top: 20px;
             background: var(--card);
             border-radius: 12px;
@@ -472,68 +472,40 @@
             overflow: hidden;
         }
 
-        .temp-table {
+        .recent-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
         }
 
-        .temp-table th {
+        .recent-table th {
             background: #222;
             color: #888;
             text-align: left;
-            padding: 10px;
+            padding: 8px 10px;
             font-weight: 500;
         }
 
-        .temp-table td {
-            padding: 10px;
+        .recent-table td {
+            padding: 8px 10px;
             border-bottom: 1px solid #333;
             color: #fff;
         }
 
-        .temp-table tr:last-child td {
+        .recent-table tr:last-child td {
             border-bottom: none;
         }
 
-        .btn-remove-temp {
-            background: rgba(255, 68, 68, 0.2);
-            color: #ff4444;
-            border: 1px solid #ff4444;
-            padding: 4px 8px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.7rem;
-        }
-
-        .temp-footer {
-            padding: 15px;
+        .recent-title {
+            padding: 10px;
             background: #1a1a1a;
-            border-top: 1px solid var(--border);
+            color: var(--primary);
+            font-weight: bold;
+            font-size: 0.8rem;
+            border-bottom: 1px solid var(--border);
             display: flex;
             justify-content: space-between;
             align-items: center;
-        }
-
-        .temp-total-label { font-size: 0.75rem; color: #888; }
-        .temp-total-value { font-size: 1.1rem; font-weight: bold; color: var(--primary); }
-
-        .btn-finalize-batch {
-            background: #28a745;
-            color: #fff;
-            border: none;
-            padding: 15px;
-            border-radius: 8px;
-            font-weight: bold;
-            font-size: 0.9rem;
-            cursor: pointer;
-            width: 100%;
-            margin-top: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
         }
 
         /* Mobile specific adjustments */
@@ -699,36 +671,29 @@
                         </div>
                     </div>
                     <div id="geral-calc-preview" style="text-align: center; padding: 10px; color: var(--primary); font-weight: bold; border: 1px dashed #444; border-radius: 8px; margin-bottom: 10px;">
-                        Subtotal: <span id="geral-valor-total">R$ 0,00</span>
+                        Total: <span id="geral-valor-total">R$ 0,00</span>
                     </div>
-                    <button type="submit" class="btn-save">➕ ADICIONAR À LISTA</button>
+                    <button type="submit" class="btn-save">✅ SALVAR QUEBRA GERAL</button>
                 </form>
             </div>
 
-            <!-- Lista Temporária -->
-            <div id="temp-list-section" style="display: none;">
-                <div class="temp-list-container">
-                    <table class="temp-table">
-                        <thead>
-                            <tr>
-                                <th>Produto</th>
-                                <th>Qtd</th>
-                                <th>Subtotal</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody id="temp-quebra-body">
-                            <!-- JS preencherá -->
-                        </tbody>
-                    </table>
-                    <div class="temp-footer">
-                        <span class="temp-total-label">TOTAL DA LISTA:</span>
-                        <span id="temp-total-geral" class="temp-total-value">R$ 0,00</span>
-                    </div>
+            <!-- Lista de Lançamentos Recentes -->
+            <div id="recent-geral-section" class="recent-list-container">
+                <div class="recent-title">
+                    <span>🕒 ÚLTIMOS LANÇAMENTOS (HOJE)</span>
                 </div>
-                <button class="btn-finalize-batch" onclick="saveBatchQuebra()">
-                    💾 FINALIZAR E SALVAR QUEBRA DO DIA
-                </button>
+                <table class="recent-table">
+                    <thead>
+                        <tr>
+                            <th>Produto</th>
+                            <th>Qtd</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recent-geral-body">
+                        <!-- JS preencherá -->
+                    </tbody>
+                </table>
             </div>
         </div>
 
@@ -1104,6 +1069,10 @@
             
             if (screenId === 'history-screen') renderHistory();
             if (screenId === 'results-screen') updateResultsDashboard();
+            if (screenId === 'geral-screen') {
+                renderRecentGeral();
+                setTimeout(() => document.getElementById('geral-codigo').focus(), 100);
+            }
         }
 
         // --- 5. CÁLCULOS E MÁSCARAS ---
@@ -1142,7 +1111,6 @@
 
         // --- 6. SALVAMENTO ---
         let currentQuebraId = null; // Para vincular quebra geral à tratativa
-        let tempQuebraList = []; // Lista temporária para Quebra Geral (Lote)
 
         document.getElementById('tratativa-form').onsubmit = (e) => {
             e.preventDefault();
@@ -1236,87 +1204,61 @@
                 timestamp: Date.now()
             };
 
-            // Adiciona à lista temporária
-            tempQuebraList.push(item);
-            
-            // Atualiza a visualização
-            renderTempList();
-            
-            // Limpeza Inteligente: Limpa Cód, Qtd, Custo e mantém foco no Cód
-            document.getElementById('geral-codigo').value = '';
-            document.getElementById('geral-qtd').value = '';
-            document.getElementById('geral-custo').value = '';
-            document.getElementById('geral-valor-total').innerText = "R$ 0,00";
-            document.getElementById('geral-codigo').focus();
-        };
-
-        function renderTempList() {
-            const section = document.getElementById('temp-list-section');
-            const tbody = document.getElementById('temp-quebra-body');
-            const totalLabel = document.getElementById('temp-total-geral');
-            
-            if (tempQuebraList.length === 0) {
-                section.style.display = 'none';
-                return;
-            }
-
-            section.style.display = 'block';
-            tbody.innerHTML = '';
-            let totalGeral = 0;
-
-            tempQuebraList.forEach((item, index) => {
-                const custo = parseFloat(item.preco_custo.replace(/\./g, '').replace(',', '.')) || 0;
-                const qtd = parseFloat(item.qtd_quebra) || 0;
-                const subtotal = custo * qtd;
-                totalGeral += subtotal;
-
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>
-                        <div style="font-weight: bold; font-size: 0.75rem;">${item.codigo}</div>
-                        <div style="font-size: 0.7rem; color: #aaa;">${item.nome}</div>
-                    </td>
-                    <td>${item.qtd_quebra} ${item.unidade.toLowerCase()}</td>
-                    <td style="color: var(--primary); font-weight: bold;">R$ ${subtotal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
-                    <td style="text-align: right;">
-                        <button class="btn-remove-temp" onclick="removeFromTempList(${index})">✕</button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-
-            totalLabel.innerText = `R$ ${totalGeral.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-        }
-
-        function removeFromTempList(index) {
-            tempQuebraList.splice(index, 1);
-            renderTempList();
-        }
-
-        async function saveBatchQuebra() {
-            if (tempQuebraList.length === 0) return;
+            // Salva diretamente no banco
             if (!db) return alert("Banco de dados não carregado!");
-
-            if (!confirm(`Deseja salvar os ${tempQuebraList.length} itens da quebra do dia?`)) return;
-
             const tx = db.transaction(historyStore, "readwrite");
             const store = tx.objectStore(historyStore);
+            store.add(item).onsuccess = () => {
+                // Limpeza Inteligente e Foco
+                document.getElementById('geral-codigo').value = '';
+                document.getElementById('geral-nome').value = '';
+                document.getElementById('geral-qtd').value = '';
+                document.getElementById('geral-valor-total').innerText = "R$ 0,00";
+                document.getElementById('geral-codigo').focus();
+                
+                // Atualiza Dashboard e Lista Recente
+                updateResultsDashboard();
+                renderRecentGeral();
+            };
+        };
 
-            // Salva todos os itens em sequência
-            for (const item of tempQuebraList) {
-                await new Promise((resolve, reject) => {
-                    const req = store.add(item);
-                    req.onsuccess = () => resolve();
-                    req.onerror = () => reject();
+        function renderRecentGeral() {
+            if (!db) return;
+            const tbody = document.getElementById('recent-geral-body');
+            const today = new Date().toLocaleDateString('pt-BR');
+            
+            const tx = db.transaction(historyStore, "readonly");
+            const store = tx.objectStore(historyStore);
+            const request = store.getAll();
+
+            request.onsuccess = () => {
+                const items = request.result
+                    .filter(item => item.tipo === 'GERAL' && item.data === today)
+                    .sort((a, b) => b.timestamp - a.timestamp) // Mais recentes primeiro
+                    .slice(0, 10); // Últimos 10
+
+                tbody.innerHTML = '';
+                if (items.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#666; padding:20px;">Nenhum lançamento hoje</td></tr>';
+                    return;
+                }
+
+                items.forEach(item => {
+                    const custo = parseFloat(item.preco_custo.replace(/\./g, '').replace(',', '.')) || 0;
+                    const qtd = parseFloat(item.qtd_quebra) || 0;
+                    const total = custo * qtd;
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>
+                            <div style="font-weight: bold;">${item.codigo}</div>
+                            <div style="font-size: 0.65rem; color: #aaa;">${item.nome}</div>
+                        </td>
+                        <td>${item.qtd_quebra} ${item.unidade.toLowerCase()}</td>
+                        <td style="color: var(--primary); font-weight: bold;">R$ ${total.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                    `;
+                    tbody.appendChild(tr);
                 });
-            }
-
-            tx.oncomplete = () => {
-                alert("✅ Quebra do Dia Salva com Sucesso!");
-                tempQuebraList = [];
-                renderTempList();
-                document.getElementById('geral-form').reset();
-                showScreen('results-screen');
             };
         }
 
