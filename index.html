@@ -480,6 +480,10 @@
         <div id="cadastro-screen" class="screen">
             <div class="form-card">
                 <form id="tratativa-form">
+                    <div class="form-group">
+                        <label>Data da Ocorrência</label>
+                        <input type="date" id="tratativa-data" style="border-color: var(--primary);">
+                    </div>
                     <div class="row">
                         <div class="form-group">
                             <label>Cód. Produto</label>
@@ -564,6 +568,10 @@
         <div id="geral-screen" class="screen">
             <div class="form-card">
                 <form id="geral-form">
+                    <div class="form-group">
+                        <label>Data da Ocorrência</label>
+                        <input type="date" id="geral-data" style="border-color: var(--primary);" onchange="renderRecentGeral()">
+                    </div>
                     <div class="row">
                         <div class="form-group">
                             <label>Cód. Produto</label>
@@ -1086,6 +1094,9 @@
                 'preview-etiqueta': selectedMedia['preview-etiqueta'].map(m => m.base64)
             };
 
+            const selectedDate = document.getElementById('tratativa-data').value;
+            const formattedDate = selectedDate ? new Date(selectedDate + 'T00:00:00').toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR');
+
             const item = {
                 codigo: document.getElementById('rev-codigo').value || 'S/C',
                 nome: document.getElementById('rev-produto').value.toUpperCase(),
@@ -1097,7 +1108,7 @@
                 media: mediaToSave,
                 tipo: 'TRATATIVA',
                 quebra_origem_id: currentQuebraId,
-                data: new Date().toLocaleDateString('pt-BR'),
+                data: formattedDate,
                 timestamp: Date.now()
             };
 
@@ -1110,6 +1121,9 @@
             const prodNome = document.getElementById('geral-nome').value.toUpperCase();
             if (!prodNome) return alert("Selecione um produto!");
 
+            const selectedDate = document.getElementById('geral-data').value;
+            const formattedDate = selectedDate ? new Date(selectedDate + 'T00:00:00').toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR');
+
             const item = {
                 codigo: document.getElementById('geral-codigo').value || 'S/C',
                 nome: prodNome,
@@ -1119,7 +1133,7 @@
                 preco_custo: document.getElementById('geral-custo').value,
                 tipo: 'GERAL',
                 status: 'Pendente',
-                data: new Date().toLocaleDateString('pt-BR'),
+                data: formattedDate,
                 timestamp: Date.now()
             };
 
@@ -1144,7 +1158,12 @@
         function renderRecentGeral() {
             if (!db) return;
             const tbody = document.getElementById('recent-geral-body');
-            const today = new Date().toLocaleDateString('pt-BR');
+            const titleSpan = document.querySelector('#recent-geral-section .recent-title span');
+            
+            const selectedDate = document.getElementById('geral-data').value;
+            const targetDate = selectedDate ? new Date(selectedDate + 'T00:00:00').toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR');
+            
+            if (titleSpan) titleSpan.innerText = `🕒 LANÇAMENTOS EM ${targetDate}`;
             
             const tx = db.transaction(historyStore, "readonly");
             const store = tx.objectStore(historyStore);
@@ -1152,7 +1171,7 @@
 
             request.onsuccess = () => {
                 const items = request.result
-                    .filter(item => item.tipo === 'GERAL' && item.data === today)
+                    .filter(item => item.tipo === 'GERAL' && item.data === targetDate)
                     .sort((a, b) => b.timestamp - a.timestamp) // Mais recentes primeiro
                     .slice(0, 10); // Últimos 10
 
@@ -1657,9 +1676,11 @@
         window.onload = () => {
             initDB();
             setupAutocompleteListeners();
-            // Define data de hoje no dash
+            // Define data de hoje nos formulários
             const hoje = new Date().toISOString().split('T')[0];
             document.getElementById('dash-date').value = hoje;
+            document.getElementById('tratativa-data').value = hoje;
+            document.getElementById('geral-data').value = hoje;
         };
     </script>
 </body>
