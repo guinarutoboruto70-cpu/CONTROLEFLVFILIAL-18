@@ -290,85 +290,6 @@
         .stat-value { font-size: 1.2rem; font-weight: bold; color: var(--primary); margin-top: 5px; }
         .stat-label { font-size: 0.7rem; color: #888; text-transform: uppercase; }
 
-        /* Modal Styles */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.85);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .modal-content {
-            background: var(--card);
-            width: 90%;
-            max-width: 500px;
-            max-height: 80vh;
-            border-radius: 12px;
-            border: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .modal-header {
-            padding: 15px;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .modal-body {
-            padding: 15px;
-            overflow-y: auto;
-            flex: 1;
-        }
-
-        .product-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-            font-size: 0.85rem;
-        }
-
-        .product-table th, .product-table td {
-            padding: 10px;
-            text-align: left;
-            border-bottom: 1px solid #333;
-        }
-
-        .product-table th { color: #888; font-weight: 500; }
-
-        .btn-action {
-            padding: 5px 8px;
-            border-radius: 4px;
-            border: none;
-            font-size: 0.75rem;
-            cursor: pointer;
-            margin-right: 5px;
-        }
-
-        .btn-edit { background: var(--primary); color: #000; }
-        .btn-delete { background: var(--danger); color: #fff; }
-        .btn-add-product { background: #44ff44; color: #000; font-weight: bold; }
-
-        .gear-btn {
-            background: transparent;
-            border: none;
-            color: #aaa;
-            font-size: 1.2rem;
-            cursor: pointer;
-            position: absolute;
-            right: 15px;
-            top: 10px;
-        }
-
         /* Review Screen Styles */
         .review-section {
             background: #1f1f1f;
@@ -519,7 +440,6 @@
 
     <header>
         <h1>SISTEMA TRATAFLV 1018</h1>
-        <button class="gear-btn" onclick="openProductModal()">⚙️</button>
         <div class="nav-bar">
             <button id="nav-dash" class="nav-btn active" onclick="showScreen('results-screen')">📊 PAINEL</button>
             <button id="nav-tratativa" class="nav-btn" onclick="showScreen('cadastro-screen')">🍎 TRATATIVA</button>
@@ -791,11 +711,6 @@
                             <input type="text" id="rev-qtd-quebra">
                         </div>
                     </div>
-                    <div class="review-group" style="margin-top: 10px; padding: 10px; background: rgba(37, 211, 102, 0.1); border-radius: 8px; border: 1px solid rgba(37, 211, 102, 0.3);">
-                        <label style="color: #25d366; font-weight: bold;">💰 Valor/Qtd Aprovada Central</label>
-                        <input type="text" id="rev-valor-aprovado" placeholder="0,00" style="border-color: #25d366;">
-                    </div>
-                </div>
 
                 <div class="review-section">
                     <div class="review-title">📱 ENVIO POR WHATSAPP</div>
@@ -836,55 +751,6 @@
             </div>
         </div>
 
-        <!-- MODAL GERENCIAR PRODUTOS -->
-        <div id="product-modal" class="modal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2 style="font-size: 1rem; color: var(--primary); margin: 0;">⚙️ GERENCIAR PRODUTOS</h2>
-                    <button onclick="closeProductModal()" style="background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer;">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <div class="form-card" style="margin-bottom: 15px;">
-                        <h3 style="font-size: 0.8rem; margin-top: 0; color: #aaa;">ADICIONAR NOVO</h3>
-                        <div class="row">
-                            <div class="form-group">
-                                <label>Código</label>
-                                <input type="number" id="new-prod-cod" placeholder="Ex: 1000">
-                            </div>
-                            <div class="form-group">
-                                <label>Unidade</label>
-                                <select id="new-prod-uni">
-                                    <option value="KG">KG</option>
-                                    <option value="UND">UND</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>Nome do Produto</label>
-                            <input type="text" id="new-prod-nome" placeholder="NOME DO ITEM">
-                        </div>
-                        <button class="btn-save btn-add-product" onclick="saveNewProduct()">✅ SALVAR PRODUTO</button>
-                    </div>
-
-                    <table class="product-table">
-                        <thead>
-                            <tr>
-                                <th>Cód</th>
-                                <th>Nome</th>
-                                <th>Ação</th>
-                            </tr>
-                        </thead>
-                        <tbody id="product-table-body">
-                            <!-- JS will fill this -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-    </div>
-
-    <!-- DATALISTS PARA AUTOCOMPLETE -->
     <datalist id="lista-codigos"></datalist>
     <datalist id="lista-nomes"></datalist>
 
@@ -1056,73 +922,6 @@
             }
         }
 
-        // --- 3.1 GESTÃO DE PRODUTOS (MODAL) ---
-        function openProductModal() {
-            document.getElementById('product-modal').style.display = 'flex';
-            renderProductTable();
-        }
-
-        function closeProductModal() {
-            document.getElementById('product-modal').style.display = 'none';
-        }
-
-        function renderProductTable() {
-            const tbody = document.getElementById('product-table-body');
-            tbody.innerHTML = '';
-            
-            // Ordenar por nome para facilitar busca visual
-            const sortedCodes = Object.keys(PRODUTOS_CACHE).sort((a, b) => 
-                PRODUTOS_CACHE[a].nome.localeCompare(PRODUTOS_CACHE[b].nome)
-            );
-
-            sortedCodes.forEach(cod => {
-                const p = PRODUTOS_CACHE[cod];
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${cod}</td>
-                    <td>${p.nome} (${p.unidade})</td>
-                    <td>
-                        <button class="btn-action btn-edit" onclick="editProduct('${cod}')">✏️</button>
-                        <button class="btn-action btn-delete" onclick="deleteProduct('${cod}')">🗑️</button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        function saveNewProduct() {
-            const cod = document.getElementById('new-prod-cod').value;
-            const nome = document.getElementById('new-prod-nome').value.toUpperCase();
-            const uni = document.getElementById('new-prod-uni').value;
-
-            if (!cod || !nome) return alert("Preencha código e nome!");
-
-            const product = { codigo: cod, nome: nome, unidade: uni };
-            const tx = db.transaction(productStore, "readwrite");
-            tx.objectStore(productStore).put(product).onsuccess = () => {
-                document.getElementById('new-prod-cod').value = '';
-                document.getElementById('new-prod-nome').value = '';
-                loadProducts().then(() => renderProductTable());
-            };
-        }
-
-        function editProduct(cod) {
-            const p = PRODUTOS_CACHE[cod];
-            document.getElementById('new-prod-cod').value = cod;
-            document.getElementById('new-prod-nome').value = p.nome;
-            document.getElementById('new-prod-uni').value = p.unidade;
-            document.getElementById('new-prod-nome').focus();
-        }
-
-        function deleteProduct(cod) {
-            if (!confirm(`Excluir produto ${PRODUTOS_CACHE[cod].nome}?`)) return;
-            
-            const tx = db.transaction(productStore, "readwrite");
-            tx.objectStore(productStore).delete(cod).onsuccess = () => {
-                loadProducts().then(() => renderProductTable());
-            };
-        }
-
         // --- 4. NAVEGAÇÃO ---
         function showScreen(screenId) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -1183,7 +982,6 @@
         // Máscaras para a tela de revisão
         setupNumericInput('rev-qtd-chegou');
         setupNumericInput('rev-qtd-quebra');
-        setupNumericInput('rev-valor-aprovado', true);
         setupNumericInput('mgmt-prod-custo', true);
 
         // --- 6. SALVAMENTO ---
@@ -1222,7 +1020,6 @@
             document.getElementById('rev-unidade').value = unit;
             document.getElementById('rev-qtd-chegou').value = qChegou;
             document.getElementById('rev-qtd-quebra').value = qQuebra;
-            document.getElementById('rev-valor-aprovado').value = ''; // Limpa para novo preenchimento
 
             // Habilita/Desabilita botões de mídia baseado no que foi selecionado
             document.getElementById('btn-send-prod').disabled = selectedMedia['preview-produto'].length === 0;
@@ -1251,7 +1048,7 @@
                 qtd_chegou: document.getElementById('rev-qtd-chegou').value,
                 qtd_quebra: document.getElementById('rev-qtd-quebra').value,
                 preco_custo: document.getElementById('preco_custo').value,
-                valor_aprovado: document.getElementById('rev-valor-aprovado').value || '0,00',
+                valor_aprovado: '0,00',
                 media: mediaToSave,
                 tipo: 'TRATATIVA',
                 quebra_origem_id: currentQuebraId,
@@ -1485,9 +1282,16 @@
                             actionBtn = `<button class="btn-bridge" onclick="bridgeToTratativa(${JSON.stringify(item).replace(/"/g, '&quot;')})">🚀 GERAR TRATATIVA</button>`;
                         }
                     } else if (item.tipo === 'TRATATIVA') {
+                        const isFinalized = item.status === 'Finalizado';
+                        const statusClass = isFinalized ? 'status-finalizado' : 'status-pendente';
                         statusBadge = `<div class="badge status-tratativa">TRATATIVA</div>`;
-                        if (item.valor_aprovado && item.valor_aprovado !== '0,00') {
-                            statusBadge += `<div class="badge status-aprovado">Aprovado: R$ ${item.valor_aprovado}</div>`;
+                        statusBadge += `<div class="badge ${statusClass}">${item.status || 'Em Aberto'}</div>`;
+                        
+                        if (isFinalized) {
+                            const recuperado = item.valor_aprovado || '0,00';
+                            statusBadge += `<div class="badge status-aprovado">Recuperado: R$ ${recuperado}</div>`;
+                        } else {
+                            actionBtn = `<button class="btn-bridge" style="background: var(--primary); color: #000;" onclick="promptFinalizarTratativa(${item.id})">✅ FINALIZAR E INFORMAR VALOR</button>`;
                         }
                     }
 
@@ -1538,6 +1342,30 @@
             
             // Scroll para o topo
             window.scrollTo(0, 0);
+        }
+
+        function promptFinalizarTratativa(id) {
+            const valor = prompt("Informe o Valor Aprovado (R$):", "0,00");
+            if (valor === null) return;
+
+            // Formata o valor para o padrão do sistema
+            let cleanVal = valor.replace(/[^\d,]/g, '');
+            if (!cleanVal.includes(',')) cleanVal += ",00";
+
+            const tx = db.transaction(historyStore, "readwrite");
+            const store = tx.objectStore(historyStore);
+            store.get(id).onsuccess = (e) => {
+                const item = e.target.result;
+                if (item) {
+                    item.status = 'Finalizado';
+                    item.valor_aprovado = cleanVal;
+                    store.put(item).onsuccess = () => {
+                        alert("✅ Tratativa Finalizada!");
+                        renderHistory();
+                        updateResultsDashboard();
+                    };
+                }
+            };
         }
 
         function updateResultsDashboard() {
