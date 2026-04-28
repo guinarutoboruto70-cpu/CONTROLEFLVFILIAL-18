@@ -435,6 +435,34 @@
             padding: 15px;
         }
 
+        /* Status Badges e Botão Ponte */
+        .badge {
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.65rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            display: inline-block;
+        }
+        .status-pendente { background: #ffcc00; color: #000; }
+        .status-finalizado { background: #28a745; color: #fff; }
+        .status-tratativa { background: #007bff; color: #fff; }
+        .status-aprovado { border: 1px solid #28a745; color: #28a745; background: rgba(40, 167, 69, 0.1); }
+
+        .btn-bridge {
+            background: var(--primary);
+            color: #000;
+            border: none;
+            padding: 10px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 0.75rem;
+            cursor: pointer;
+            margin-top: 10px;
+            width: 100%;
+            text-transform: uppercase;
+        }
+
         /* Mobile specific adjustments */
         @media (max-width: 380px) {
             .nav-btn { font-size: 0.6rem; }
@@ -468,16 +496,16 @@
             
             <div class="dashboard-grid">
                 <div class="stat-card" style="grid-column: span 2;">
-                    <div class="stat-label">Total Quebra Acumulada</div>
-                    <div id="total-geral" class="stat-value">R$ 0,00</div>
+                    <div class="stat-label">Quebra Acumulada Real (Geral - Aprovado)</div>
+                    <div id="total-acumulado-real" class="stat-value" style="color: var(--primary);">R$ 0,00</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">Quebra Geral</div>
+                    <div class="stat-label">Total Quebra Geral</div>
                     <div id="total-quebra-geral" class="stat-value">R$ 0,00</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">Tratativa</div>
-                    <div id="total-tratativa" class="stat-value">R$ 0,00</div>
+                    <div class="stat-label">Total Aprovado Central</div>
+                    <div id="total-aprovado" class="stat-value" style="color: #25d366;">R$ 0,00</div>
                 </div>
             </div>
         </div>
@@ -646,6 +674,10 @@
                             <input type="text" id="rev-qtd-quebra">
                         </div>
                     </div>
+                    <div class="review-group" style="margin-top: 10px; padding: 10px; background: rgba(37, 211, 102, 0.1); border-radius: 8px; border: 1px solid rgba(37, 211, 102, 0.3);">
+                        <label style="color: #25d366; font-weight: bold;">💰 Valor/Qtd Aprovada Central</label>
+                        <input type="text" id="rev-valor-aprovado" placeholder="0,00" style="border-color: #25d366;">
+                    </div>
                 </div>
 
                 <div class="review-section">
@@ -790,7 +822,7 @@
 
         // --- 2. INICIALIZAÇÃO DO BANCO ---
         function initDB() {
-            const request = indexedDB.open(dbName, 4);
+            const request = indexedDB.open(dbName, 22);
             request.onupgradeneeded = (e) => {
                 const db = e.target.result;
                 if (!db.objectStoreNames.contains(historyStore)) {
@@ -1007,20 +1039,35 @@
         // Máscaras para a tela de revisão
         setupNumericInput('rev-qtd-chegou');
         setupNumericInput('rev-qtd-quebra');
+        setupNumericInput('rev-valor-aprovado', true);
 
         // --- 6. SALVAMENTO ---
+        let currentQuebraId = null; // Para vincular quebra geral à tratativa
+
         document.getElementById('tratativa-form').onsubmit = (e) => {
             e.preventDefault();
             prepareReview();
         };
 
-        function prepareReview() {
+        function prepareReview(preFilledData = null) {
+            // Se vier de uma quebra geral, preenche os campos
+            if (preFilledData) {
+                document.getElementById('codigo').value = preFilledData.codigo;
+                document.getElementById('produto').value = preFilledData.nome;
+                document.getElementById('unidade').value = preFilledData.unidade;
+                document.getElementById('qtd_chegou').value = ''; // Sempre vazio para preenchimento manual
+                document.getElementById('qtd_quebra').value = preFilledData.qtd_quebra;
+                document.getElementById('preco_custo').value = preFilledData.preco_custo;
+                currentQuebraId = preFilledData.id;
+            }
+
             // Pega os dados atuais do formulário
             const cod = document.getElementById('codigo').value || 'S/C';
             const prod = document.getElementById('produto').value.toUpperCase();
             const unit = document.getElementById('unidade').value;
             const qChegou = document.getElementById('qtd_chegou').value;
             const qQuebra = document.getElementById('qtd_quebra').value;
+            const preco = document.getElementById('preco_custo').value;
 
             if (!prod) return alert("Selecione um produto!");
 
@@ -1030,6 +1077,7 @@
             document.getElementById('rev-unidade').value = unit;
             document.getElementById('rev-qtd-chegou').value = qChegou;
             document.getElementById('rev-qtd-quebra').value = qQuebra;
+            document.getElementById('rev-valor-aprovado').value = ''; // Limpa para novo preenchimento
 
             // Habilita/Desabilita botões de mídia baseado no que foi selecionado
             document.getElementById('btn-send-prod').disabled = selectedMedia['preview-produto'].length === 0;
@@ -1058,8 +1106,10 @@
                 qtd_chegou: document.getElementById('rev-qtd-chegou').value,
                 qtd_quebra: document.getElementById('rev-qtd-quebra').value,
                 preco_custo: document.getElementById('preco_custo').value,
+                valor_aprovado: document.getElementById('rev-valor-aprovado').value || '0,00',
                 media: mediaToSave,
                 tipo: 'TRATATIVA',
+                quebra_origem_id: currentQuebraId,
                 data: new Date().toLocaleDateString('pt-BR'),
                 timestamp: Date.now()
             };
@@ -1077,6 +1127,7 @@
                 qtd_quebra: document.getElementById('geral-qtd').value,
                 preco_custo: document.getElementById('geral-custo').value,
                 tipo: 'GERAL',
+                status: 'Pendente', // Status inicial para quebra geral
                 data: new Date().toLocaleDateString('pt-BR'),
                 timestamp: Date.now()
             };
@@ -1086,11 +1137,27 @@
         function salvar(item) {
             if (!db) return alert("Banco de dados não carregado!");
             const tx = db.transaction(historyStore, "readwrite");
-            tx.objectStore(historyStore).add(item).onsuccess = () => {
+            const store = tx.objectStore(historyStore);
+            
+            store.add(item).onsuccess = (e) => {
+                // Se for uma tratativa que veio de uma quebra geral, atualiza o status da quebra
+                if (item.tipo === 'TRATATIVA' && item.quebra_origem_id) {
+                    const updateTx = db.transaction(historyStore, "readwrite");
+                    const updateStore = updateTx.objectStore(historyStore);
+                    updateStore.get(item.quebra_origem_id).onsuccess = (ev) => {
+                        const quebra = ev.target.result;
+                        if (quebra) {
+                            quebra.status = 'Finalizado';
+                            updateStore.put(quebra);
+                        }
+                    };
+                }
+
                 alert("✅ Registro Salvo com Sucesso!");
                 document.getElementById('tratativa-form').reset();
                 document.getElementById('geral-form').reset();
                 document.getElementById('geral-valor-total').innerText = "R$ 0,00";
+                currentQuebraId = null;
                 
                 // Limpar mídias
                 selectedMedia = {
@@ -1126,12 +1193,32 @@
                     const qChegou = item.unidade === 'KG' ? parseFloat(item.qtd_chegou || 0).toFixed(2) : item.qtd_chegou;
                     const qQuebra = item.unidade === 'KG' ? parseFloat(item.qtd_quebra || 0).toFixed(2) : item.qtd_quebra;
 
+                    let statusBadge = '';
+                    let actionBtn = '';
+                    if (item.tipo === 'GERAL') {
+                        const statusClass = item.status === 'Pendente' ? 'status-pendente' : 'status-finalizado';
+                        statusBadge = `<div class="badge ${statusClass}">${item.status || 'Pendente'}</div>`;
+                        
+                        if (item.status !== 'Finalizado') {
+                            actionBtn = `<button class="btn-bridge" onclick="bridgeToTratativa(${JSON.stringify(item).replace(/"/g, '&quot;')})">🚀 GERAR TRATATIVA</button>`;
+                        }
+                    } else if (item.tipo === 'TRATATIVA') {
+                        statusBadge = `<div class="badge status-tratativa">TRATATIVA</div>`;
+                        if (item.valor_aprovado && item.valor_aprovado !== '0,00') {
+                            statusBadge += `<div class="badge status-aprovado">Aprovado: R$ ${item.valor_aprovado}</div>`;
+                        }
+                    }
+
                     card.innerHTML = `
-                        <div class="card-cod">Cód ${item.codigo}</div>
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <div class="card-cod">Cód ${item.codigo}</div>
+                            <div style="display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end;">${statusBadge}</div>
+                        </div>
                         <div class="card-name">${item.nome}</div>
                         <div class="card-date">${item.data}</div>
                         <div class="card-chegou">Chegou: ${qChegou} ${unit}</div>
                         <div class="card-quebra">Quantidade da quebra: ${qQuebra} ${unit}</div>
+                        ${actionBtn}
                         ${item.media ? `
                             <div style="margin-top: 8px; display: flex; gap: 5px; flex-wrap: wrap;">
                                 ${Object.keys(item.media).map(key => 
@@ -1156,14 +1243,28 @@
             };
         }
 
+        function bridgeToTratativa(item) {
+            showScreen('cadastro-screen');
+            // Preenche o formulário da tratativa
+            document.getElementById('codigo').value = item.codigo;
+            document.getElementById('produto').value = item.nome;
+            document.getElementById('unidade').value = item.unidade;
+            document.getElementById('qtd_chegou').value = ''; // Manual
+            document.getElementById('qtd_quebra').value = item.qtd_quebra;
+            document.getElementById('preco_custo').value = item.preco_custo;
+            currentQuebraId = item.id;
+            
+            // Scroll para o topo
+            window.scrollTo(0, 0);
+        }
+
         function updateResultsDashboard() {
             if (!db) return;
             const filterDate = document.getElementById('dash-date').value;
             const formattedFilterDate = filterDate ? new Date(filterDate + 'T00:00:00').toLocaleDateString('pt-BR') : null;
             
-            let totalG = 0;
-            let totalT = 0;
-            let totalQG = 0;
+            let totalQuebraGeralVal = 0;
+            let totalAprovadoVal = 0;
 
             const tx = db.transaction(historyStore, "readonly");
             const store = tx.objectStore(historyStore);
@@ -1176,15 +1277,22 @@
                         const qtd = parseFloat(item.qtd_quebra) || 0;
                         const valor = custo * qtd;
                         
-                        totalG += valor;
-                        if (item.tipo === 'TRATATIVA') totalT += valor;
-                        if (item.tipo === 'GERAL') totalQG += valor;
+                        if (item.tipo === 'GERAL') {
+                            totalQuebraGeralVal += valor;
+                        }
+                        
+                        if (item.tipo === 'TRATATIVA') {
+                            const aprovado = parseFloat((item.valor_aprovado || '0,00').replace(/\./g, '').replace(',', '.')) || 0;
+                            totalAprovadoVal += aprovado;
+                        }
                     }
                     cursor.continue();
                 } else {
-                    document.getElementById('total-geral').innerText = `R$ ${totalG.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-                    document.getElementById('total-tratativa').innerText = `R$ ${totalT.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-                    document.getElementById('total-quebra-geral').innerText = `R$ ${totalQG.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+                    const acumuladoReal = totalQuebraGeralVal - totalAprovadoVal;
+                    
+                    document.getElementById('total-quebra-geral').innerText = `R$ ${totalQuebraGeralVal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+                    document.getElementById('total-aprovado').innerText = `R$ ${totalAprovadoVal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+                    document.getElementById('total-acumulado-real').innerText = `R$ ${acumuladoReal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
                 }
             };
         }
