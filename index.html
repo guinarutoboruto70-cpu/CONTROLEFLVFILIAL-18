@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SISTEMA TRATAFLV 1018 - V18</title>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <style>
         :root { 
             --primary: #ffcc00; 
@@ -388,6 +389,41 @@
             background: rgba(37, 211, 102, 0.05);
         }
 
+        /* OCR e Review Styles */
+        .ocr-loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        .ocr-item-new {
+            background: rgba(37, 211, 102, 0.1);
+            border-left: 4px solid #25d366 !important;
+        }
+
+        .btn-ocr-scan {
+            background: #444;
+            color: #fff;
+            border: 1px solid #666;
+            padding: 12px;
+            border-radius: 10px;
+            width: 100%;
+            margin-bottom: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-ocr-scan:hover {
+            background: #555;
+            border-color: var(--primary);
+        }
+
         /* Review Screen Styles */
         .review-section {
             background: #1f1f1f;
@@ -750,6 +786,17 @@
                     ⬅️ VOLTAR
                 </button>
                 <h2 style="color: var(--primary); font-size: 1.1rem; margin-top: 0; text-align: center;">📦 CADASTRO DE PRODUTOS</h2>
+                
+                <div style="margin-bottom: 20px;">
+                    <label class="btn-ocr-scan">
+                        📷 LER NOTA FISCAL (OCR)
+                        <input type="file" id="ocr-upload" accept="image/*" style="display: none;" onchange="handleOCR(event)">
+                    </label>
+                    <div id="ocr-loading" class="ocr-loading">
+                        ⏳ Lendo nota fiscal... <span id="ocr-progress">0%</span>
+                    </div>
+                </div>
+
                 <form id="product-mgmt-form">
                     <input type="hidden" id="mgmt-edit-mode" value="false">
                     <div class="row">
@@ -840,6 +887,66 @@
                         <!-- JS preencherá -->
                     </tbody>
                 </table>
+            </div>
+        </div>
+
+        <!-- OCR REVIEW SCREEN -->
+        <div id="ocr-review-screen" class="screen">
+            <div class="form-card">
+                <h2 style="color: var(--primary); font-size: 1.1rem; margin-top: 0; text-align: center;">📝 REVISAR NOVOS PRODUTOS</h2>
+                <p style="font-size: 0.8rem; color: #888; text-align: center; margin-bottom: 15px;">
+                    Produtos abaixo foram detectados na nota. Clique para ajustar o preço de custo.
+                </p>
+                
+                <div id="ocr-results-list" class="recent-list-container">
+                    <table class="recent-table">
+                        <thead>
+                            <tr>
+                                <th>Cód</th>
+                                <th>Produto</th>
+                                <th>Custo</th>
+                                <th>Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ocr-results-body">
+                            <!-- JS preencherá -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <button class="btn-save" style="margin-top: 20px;" onclick="showScreen('product-management-screen')">
+                    🏁 FINALIZAR REVISÃO
+                </button>
+            </div>
+        </div>
+
+        <!-- OCR REVIEW SCREEN -->
+        <div id="ocr-review-screen" class="screen">
+            <div class="form-card">
+                <h2 style="color: var(--primary); font-size: 1.1rem; margin-top: 0; text-align: center;">📝 REVISAR NOVOS PRODUTOS</h2>
+                <p style="font-size: 0.8rem; color: #888; text-align: center; margin-bottom: 15px;">
+                    Produtos abaixo foram detectados na nota. Clique para ajustar o preço de custo.
+                </p>
+                
+                <div id="ocr-results-list" class="recent-list-container">
+                    <table class="recent-table">
+                        <thead>
+                            <tr>
+                                <th>Cód</th>
+                                <th>Produto</th>
+                                <th>Custo</th>
+                                <th>Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ocr-results-body">
+                            <!-- JS preencherá -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <button class="btn-save" style="margin-top: 20px;" onclick="showScreen('product-management-screen')">
+                    🏁 FINALIZAR REVISÃO
+                </button>
             </div>
         </div>
 
@@ -1128,6 +1235,7 @@
                 'geral-screen': 'nav-geral',
                 'vendas-screen': 'nav-vendas',
                 'product-management-screen': 'nav-products',
+                'ocr-review-screen': 'nav-products',
                 'history-screen': 'nav-history',
                 'review-screen': 'nav-tratativa'
             };
@@ -1455,7 +1563,124 @@
             };
         }
 
-        // --- 6.2 GESTÃO DE VENDAS DIÁRIAS ---
+        // --- 6.2 OCR (IMPORTAÇÃO AUTOMÁTICA) ---
+        async function handleOCR(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const loading = document.getElementById('ocr-loading');
+            const progress = document.getElementById('ocr-progress');
+            loading.style.display = 'block';
+
+            try {
+                // Carrega o worker do Tesseract
+                const worker = await Tesseract.createWorker('por', 1, {
+                    logger: m => {
+                        if (m.status === 'recognizing text') {
+                            progress.innerText = `${Math.floor(m.progress * 100)}%`;
+                        }
+                    }
+                });
+
+                const { data: { text } } = await worker.recognize(file);
+                await worker.terminate();
+
+                const detectedProducts = parseOCRText(text);
+                const newProducts = await saveOCRProducts(detectedProducts);
+
+                if (newProducts.length > 0) {
+                    renderOCRResults(newProducts);
+                    showScreen('ocr-review-screen');
+                } else {
+                    alert("Nenhum novo produto detectado ou todos já cadastrados.");
+                }
+            } catch (error) {
+                console.error("Erro OCR:", error);
+                alert("Erro ao ler a nota. Tente uma foto mais nítida.");
+            } finally {
+                loading.style.display = 'none';
+                event.target.value = ''; 
+            }
+        }
+
+        function parseOCRText(text) {
+            const lines = text.split('\n');
+            const products = [];
+            // Regex: Captura [Código (3-6 dígitos)] [Espaço] [Nome (Letras e Espaços)]
+            const productRegex = /^(\d{3,6})\s+([A-ZÀ-Ú0-9\s.\-/]{3,})/;
+
+            lines.forEach(line => {
+                const trimmed = line.trim().toUpperCase();
+                // Filtro de ruído
+                if (trimmed.includes('TOTAL') || trimmed.includes('CNPJ') || trimmed.includes('IE:') || 
+                    trimmed.includes('DATA:') || trimmed.includes('VALOR') || trimmed.length < 5) return;
+
+                const match = trimmed.match(productRegex);
+                if (match) {
+                    products.push({
+                        codigo: match[1],
+                        nome: match[2].trim()
+                    });
+                }
+            });
+            return products;
+        }
+
+        async function saveOCRProducts(products) {
+            const newAdded = [];
+            const tx = db.transaction(productStore, "readwrite");
+            const store = tx.objectStore(productStore);
+
+            for (const p of products) {
+                const existing = await new Promise(resolve => {
+                    store.get(p.codigo).onsuccess = (e) => resolve(e.target.result);
+                });
+
+                if (!existing) {
+                    const newProd = {
+                        codigo: p.codigo,
+                        nome: p.nome,
+                        unidade: 'KG', 
+                        unidade_nota: 'KG',
+                        preco_nota: '0,00',
+                        preco_custo: '0,00' 
+                    };
+                    store.put(newProd);
+                    newAdded.push(newProd);
+                }
+            }
+
+            await new Promise(resolve => tx.oncomplete = resolve);
+            await loadProducts(); 
+            return newAdded;
+        }
+
+        function renderOCRResults(products) {
+            const tbody = document.getElementById('ocr-results-body');
+            tbody.innerHTML = '';
+
+            products.forEach(p => {
+                const tr = document.createElement('tr');
+                tr.className = 'ocr-item-new';
+                tr.innerHTML = `
+                    <td>${p.codigo}</td>
+                    <td>${p.nome}</td>
+                    <td style="color: var(--danger); font-weight: bold;">Pendente</td>
+                    <td>
+                        <button class="btn-remove-temp" style="background:var(--primary); color:#000;" onclick="quickEditPrice('${p.codigo}')">💰</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function quickEditPrice(cod) {
+            showScreen('product-management-screen');
+            editMgmtProduct(cod);
+            setTimeout(() => document.getElementById('mgmt-prod-price-nota').focus(), 100);
+        }
+
+        // --- 6.3 GESTÃO DE VENDAS DIÁRIAS ---
         document.getElementById('vendas-form').onsubmit = (e) => {
             e.preventDefault();
             const dataRaw = document.getElementById('venda-data').value;
