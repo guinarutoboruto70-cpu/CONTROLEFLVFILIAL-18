@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SISTEMA TRATAFLV 1018 - V18</title>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <style>
         :root { 
             --primary: #ffcc00; 
@@ -424,6 +426,44 @@
             border-color: var(--primary);
         }
 
+        /* Cropper Modal */
+        #cropper-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 2000;
+            flex-direction: column;
+        }
+
+        .cropper-container-inner {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cropper-controls {
+            padding: 20px;
+            display: flex;
+            gap: 10px;
+            background: #111;
+        }
+
+        .btn-manual-quick {
+            background: none;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            padding: 8px;
+            border-radius: 8px;
+            font-size: 0.7rem;
+            width: 100%;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+
         /* Review Screen Styles */
         .review-section {
             background: #1f1f1f;
@@ -792,6 +832,9 @@
                         📷 LER NOTA FISCAL (OCR)
                         <input type="file" id="ocr-upload" accept="image/*" capture="environment" style="display: none;" onchange="handleOCR(event)">
                     </label>
+                    <button type="button" class="btn-manual-quick" onclick="showQuickManualEntry()">
+                        ⌨️ ENTRADA MANUAL RÁPIDA
+                    </button>
                     <div id="ocr-loading" class="ocr-loading">
                         ⏳ Lendo nota fiscal... <span id="ocr-progress">0%</span>
                     </div>
@@ -1037,6 +1080,16 @@
 
     <datalist id="lista-codigos"></datalist>
     <datalist id="lista-nomes"></datalist>
+
+    <div id="cropper-modal">
+        <div class="cropper-container-inner">
+            <img id="cropper-image" style="max-width: 100%;">
+        </div>
+        <div class="cropper-controls">
+            <button class="btn-save" style="background: #444;" onclick="closeCropper()">❌ CANCELAR</button>
+            <button class="btn-save" onclick="processCrop()">✂️ RECORTAR E LER</button>
+        </div>
+    </div>
 
     <script>
         // --- 1. CONFIGURAÇÕES E BANCO DE DADOS ---
@@ -1564,20 +1617,56 @@
         }
 
         // --- 6.2 OCR (IMPORTAÇÃO AUTOMÁTICA) ---
+        let cropper = null;
+
         async function handleOCR(event) {
             const file = event.target.files[0];
             if (!file) return;
 
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const modal = document.getElementById('cropper-modal');
+                const image = document.getElementById('cropper-image');
+                image.src = e.target.result;
+                modal.style.display = 'flex';
+
+                if (cropper) cropper.destroy();
+                cropper = new Cropper(image, {
+                    viewMode: 1,
+                    autoCropArea: 0.8,
+                    movable: true,
+                    zoomable: true,
+                    scalable: true
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function closeCropper() {
+            document.getElementById('cropper-modal').style.display = 'none';
+            if (cropper) {
+                cropper.destroy();
+                cropper = null;
+            }
+            document.getElementById('ocr-upload').value = '';
+        }
+
+        async function processCrop() {
+            if (!cropper) return;
+            
+            const croppedCanvas = cropper.getCroppedCanvas();
+            closeCropper();
+            
             const loading = document.getElementById('ocr-loading');
             const progress = document.getElementById('ocr-progress');
             loading.style.display = 'block';
             progress.innerText = '0%';
 
             try {
-                // 1. Pré-processamento da imagem (Binarização/Contraste)
-                const processedImageData = await preprocessImage(file);
+                // Converte o canvas para Blob para o processamento
+                const blob = await new Promise(resolve => croppedCanvas.toBlob(resolve, 'image/jpeg', 0.9));
+                const processedImageData = await preprocessImage(blob);
 
-                // 2. Carrega o worker do Tesseract com configuração de Engine (PSM 6)
                 const worker = await Tesseract.createWorker('por', 1, {
                     logger: m => {
                         if (m.status === 'recognizing text') {
@@ -1586,18 +1675,16 @@
                     }
                 });
 
-                // PSM 6: Assume a single uniform block of text
+                // PSM 4: Assume a single column of text of variable sizes (ideal para lista de produtos)
                 await worker.setParameters({
-                    tessedit_pageseg_mode: '6',
+                    tessedit_pageseg_mode: '4',
                 });
 
                 const { data: { text } } = await worker.recognize(processedImageData);
                 await worker.terminate();
 
-                // Log de Verificação (Debug)
-                console.log("--- TEXTO BRUTO OCR ---");
+                console.log("--- TEXTO BRUTO OCR (ROI) ---");
                 console.log(text);
-                console.log("-----------------------");
 
                 const detectedProducts = parseOCRText(text);
                 const newProducts = await saveOCRProducts(detectedProducts);
@@ -1606,14 +1693,43 @@
                     renderOCRResults(newProducts);
                     showScreen('ocr-review-screen');
                 } else {
-                    alert("Nenhum novo produto detectado ou todos já cadastrados. Verifique o console para debug.");
+                    alert("Nenhum novo produto detectado no recorte. Tente um recorte mais justo na coluna de código e nome.");
                 }
             } catch (error) {
                 console.error("Erro OCR:", error);
-                alert("Erro ao ler a nota. Tente uma foto mais nítida.");
+                alert("Erro ao processar imagem.");
             } finally {
                 loading.style.display = 'none';
-                event.target.value = ''; 
+            }
+        }
+
+        function showQuickManualEntry() {
+            const products = [];
+            const loop = () => {
+                const cod = prompt("Cód. Produto (ou deixe vazio para encerrar):");
+                if (!cod) {
+                    if (products.length > 0) finalizeManualEntry(products);
+                    return;
+                }
+                const nome = prompt(`Nome para o código ${cod}:`);
+                if (!nome) {
+                    alert("Nome obrigatório!");
+                    loop();
+                    return;
+                }
+                products.push({ codigo: cod, nome: nome.toUpperCase() });
+                loop();
+            };
+            loop();
+        }
+
+        async function finalizeManualEntry(products) {
+            const newAdded = await saveOCRProducts(products);
+            if (newAdded.length > 0) {
+                renderOCRResults(newAdded);
+                showScreen('ocr-review-screen');
+            } else {
+                alert("Todos os produtos informados já estavam cadastrados.");
             }
         }
 
@@ -1648,11 +1764,12 @@
         }
 
         function sanitizeOCRString(str) {
-            return str.trim()
-                      .toUpperCase()
-                      .replace(/\s+/g, ' ') // Remove espaços excessivos
-                      .replace(/[^\w\sÀ-Ú.\-/]/g, ''); // Remove caracteres especiais indesejados
-        }
+             return str.trim()
+                       .toUpperCase()
+                       .replace(/\s+/g, ' ') // Remove espaços excessivos
+                       .replace(/[.,]/g, '') // Remove pontos e vírgulas extras que o OCR inventa
+                       .replace(/[^\w\sÀ-Ú.\-/]/g, ''); // Remove outros caracteres especiais
+         }
 
         function parseOCRText(text) {
             const lines = text.split('\n');
