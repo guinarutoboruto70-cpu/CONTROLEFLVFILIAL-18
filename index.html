@@ -4,9 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SISTEMA TRATAFLV 1018 - V18</title>
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <style>
         :root { 
             --primary: #ffcc00; 
@@ -391,79 +388,6 @@
             background: rgba(37, 211, 102, 0.05);
         }
 
-        /* OCR e Review Styles */
-        .ocr-loading {
-            display: none;
-            text-align: center;
-            padding: 20px;
-            color: var(--primary);
-            font-weight: bold;
-        }
-
-        .ocr-item-new {
-            background: rgba(37, 211, 102, 0.1);
-            border-left: 4px solid #25d366 !important;
-        }
-
-        .btn-ocr-scan {
-            background: #444;
-            color: #fff;
-            border: 1px solid #666;
-            padding: 12px;
-            border-radius: 10px;
-            width: 100%;
-            margin-bottom: 15px;
-            font-weight: bold;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-
-        .btn-ocr-scan:hover {
-            background: #555;
-            border-color: var(--primary);
-        }
-
-        /* Cropper Modal */
-        #cropper-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #000;
-            z-index: 2000;
-            flex-direction: column;
-        }
-
-        .cropper-container-inner {
-            flex: 1;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .cropper-controls {
-            padding: 20px;
-            display: flex;
-            gap: 10px;
-            background: #111;
-        }
-
-        .btn-manual-quick {
-            background: none;
-            border: 1px solid var(--primary);
-            color: var(--primary);
-            padding: 8px;
-            border-radius: 8px;
-            font-size: 0.7rem;
-            width: 100%;
-            margin-top: 10px;
-            cursor: pointer;
-        }
-
         /* Review Screen Styles */
         .review-section {
             background: #1f1f1f;
@@ -827,25 +751,22 @@
                 </button>
                 <h2 style="color: var(--primary); font-size: 1.1rem; margin-top: 0; text-align: center;">📦 CADASTRO DE PRODUTOS</h2>
                 
-                <div style="margin-bottom: 20px;">
-                    <label class="btn-ocr-scan">
-                        📷 LER NOTA FISCAL (OCR)
-                        <input type="file" id="ocr-upload" accept="image/*" capture="environment" style="display: none;" onchange="handleOCR(event)">
-                    </label>
-                    <button type="button" class="btn-manual-quick" onclick="showQuickManualEntry()">
-                        ⌨️ ENTRADA MANUAL RÁPIDA
-                    </button>
-                    <div id="ocr-loading" class="ocr-loading">
-                        ⏳ Lendo nota fiscal... <span id="ocr-progress">0%</span>
-                    </div>
-                </div>
-
                 <form id="product-mgmt-form">
                     <input type="hidden" id="mgmt-edit-mode" value="false">
                     <div class="row">
                         <div class="form-group">
                             <label>Cód. Produto</label>
                             <input type="number" id="mgmt-prod-cod" placeholder="Ex: 1000">
+                        </div>
+                        <div class="form-group">
+                            <label>Nome do Produto</label>
+                            <input type="text" id="mgmt-prod-nome" placeholder="NOME DO ITEM">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="form-group">
+                            <label>Preço da Nota (R$)</label>
+                            <input type="text" id="mgmt-prod-price-nota" placeholder="0,00" oninput="calculateUnitCost()">
                         </div>
                         <div class="form-group">
                             <label>Unidade de Venda</label>
@@ -855,23 +776,15 @@
                             </select>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label>Nome do Produto</label>
-                        <input type="text" id="mgmt-prod-nome" placeholder="NOME DO ITEM">
-                    </div>
                     <div class="row">
                         <div class="form-group">
                             <label>Unidade da Nota (Ex: CX20, KG)</label>
                             <input type="text" id="mgmt-prod-unit-nota" placeholder="CX20" oninput="calculateUnitCost()">
                         </div>
                         <div class="form-group">
-                            <label>Preço da Nota (R$)</label>
-                            <input type="text" id="mgmt-prod-price-nota" placeholder="0,00" oninput="calculateUnitCost()">
+                            <label>Custo Unitário Calculado (R$)</label>
+                            <input type="text" id="mgmt-prod-custo" placeholder="0,00" readonly style="background: #1a1a1a; color: var(--primary); font-weight: bold;">
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Custo Unitário Calculado (R$)</label>
-                        <input type="text" id="mgmt-prod-custo" placeholder="0,00" readonly style="background: #1a1a1a; color: var(--primary); font-weight: bold;">
                     </div>
                     <button type="submit" class="btn-save" id="btn-save-mgmt">✅ SALVAR PRODUTO</button>
                     <button type="button" class="btn-save" id="btn-cancel-mgmt" style="background: #444; margin-top: 10px; display: none;" onclick="cancelMgmtEdit()">❌ CANCELAR EDIÇÃO</button>
@@ -933,65 +846,7 @@
             </div>
         </div>
 
-        <!-- OCR REVIEW SCREEN -->
-        <div id="ocr-review-screen" class="screen">
-            <div class="form-card">
-                <h2 style="color: var(--primary); font-size: 1.1rem; margin-top: 0; text-align: center;">📝 REVISAR NOVOS PRODUTOS</h2>
-                <p style="font-size: 0.8rem; color: #888; text-align: center; margin-bottom: 15px;">
-                    Produtos abaixo foram detectados na nota. Clique para ajustar o preço de custo.
-                </p>
-                
-                <div id="ocr-results-list" class="recent-list-container">
-                    <table class="recent-table">
-                        <thead>
-                            <tr>
-                                <th>Cód</th>
-                                <th>Produto</th>
-                                <th>Custo</th>
-                                <th>Ação</th>
-                            </tr>
-                        </thead>
-                        <tbody id="ocr-results-body">
-                            <!-- JS preencherá -->
-                        </tbody>
-                    </table>
-                </div>
 
-                <button class="btn-save" style="margin-top: 20px;" onclick="showScreen('product-management-screen')">
-                    🏁 FINALIZAR REVISÃO
-                </button>
-            </div>
-        </div>
-
-        <!-- OCR REVIEW SCREEN -->
-        <div id="ocr-review-screen" class="screen">
-            <div class="form-card">
-                <h2 style="color: var(--primary); font-size: 1.1rem; margin-top: 0; text-align: center;">📝 REVISAR NOVOS PRODUTOS</h2>
-                <p style="font-size: 0.8rem; color: #888; text-align: center; margin-bottom: 15px;">
-                    Produtos abaixo foram detectados na nota. Clique para ajustar o preço de custo.
-                </p>
-                
-                <div id="ocr-results-list" class="recent-list-container">
-                    <table class="recent-table">
-                        <thead>
-                            <tr>
-                                <th>Cód</th>
-                                <th>Produto</th>
-                                <th>Custo</th>
-                                <th>Ação</th>
-                            </tr>
-                        </thead>
-                        <tbody id="ocr-results-body">
-                            <!-- JS preencherá -->
-                        </tbody>
-                    </table>
-                </div>
-
-                <button class="btn-save" style="margin-top: 20px;" onclick="showScreen('product-management-screen')">
-                    🏁 FINALIZAR REVISÃO
-                </button>
-            </div>
-        </div>
 
         <!-- HISTORY -->
         <div id="history-screen" class="screen">
@@ -1080,16 +935,6 @@
 
     <datalist id="lista-codigos"></datalist>
     <datalist id="lista-nomes"></datalist>
-
-    <div id="cropper-modal">
-        <div class="cropper-container-inner">
-            <img id="cropper-image" style="max-width: 100%;">
-        </div>
-        <div class="cropper-controls">
-            <button class="btn-save" style="background: #444;" onclick="closeCropper()">❌ CANCELAR</button>
-            <button class="btn-save" onclick="processCrop()">✂️ RECORTAR E LER</button>
-        </div>
-    </div>
 
     <script>
         // --- 1. CONFIGURAÇÕES E BANCO DE DADOS ---
@@ -1211,7 +1056,7 @@
             });
         }
 
-        // --- 3. AUTOCOMPLETE ---
+        // --- 3. AUTOCOMPLETE E BUSCA BIDIRECIONAL ---
         function setupAutocompleteListeners() {
             // Tratativa listeners
             document.getElementById('codigo').addEventListener('input', (e) => preencher(e.target.value, 'produto', 'unidade'));
@@ -1220,6 +1065,34 @@
             // Geral listeners
             document.getElementById('geral-codigo').addEventListener('input', (e) => preencher(e.target.value, 'geral-nome', 'geral-unidade'));
             document.getElementById('geral-nome').addEventListener('input', (e) => preencherPorNome(e.target.value, 'geral-codigo', 'geral-unidade'));
+
+            // Navegação por Enter em todos os formulários
+            setupEnterKeyNavigation('tratativa-form');
+            setupEnterKeyNavigation('geral-form');
+            setupEnterKeyNavigation('product-mgmt-form');
+            setupEnterKeyNavigation('vendas-form');
+        }
+
+        function setupEnterKeyNavigation(formId) {
+            const form = document.getElementById(formId);
+            if (!form) return;
+
+            const inputs = Array.from(form.querySelectorAll('input:not([type="hidden"]), select, textarea'));
+            
+            inputs.forEach((input, index) => {
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const nextInput = inputs[index + 1];
+                        if (nextInput) {
+                            nextInput.focus();
+                        } else {
+                            // Se for o último campo, submete o formulário
+                            form.requestSubmit();
+                        }
+                    }
+                });
+            });
         }
 
         function initAutocomplete() {
@@ -1240,6 +1113,10 @@
         }
 
         function preencher(cod, nomeId, unitId) {
+            if (!cod) {
+                document.getElementById(nomeId).value = '';
+                return;
+            }
             if (PRODUTOS_CACHE[cod]) {
                 document.getElementById(nomeId).value = PRODUTOS_CACHE[cod].nome;
                 document.getElementById(unitId).value = PRODUTOS_CACHE[cod].unidade;
@@ -1256,8 +1133,13 @@
         }
 
         function preencherPorNome(nome, codId, unitId) {
+            if (!nome) {
+                document.getElementById(codId).value = '';
+                return;
+            }
+            const upperNome = nome.toUpperCase();
             for (const cod in PRODUTOS_CACHE) {
-                if (PRODUTOS_CACHE[cod].nome === nome.toUpperCase()) {
+                if (PRODUTOS_CACHE[cod].nome === upperNome) {
                     document.getElementById(codId).value = cod;
                     document.getElementById(unitId).value = PRODUTOS_CACHE[cod].unidade;
                     
@@ -1288,7 +1170,6 @@
                 'geral-screen': 'nav-geral',
                 'vendas-screen': 'nav-vendas',
                 'product-management-screen': 'nav-products',
-                'ocr-review-screen': 'nav-products',
                 'history-screen': 'nav-history',
                 'review-screen': 'nav-tratativa'
             };
@@ -1298,10 +1179,14 @@
             if (screenId === 'results-screen') updateResultsDashboard();
             if (screenId === 'product-management-screen') renderMgmtProductTable();
             if (screenId === 'vendas-screen') renderVendasTable();
-            if (screenId === 'geral-screen') {
-                renderRecentGeral();
-                setTimeout(() => document.getElementById('geral-codigo').focus(), 100);
-            }
+            if (screenId === 'geral-screen') renderRecentGeral();
+
+            // Foco automático no primeiro campo da tela
+            setTimeout(() => {
+                const screen = document.getElementById(screenId);
+                const firstInput = screen.querySelector('input:not([type="hidden"]), select, textarea');
+                if (firstInput) firstInput.focus();
+            }, 100);
         }
 
         // --- 5. CÁLCULOS E MÁSCARAS ---
@@ -1616,240 +1501,7 @@
             };
         }
 
-        // --- 6.2 OCR (IMPORTAÇÃO AUTOMÁTICA) ---
-        let cropper = null;
-
-        async function handleOCR(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const modal = document.getElementById('cropper-modal');
-                const image = document.getElementById('cropper-image');
-                image.src = e.target.result;
-                modal.style.display = 'flex';
-
-                if (cropper) cropper.destroy();
-                cropper = new Cropper(image, {
-                    viewMode: 1,
-                    autoCropArea: 0.8,
-                    movable: true,
-                    zoomable: true,
-                    scalable: true
-                });
-            };
-            reader.readAsDataURL(file);
-        }
-
-        function closeCropper() {
-            document.getElementById('cropper-modal').style.display = 'none';
-            if (cropper) {
-                cropper.destroy();
-                cropper = null;
-            }
-            document.getElementById('ocr-upload').value = '';
-        }
-
-        async function processCrop() {
-            if (!cropper) return;
-            
-            const croppedCanvas = cropper.getCroppedCanvas();
-            closeCropper();
-            
-            const loading = document.getElementById('ocr-loading');
-            const progress = document.getElementById('ocr-progress');
-            loading.style.display = 'block';
-            progress.innerText = '0%';
-
-            try {
-                // Converte o canvas para Blob para o processamento
-                const blob = await new Promise(resolve => croppedCanvas.toBlob(resolve, 'image/jpeg', 0.9));
-                const processedImageData = await preprocessImage(blob);
-
-                const worker = await Tesseract.createWorker('por', 1, {
-                    logger: m => {
-                        if (m.status === 'recognizing text') {
-                            progress.innerText = `${Math.floor(m.progress * 100)}%`;
-                        }
-                    }
-                });
-
-                // PSM 4: Assume a single column of text of variable sizes (ideal para lista de produtos)
-                await worker.setParameters({
-                    tessedit_pageseg_mode: '4',
-                });
-
-                const { data: { text } } = await worker.recognize(processedImageData);
-                await worker.terminate();
-
-                console.log("--- TEXTO BRUTO OCR (ROI) ---");
-                console.log(text);
-
-                const detectedProducts = parseOCRText(text);
-                const newProducts = await saveOCRProducts(detectedProducts);
-
-                if (newProducts.length > 0) {
-                    renderOCRResults(newProducts);
-                    showScreen('ocr-review-screen');
-                } else {
-                    alert("Nenhum novo produto detectado no recorte. Tente um recorte mais justo na coluna de código e nome.");
-                }
-            } catch (error) {
-                console.error("Erro OCR:", error);
-                alert("Erro ao processar imagem.");
-            } finally {
-                loading.style.display = 'none';
-            }
-        }
-
-        function showQuickManualEntry() {
-            const products = [];
-            const loop = () => {
-                const cod = prompt("Cód. Produto (ou deixe vazio para encerrar):");
-                if (!cod) {
-                    if (products.length > 0) finalizeManualEntry(products);
-                    return;
-                }
-                const nome = prompt(`Nome para o código ${cod}:`);
-                if (!nome) {
-                    alert("Nome obrigatório!");
-                    loop();
-                    return;
-                }
-                products.push({ codigo: cod, nome: nome.toUpperCase() });
-                loop();
-            };
-            loop();
-        }
-
-        async function finalizeManualEntry(products) {
-            const newAdded = await saveOCRProducts(products);
-            if (newAdded.length > 0) {
-                renderOCRResults(newAdded);
-                showScreen('ocr-review-screen');
-            } else {
-                alert("Todos os produtos informados já estavam cadastrados.");
-            }
-        }
-
-        // Função de Binarização e Contraste via Canvas
-        async function preprocessImage(file) {
-            return new Promise((resolve) => {
-                const img = new Image();
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    
-                    ctx.drawImage(img, 0, 0);
-                    
-                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                    const data = imageData.data;
-                    
-                    // Grayscale + Binarização + Contraste
-                    for (let i = 0; i < data.length; i += 4) {
-                        const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
-                        // Threshold simples para binarização (128)
-                        const val = avg > 128 ? 255 : 0;
-                        data[i] = data[i + 1] = data[i + 2] = val;
-                    }
-                    
-                    ctx.putImageData(imageData, 0, 0);
-                    resolve(canvas.toDataURL('image/jpeg', 0.8));
-                };
-                img.src = URL.createObjectURL(file);
-            });
-        }
-
-        function sanitizeOCRString(str) {
-             return str.trim()
-                       .toUpperCase()
-                       .replace(/\s+/g, ' ') // Remove espaços excessivos
-                       .replace(/[.,]/g, '') // Remove pontos e vírgulas extras que o OCR inventa
-                       .replace(/[^\w\sÀ-Ú.\-/]/g, ''); // Remove outros caracteres especiais
-         }
-
-        function parseOCRText(text) {
-            const lines = text.split('\n');
-            const products = [];
-            // Regex: Captura [Código (3-6 dígitos)] [Espaço] [Nome]
-            const productRegex = /^(\d{3,6})\s+([A-ZÀ-Ú0-9\s.\-/]{3,})/;
-
-            lines.forEach(line => {
-                const sanitizedLine = sanitizeOCRString(line);
-                
-                // Filtro de ruído
-                if (sanitizedLine.includes('TOTAL') || sanitizedLine.includes('CNPJ') || sanitizedLine.includes('IE') || 
-                    sanitizedLine.includes('DATA') || sanitizedLine.includes('VALOR') || sanitizedLine.length < 5) return;
-
-                const match = sanitizedLine.match(productRegex);
-                if (match) {
-                    products.push({
-                        codigo: match[1],
-                        nome: match[2].trim()
-                    });
-                }
-            });
-            return products;
-        }
-
-        async function saveOCRProducts(products) {
-            const newAdded = [];
-            const tx = db.transaction(productStore, "readwrite");
-            const store = tx.objectStore(productStore);
-
-            for (const p of products) {
-                const existing = await new Promise(resolve => {
-                    store.get(p.codigo).onsuccess = (e) => resolve(e.target.result);
-                });
-
-                if (!existing) {
-                    const newProd = {
-                        codigo: p.codigo,
-                        nome: p.nome,
-                        unidade: 'KG', 
-                        unidade_nota: 'KG',
-                        preco_nota: '0,00',
-                        preco_custo: '0,00' 
-                    };
-                    store.put(newProd);
-                    newAdded.push(newProd);
-                }
-            }
-
-            await new Promise(resolve => tx.oncomplete = resolve);
-            await loadProducts(); 
-            return newAdded;
-        }
-
-        function renderOCRResults(products) {
-            const tbody = document.getElementById('ocr-results-body');
-            tbody.innerHTML = '';
-
-            products.forEach(p => {
-                const tr = document.createElement('tr');
-                tr.className = 'ocr-item-new';
-                tr.innerHTML = `
-                    <td>${p.codigo}</td>
-                    <td>${p.nome}</td>
-                    <td style="color: var(--danger); font-weight: bold;">Pendente</td>
-                    <td>
-                        <button class="btn-remove-temp" style="background:var(--primary); color:#000;" onclick="quickEditPrice('${p.codigo}')">💰</button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        function quickEditPrice(cod) {
-            showScreen('product-management-screen');
-            editMgmtProduct(cod);
-            setTimeout(() => document.getElementById('mgmt-prod-price-nota').focus(), 100);
-        }
-
-        // --- 6.3 GESTÃO DE VENDAS DIÁRIAS ---
+        // --- 6.2 GESTÃO DE VENDAS DIÁRIAS ---
         document.getElementById('vendas-form').onsubmit = (e) => {
             e.preventDefault();
             const dataRaw = document.getElementById('venda-data').value;
@@ -2370,19 +2022,22 @@
             const tx = db.transaction(historyStore, "readwrite");
             const store = tx.objectStore(historyStore);
             
-            let deletedCount = 0;
             checkboxes.forEach(cb => {
                 const id = parseInt(cb.value);
-                store.delete(id).onsuccess = () => {
-                    deletedCount++;
-                    if (deletedCount === checkboxes.length) {
-                        renderHistory();
-                        updateResultsDashboard();
-                        document.getElementById('mass-delete-bar').style.display = 'none';
-                        alert(`✅ ${deletedCount} registros excluídos!`);
-                    }
-                };
+                store.delete(id);
             });
+
+            tx.oncomplete = () => {
+                renderHistory();
+                updateResultsDashboard();
+                document.getElementById('mass-delete-bar').style.display = 'none';
+                alert(`✅ ${checkboxes.length} registros excluídos!`);
+            };
+            
+            tx.onerror = (e) => {
+                console.error("Erro ao excluir itens:", e);
+                alert("Erro ao excluir alguns itens.");
+            };
         }
 
         function resetMonthData() {
