@@ -595,7 +595,10 @@
 
         <!-- FORM TRATATIVA -->
         <div id="cadastro-screen" class="screen">
-            <div class="form-card">
+            <div class="form-card" style="position: relative; padding-top: 45px;">
+                <button class="btn-back-header" onclick="showScreen('results-screen')">
+                    ⬅️ VOLTAR
+                </button>
                 <form id="tratativa-form">
                     <div class="form-group">
                         <label>Data da Ocorrência</label>
@@ -673,9 +676,8 @@
                         <div id="preview-etiqueta" class="preview-container"></div>
                     </div>
 
-                    <div class="actions-row">
-                        <button type="submit" class="btn-save">✅ SALVAR</button>
-                        <button type="button" class="btn-save btn-whatsapp" onclick="sendWhatsApp()">📱 WHATSAPP</button>
+                    <div class="actions-row" style="grid-template-columns: 1fr;">
+                        <button type="submit" class="btn-save">✅ SALVAR TRATATIVA</button>
                     </div>
                 </form>
             </div>
@@ -683,7 +685,10 @@
 
         <!-- FORM QUEBRA GERAL -->
         <div id="geral-screen" class="screen">
-            <div class="form-card">
+            <div class="form-card" style="position: relative; padding-top: 45px;">
+                <button class="btn-back-header" onclick="showScreen('results-screen')">
+                    ⬅️ VOLTAR
+                </button>
                 <form id="geral-form">
                     <div class="form-group">
                         <label>Data da Ocorrência</label>
@@ -817,7 +822,10 @@
 
         <!-- VENDAS DIÁRIAS -->
         <div id="vendas-screen" class="screen">
-            <div class="form-card">
+            <div class="form-card" style="position: relative; padding-top: 45px;">
+                <button class="btn-back-header" onclick="showScreen('results-screen')">
+                    ⬅️ VOLTAR
+                </button>
                 <form id="vendas-form">
                     <div class="form-group">
                         <label>Data da Venda</label>
@@ -854,6 +862,11 @@
 
         <!-- HISTORY -->
         <div id="history-screen" class="screen">
+            <div class="form-card" style="position: relative; padding-top: 45px; border: none; background: transparent;">
+                <button class="btn-back-header" onclick="showScreen('results-screen')">
+                    ⬅️ VOLTAR
+                </button>
+            </div>
             <div id="mass-delete-bar" class="mass-delete-bar">
                 <span id="mass-delete-count" style="color: #fff; font-size: 0.9rem; font-weight: bold;">0 itens selecionados</span>
                 <button class="btn-delete-mass" onclick="deleteSelectedHistory()">🗑️ EXCLUIR SELECIONADOS</button>
@@ -899,41 +912,13 @@
                     </div>
 
                 <div class="review-section">
-                    <div class="review-title">📱 ENVIO POR WHATSAPP</div>
+                    <div class="review-title">📱 FINALIZAR</div>
                     <div class="review-whatsapp-buttons">
-                        <button class="btn-wa-action" onclick="sendWhatsAppTextOnly()">
-                            💬 ENVIAR TEXTO (RESUMO)
+                        <button class="btn-save btn-finalize" onclick="finalizeTratativa()" style="margin-top: 0;">
+                            🏁 FINALIZAR E SALVAR
                         </button>
-                        
-                        <div style="border-top: 1px solid #333; margin: 5px 0; padding-top: 10px;">
-                            <label style="font-size: 0.7rem; color: #888; display: block; margin-bottom: 5px;">FOTOS DO PRODUTO</label>
-                            <div id="rev-preview-produto" class="preview-container"></div>
-                            <button id="btn-send-prod" class="btn-wa-action" style="margin-top: 5px;" onclick="sendWhatsAppMedia('preview-produto', 'PRODUTO')">
-                                📸 ENVIAR TODAS DO PRODUTO
-                            </button>
-                        </div>
-                        
-                        <div style="margin-top: 10px;">
-                            <label style="font-size: 0.7rem; color: #888; display: block; margin-bottom: 5px;">FOTOS DA BALANÇA</label>
-                            <div id="rev-preview-balanca" class="preview-container"></div>
-                            <button id="btn-send-bal" class="btn-wa-action" style="margin-top: 5px;" onclick="sendWhatsAppMedia('preview-balanca', 'BALANÇA')">
-                                ⚖️ ENVIAR TODAS DA BALANÇA
-                            </button>
-                        </div>
-                        
-                        <div style="margin-top: 10px;">
-                            <label style="font-size: 0.7rem; color: #888; display: block; margin-bottom: 5px;">FOTO DA ETIQUETA</label>
-                            <div id="rev-preview-etiqueta" class="preview-container"></div>
-                            <button id="btn-send-etiq" class="btn-wa-action" style="margin-top: 5px;" onclick="sendWhatsAppMedia('preview-etiqueta', 'ETIQUETA')">
-                                🏷️ ENVIAR ETIQUETA
-                            </button>
-                        </div>
                     </div>
                 </div>
-
-                <button class="btn-save btn-finalize" onclick="finalizeTratativa()">
-                    🏁 FINALIZAR E SAIR
-                </button>
             </div>
         </div>
 
@@ -1064,10 +1049,12 @@
         function setupAutocompleteListeners() {
             // Tratativa listeners
             document.getElementById('codigo').addEventListener('input', (e) => preencher(e.target.value, 'produto', 'unidade'));
+            document.getElementById('produto').addEventListener('change', (e) => preencherPorNome(e.target.value, 'codigo', 'unidade'));
             document.getElementById('produto').addEventListener('input', (e) => preencherPorNome(e.target.value, 'codigo', 'unidade'));
             
             // Geral listeners
             document.getElementById('geral-codigo').addEventListener('input', (e) => preencher(e.target.value, 'geral-nome', 'geral-unidade'));
+            document.getElementById('geral-nome').addEventListener('change', (e) => preencherPorNome(e.target.value, 'geral-codigo', 'geral-unidade'));
             document.getElementById('geral-nome').addEventListener('input', (e) => preencherPorNome(e.target.value, 'geral-codigo', 'geral-unidade'));
 
             // Cadastro/Gestão listeners
@@ -1089,7 +1076,7 @@
                 }
             });
 
-            document.getElementById('mgmt-prod-nome').addEventListener('input', (e) => {
+            const mgmtNomeHandler = (e) => {
                 const nome = e.target.value;
                 const isEditMode = document.getElementById('mgmt-edit-mode').value === "true";
                 
@@ -1107,7 +1094,10 @@
                 } else {
                     document.getElementById('mgmt-alert').style.display = 'none';
                 }
-            });
+            };
+
+            document.getElementById('mgmt-prod-nome').addEventListener('change', mgmtNomeHandler);
+            document.getElementById('mgmt-prod-nome').addEventListener('input', mgmtNomeHandler);
 
             // Navegação por Enter em todos os formulários
             setupEnterKeyNavigation('tratativa-form');
@@ -1267,10 +1257,17 @@
         setupNumericInput('geral-custo', true);
         
         // Máscaras para a tela de revisão
-        setupNumericInput('rev-qtd-chegou');
-        setupNumericInput('rev-qtd-quebra');
         setupNumericInput('mgmt-prod-price-nota', true);
         setupNumericInput('venda-valor', true);
+
+        // Adicionando inputmode decimal para campos de preço/valor
+        document.getElementById('preco_custo').setAttribute('inputmode', 'decimal');
+        document.getElementById('geral-custo').setAttribute('inputmode', 'decimal');
+        document.getElementById('mgmt-prod-price-nota').setAttribute('inputmode', 'decimal');
+        document.getElementById('venda-valor').setAttribute('inputmode', 'decimal');
+        document.getElementById('qtd_chegou').setAttribute('inputmode', 'decimal');
+        document.getElementById('qtd_quebra').setAttribute('inputmode', 'decimal');
+        document.getElementById('geral-qtd').setAttribute('inputmode', 'decimal');
 
         function calculateUnitCost() {
             const unitNota = document.getElementById('mgmt-prod-unit-nota').value.toUpperCase();
