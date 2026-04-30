@@ -753,14 +753,17 @@
                 
                 <form id="product-mgmt-form">
                     <input type="hidden" id="mgmt-edit-mode" value="false">
+                    <div id="mgmt-alert" style="display: none; background: rgba(255, 204, 0, 0.1); color: var(--primary); padding: 8px; border-radius: 6px; font-size: 0.75rem; text-align: center; margin-bottom: 10px; border: 1px solid var(--primary);">
+                        ⚠️ Produto já cadastrado
+                    </div>
                     <div class="row">
                         <div class="form-group">
                             <label>Cód. Produto</label>
-                            <input type="number" id="mgmt-prod-cod" placeholder="Ex: 1000">
+                            <input type="number" id="mgmt-prod-cod" list="lista-codigos" placeholder="Ex: 1000">
                         </div>
                         <div class="form-group">
                             <label>Nome do Produto</label>
-                            <input type="text" id="mgmt-prod-nome" placeholder="NOME DO ITEM">
+                            <input type="text" id="mgmt-prod-nome" list="lista-nomes" placeholder="NOME DO ITEM">
                         </div>
                     </div>
                     <div class="row">
@@ -1065,6 +1068,45 @@
             // Geral listeners
             document.getElementById('geral-codigo').addEventListener('input', (e) => preencher(e.target.value, 'geral-nome', 'geral-unidade'));
             document.getElementById('geral-nome').addEventListener('input', (e) => preencherPorNome(e.target.value, 'geral-codigo', 'geral-unidade'));
+
+            // Cadastro/Gestão listeners
+            document.getElementById('mgmt-prod-cod').addEventListener('input', (e) => {
+                const cod = e.target.value;
+                const isEditMode = document.getElementById('mgmt-edit-mode').value === "true";
+                
+                if (PRODUTOS_CACHE[cod]) {
+                    if (!isEditMode) {
+                        document.getElementById('mgmt-alert').style.display = 'block';
+                        preencher(cod, 'mgmt-prod-nome', 'mgmt-prod-uni');
+                        // Preenche também campos de nota se existirem
+                        document.getElementById('mgmt-prod-unit-nota').value = PRODUTOS_CACHE[cod].unidade_nota || '';
+                        document.getElementById('mgmt-prod-price-nota').value = PRODUTOS_CACHE[cod].preco_nota || '0,00';
+                        document.getElementById('mgmt-prod-custo').value = PRODUTOS_CACHE[cod].preco_custo || '0,00';
+                    }
+                } else {
+                    document.getElementById('mgmt-alert').style.display = 'none';
+                }
+            });
+
+            document.getElementById('mgmt-prod-nome').addEventListener('input', (e) => {
+                const nome = e.target.value;
+                const isEditMode = document.getElementById('mgmt-edit-mode').value === "true";
+                
+                const codEncontrado = Object.keys(PRODUTOS_CACHE).find(c => PRODUTOS_CACHE[c].nome === nome.toUpperCase());
+                
+                if (codEncontrado) {
+                    if (!isEditMode) {
+                        document.getElementById('mgmt-alert').style.display = 'block';
+                        document.getElementById('mgmt-prod-cod').value = codEncontrado;
+                        document.getElementById('mgmt-prod-uni').value = PRODUTOS_CACHE[codEncontrado].unidade;
+                        document.getElementById('mgmt-prod-unit-nota').value = PRODUTOS_CACHE[codEncontrado].unidade_nota || '';
+                        document.getElementById('mgmt-prod-price-nota').value = PRODUTOS_CACHE[codEncontrado].preco_nota || '0,00';
+                        document.getElementById('mgmt-prod-custo').value = PRODUTOS_CACHE[codEncontrado].preco_custo || '0,00';
+                    }
+                } else {
+                    document.getElementById('mgmt-alert').style.display = 'none';
+                }
+            });
 
             // Navegação por Enter em todos os formulários
             setupEnterKeyNavigation('tratativa-form');
@@ -1490,6 +1532,7 @@
             document.getElementById('mgmt-edit-mode').value = "false";
             document.getElementById('btn-save-mgmt').innerText = "✅ SALVAR PRODUTO";
             document.getElementById('btn-cancel-mgmt').style.display = "none";
+            document.getElementById('mgmt-alert').style.display = "none";
         }
 
         function deleteMgmtProduct(cod) {
