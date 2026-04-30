@@ -604,7 +604,7 @@
                     <div class="row">
                         <div class="form-group">
                             <label>Cód. Produto</label>
-                            <input type="number" id="codigo" list="lista-codigos" placeholder="Ex: 7028">
+                            <input type="number" id="codigo" list="lista-codigos" placeholder="Ex: 7028" inputmode="numeric">
                         </div>
                         <div class="form-group">
                             <label>Unidade</label>
@@ -692,7 +692,7 @@
                     <div class="row">
                         <div class="form-group">
                             <label>Cód. Produto</label>
-                            <input type="number" id="geral-codigo" list="lista-codigos" placeholder="Ex: 7028">
+                            <input type="number" id="geral-codigo" list="lista-codigos" placeholder="Ex: 7028" inputmode="numeric">
                         </div>
                         <div class="form-group">
                             <label>Unidade</label>
@@ -757,9 +757,10 @@
                         ⚠️ Produto já cadastrado
                     </div>
                     <div class="row">
-                        <div class="form-group">
+                        <div class="form-group" style="position: relative;">
                             <label>Cód. Produto</label>
-                            <input type="number" id="mgmt-prod-cod" list="lista-codigos" placeholder="Ex: 1000">
+                            <input type="number" id="mgmt-prod-cod" list="lista-codigos" placeholder="Ex: 1000" inputmode="numeric">
+                            <button type="button" onclick="cancelMgmtEdit()" style="position: absolute; right: 5px; top: 25px; background: none; border: none; color: #888; font-size: 1.2rem; cursor: pointer; padding: 5px;" title="Limpar Campos">✕</button>
                         </div>
                         <div class="form-group">
                             <label>Nome do Produto</label>
@@ -1533,6 +1534,11 @@
             document.getElementById('btn-save-mgmt').innerText = "✅ SALVAR PRODUTO";
             document.getElementById('btn-cancel-mgmt').style.display = "none";
             document.getElementById('mgmt-alert').style.display = "none";
+            
+            // Foco automático no código
+            setTimeout(() => {
+                document.getElementById('mgmt-prod-cod').focus();
+            }, 50);
         }
 
         function deleteMgmtProduct(cod) {
