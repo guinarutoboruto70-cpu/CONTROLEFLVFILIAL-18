@@ -466,7 +466,40 @@
         .status-pendente { background: #ffcc00; color: #000; }
         .status-finalizado { background: #28a745; color: #fff; }
         .status-tratativa { background: #007bff; color: #fff; }
-        .status-aprovado { border: 1px solid #28a745; color: #28a745; background: rgba(40, 167, 69, 0.1); }
+        .status-aprovado { background: #28a745; color: #fff; }
+        .status-reprovado { background: #ff4444; color: #fff; }
+        .status-badge-aprovado { border: 1px solid #28a745; color: #28a745; background: rgba(40, 167, 69, 0.1); }
+
+        .btn-status-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .btn-status-approve {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 0.75rem;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+
+        .btn-status-reject {
+            background: #ff4444;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 0.75rem;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
 
         .btn-bridge {
             background: var(--primary);
@@ -1376,12 +1409,18 @@
                 valor_aprovado: '0,00',
                 media: mediaToSave,
                 tipo: 'TRATATIVA',
+                status: 'pendente', // Status inicial oficial
                 quebra_origem_id: currentQuebraId,
                 data: formattedDate,
                 timestamp: Date.now()
             };
 
             salvar(item);
+            
+            // Abrir WhatsApp após salvar
+            setTimeout(() => {
+                sendWhatsAppTextOnly();
+            }, 500);
         }
 
         document.getElementById('geral-form').onsubmit = (e) => {
@@ -1699,24 +1738,39 @@
                     let statusBadge = '';
                     let actionBtn = '';
                     if (item.tipo === 'GERAL') {
-                        const statusClass = item.status === 'Pendente' ? 'status-pendente' : 'status-finalizado';
+                        const statusClass = item.status === 'Finalizado' ? 'status-finalizado' : 'status-pendente';
                         statusBadge = `<div class="badge ${statusClass}">${item.status || 'Pendente'}</div>`;
                         
                         if (item.status !== 'Finalizado') {
                             actionBtn = `<button class="btn-bridge" onclick="bridgeToTratativa(${JSON.stringify(item).replace(/"/g, '&quot;')})">🚀 GERAR TRATATIVA</button>`;
                         }
                     } else if (item.tipo === 'TRATATIVA') {
-                        const isFinalized = item.status === 'Finalizado';
-                        const statusClass = isFinalized ? 'status-finalizado' : 'status-pendente';
-                        statusBadge = `<div class="badge status-tratativa">TRATATIVA</div>`;
-                        statusBadge += `<div class="badge ${statusClass}">${item.status || 'Em Aberto'}</div>`;
+                        const status = item.status || 'pendente';
+                        let statusClass = 'status-pendente';
+                        let statusText = '⏳ PENDENTE';
                         
-                        if (isFinalized) {
+                        if (status === 'aprovado') {
+                            statusClass = 'status-aprovado';
+                            statusText = '✔ APROVADO';
+                        } else if (status === 'reprovado') {
+                            statusClass = 'status-reprovado';
+                            statusText = '✖ REPROVADO';
+                        }
+                        
+                        statusBadge = `<div class="badge status-tratativa">TRATATIVA</div>`;
+                        statusBadge += `<div class="badge ${statusClass}">${statusText}</div>`;
+                        
+                        if (status === 'aprovado') {
                             const recuperado = item.valor_aprovado || '0,00';
                             const qAprovada = item.qtd_aprovada || '0';
-                            statusBadge += `<div class="badge status-aprovado">Aprovado: ${qAprovada} ${unit} (R$ ${recuperado})</div>`;
-                        } else {
-                            actionBtn = `<button class="btn-bridge" style="background: var(--primary); color: #000;" onclick="promptFinalizarTratativa(${item.id})">✅ FINALIZAR E INFORMAR VALOR</button>`;
+                            statusBadge += `<div class="badge status-badge-aprovado">Aprovado: ${qAprovada} ${unit} (R$ ${recuperado})</div>`;
+                        } else if (status === 'pendente') {
+                            actionBtn = `
+                                <div class="btn-status-group">
+                                    <button class="btn-status-approve" onclick="approveTratativa(${item.id})">✔ APROVAR</button>
+                                    <button class="btn-status-reject" onclick="rejectTratativa(${item.id})">✖ REPROVAR</button>
+                                </div>
+                            `;
                         }
                     }
 
@@ -1761,6 +1815,56 @@
             };
         }
 
+        function approveTratativa(id) {
+            const tx = db.transaction(historyStore, "readonly");
+            const store = tx.objectStore(historyStore);
+            store.get(id).onsuccess = (e) => {
+                const item = e.target.result;
+                if (item) {
+                    const unit = (item.unidade || 'un').toLowerCase();
+                    const promptText = `Informe a QUANTIDADE APROVADA (${unit.toUpperCase()}):`;
+                    const qtdAprovada = prompt(promptText, item.qtd_quebra);
+                    if (qtdAprovada === null) return;
+
+                    const q = parseFloat(qtdAprovada.replace(',', '.')) || 0;
+                    const custoUnit = parseFloat(item.preco_custo.replace(/\./g, '').replace(',', '.')) || 0;
+                    const valorAprovadoFinal = q * custoUnit;
+
+                    item.status = 'aprovado';
+                    item.qtd_aprovada = q.toString();
+                    item.valor_aprovado = valorAprovadoFinal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    
+                    const updateTx = db.transaction(historyStore, "readwrite");
+                    const updateStore = updateTx.objectStore(historyStore);
+                    updateStore.put(item).onsuccess = () => {
+                        alert(`✅ Tratativa Aprovada!\nValor Recuperado: R$ ${item.valor_aprovado}`);
+                        renderHistory();
+                        updateResultsDashboard();
+                    };
+                }
+            };
+        }
+
+        function rejectTratativa(id) {
+            if (!confirm("Deseja realmente REPROVAR esta tratativa? O valor não será abatido da quebra.")) return;
+            
+            const tx = db.transaction(historyStore, "readwrite");
+            const store = tx.objectStore(historyStore);
+            store.get(id).onsuccess = (e) => {
+                const item = e.target.result;
+                if (item) {
+                    item.status = 'reprovado';
+                    item.valor_aprovado = '0,00';
+                    item.qtd_aprovada = '0';
+                    store.put(item).onsuccess = () => {
+                        alert("✖ Tratativa Reprovada.");
+                        renderHistory();
+                        updateResultsDashboard();
+                    };
+                }
+            };
+        }
+
         function bridgeToTratativa(item) {
             showScreen('cadastro-screen');
             // Preenche o formulário da tratativa
@@ -1777,33 +1881,7 @@
         }
 
         function promptFinalizarTratativa(id) {
-            const tx = db.transaction(historyStore, "readonly");
-            const store = tx.objectStore(historyStore);
-            store.get(id).onsuccess = (e) => {
-                const item = e.target.result;
-                if (item) {
-                    const unit = (item.unidade || 'un').toLowerCase();
-                    const promptText = `Informe a QUANTIDADE APROVADA (${unit.toUpperCase()}):`;
-                    const qtdAprovada = prompt(promptText, "0.00");
-                    if (qtdAprovada === null) return;
-
-                    const q = parseFloat(qtdAprovada.replace(',', '.')) || 0;
-                    const custoUnit = parseFloat(item.preco_custo.replace(/\./g, '').replace(',', '.')) || 0;
-                    const valorAprovadoFinal = q * custoUnit;
-
-                    item.status = 'Finalizado';
-                    item.qtd_aprovada = q.toString();
-                    item.valor_aprovado = valorAprovadoFinal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                    
-                    const updateTx = db.transaction(historyStore, "readwrite");
-                    const updateStore = updateTx.objectStore(historyStore);
-                    updateStore.put(item).onsuccess = () => {
-                        alert(`✅ Tratativa Finalizada!\nValor Recuperado: R$ ${item.valor_aprovado}`);
-                        renderHistory();
-                        updateResultsDashboard();
-                    };
-                }
-            };
+            approveTratativa(id);
         }
 
         function updateResultsDashboard() {
@@ -1822,22 +1900,22 @@
                 const cursor = e.target.result;
                 if (cursor) {
                     const item = cursor.value;
-                    if (!formattedFilterDate || item.data === formattedFilterDate) {
-                        const custoStr = (item.preco_custo || '0,00').replace(/\./g, '').replace(',', '.');
-                        const custo = parseFloat(custoStr) || 0;
-                        const qtd = parseFloat(item.qtd_quebra) || 0;
-                        const valor = custo * qtd;
-                        
-                        if (item.tipo === 'GERAL' || (item.tipo === 'TRATATIVA' && !item.quebra_origem_id)) {
-                            totalQuebraGeralVal += valor;
+                        if (item.data === formattedFilterDate || !formattedFilterDate) {
+                            const custoStr = (item.preco_custo || '0,00').replace(/\./g, '').replace(',', '.');
+                            const custo = parseFloat(custoStr) || 0;
+                            const qtd = parseFloat(item.qtd_quebra) || 0;
+                            const valor = custo * qtd;
+                            
+                            if (item.tipo === 'GERAL' || (item.tipo === 'TRATATIVA' && !item.quebra_origem_id)) {
+                                totalQuebraGeralVal += valor;
+                            }
+                            
+                            if (item.tipo === 'TRATATIVA' && item.status === 'aprovado') {
+                                const aprovadoStr = (item.valor_aprovado || '0,00').replace(/\./g, '').replace(',', '.');
+                                const aprovado = parseFloat(aprovadoStr) || 0;
+                                totalAprovadoVal += aprovado;
+                            }
                         }
-                        
-                        if (item.tipo === 'TRATATIVA') {
-                            const aprovadoStr = (item.valor_aprovado || '0,00').replace(/\./g, '').replace(',', '.');
-                            const aprovado = parseFloat(aprovadoStr) || 0;
-                            totalAprovadoVal += aprovado;
-                        }
-                    }
                     cursor.continue();
                 } else {
                     // 2. Calcular Vendas
