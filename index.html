@@ -1434,9 +1434,9 @@
         }
 
         function finalizeTratativa() {
-            console.log("Iniciando finalizeTratativa...");
+            console.log("Iniciando salvamento definitivo da tratativa...");
             try {
-                // 1. Captura rigorosa dos dados
+                // 1. Captura e Validação Rigorosa
                 const revCodigo = document.getElementById('rev-codigo')?.value || 'S/C';
                 const revProduto = document.getElementById('rev-produto')?.value?.toUpperCase() || '';
                 const revUnidade = document.getElementById('rev-unidade')?.value || 'KG';
@@ -1444,8 +1444,8 @@
                 const revQtdQuebra = document.getElementById('rev-qtd-quebra')?.value || '0';
                 const revPrecoCusto = document.getElementById('preco_custo')?.value || '0,00';
 
-                if (!revProduto) {
-                    alert("Erro: Nome do produto é obrigatório.");
+                if (!revProduto || revProduto.length < 2) {
+                    alert("❌ ERRO: O Nome do Produto é obrigatório.");
                     return;
                 }
 
@@ -1460,7 +1460,7 @@
                 const selectedDate = document.getElementById('tratativa-data').value;
                 const formattedDate = selectedDate ? new Date(selectedDate + 'T00:00:00').toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR');
 
-                // 4. Criação do Objeto (ID será gerado pelo IndexedDB)
+                // 4. Objeto Definitivo da Tratativa
                 const item = {
                     codigo: revCodigo,
                     nome: revProduto,
@@ -1471,29 +1471,74 @@
                     valor_aprovado: '0,00',
                     media: mediaToSave,
                     tipo: 'TRATATIVA',
-                    status: 'pendente',
+                    status: 'pendente', // Status oficial inicial
                     quebra_origem_id: currentQuebraId,
                     data: formattedDate,
                     timestamp: Date.now()
                 };
 
-                console.log("Objeto preparado para salvar:", item);
+                console.log("Objeto pronto para persistência:", item);
 
-                // 5. Persistência Atômica
-                salvar(item, false, (success, error) => {
-                    if (success) {
-                        console.log("✅ Sucesso na gravação. Iniciando fluxo de WhatsApp.");
-                        renderWhatsAppCheckpoint(item);
-                    } else {
-                        console.error("❌ Falha crítica na gravação:", error);
-                        alert("ERRO AO SALVAR: O navegador não permitiu gravar os dados. Verifique o espaço em disco ou se o banco de dados está aberto.");
-                    }
-                });
+                // 5. Persistência Robusta
+                salvarTratativa(item);
 
             } catch (err) {
                 console.error("Erro catastrófico em finalizeTratativa:", err);
-                alert("Erro interno: " + err.message);
+                alert("❌ ERRO INTERNO: " + err.message);
             }
+        }
+
+        function salvarTratativa(item) {
+            if (!db) {
+                alert("❌ ERRO: Banco de dados não carregado!");
+                return;
+            }
+
+            const tx = db.transaction(historyStore, "readwrite");
+            const store = tx.objectStore(historyStore);
+            
+            // Auto-increment garante o ID
+            if (item.id) delete item.id;
+
+            const request = store.add(item);
+
+            request.onsuccess = (e) => {
+                const idGerado = e.target.result;
+                console.log(`✅ Sucesso: Gravado com ID ${idGerado}`);
+
+                // Atualiza vínculo se necessário
+                if (item.quebra_origem_id) {
+                    store.get(item.quebra_origem_id).onsuccess = (ev) => {
+                        const quebra = ev.target.result;
+                        if (quebra) {
+                            quebra.status = 'Finalizado';
+                            store.put(quebra);
+                        }
+                    };
+                }
+
+                tx.oncomplete = () => {
+                    alert("✅ Tratativa Gravada com Sucesso!");
+                    
+                    // Limpeza e Redirecionamento
+                    resetAllForms();
+                    showScreen('results-screen');
+                    
+                    // Dispara WhatsApp após salvar
+                    // renderWhatsAppCheckpoint(item); 
+                };
+            };
+
+            request.onerror = (e) => {
+                const error = e.target.error;
+                console.error("❌ Erro ao gravar no IndexedDB:", error);
+                alert(`❌ ERRO AO GRAVAR: ${error.name} - ${error.message}`);
+            };
+
+            tx.onerror = (e) => {
+                console.error("❌ Erro na transação:", e.target.error);
+                alert("❌ ERRO DE TRANSAÇÃO: Verifique o espaço no navegador.");
+            };
         }
 
         function renderWhatsAppCheckpoint(item) {
