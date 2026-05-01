@@ -1424,13 +1424,18 @@
             const selectedDate = document.getElementById('tratativa-data').value;
             const formattedDate = selectedDate ? new Date(selectedDate + 'T00:00:00').toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR');
 
+            // Conversão de valores para garantir integridade numérica
+            const precoCustoStr = document.getElementById('preco_custo').value || '0,00';
+            const qtdQuebraStr = document.getElementById('rev-qtd-quebra').value || '0';
+            const qtdChegouStr = document.getElementById('rev-qtd-chegou').value || '0';
+
             const item = {
                 codigo: document.getElementById('rev-codigo').value || 'S/C',
                 nome: document.getElementById('rev-produto').value.toUpperCase(),
                 unidade: document.getElementById('rev-unidade').value,
-                qtd_chegou: document.getElementById('rev-qtd-chegou').value,
-                qtd_quebra: document.getElementById('rev-qtd-quebra').value,
-                preco_custo: document.getElementById('preco_custo').value,
+                qtd_chegou: qtdChegouStr,
+                qtd_quebra: qtdQuebraStr,
+                preco_custo: precoCustoStr,
                 valor_aprovado: '0,00',
                 media: mediaToSave,
                 tipo: 'TRATATIVA',
@@ -1440,8 +1445,15 @@
                 timestamp: Date.now()
             };
 
-            salvar(item, false); // Não redireciona direto para dashboard
-            renderWhatsAppCheckpoint(item);
+            // 1. Persistência Primeiro: Só avança se salvar com sucesso
+            salvar(item, false, (success) => {
+                if (success) {
+                    // 2. Validação de Gravação: Sucesso! Agora abre o checkpoint de envio
+                    renderWhatsAppCheckpoint(item);
+                } else {
+                    alert("❌ Erro crítico: A tratativa NÃO pôde ser salva no banco de dados. Tente novamente.");
+                }
+            });
         }
 
         function renderWhatsAppCheckpoint(item) {
@@ -1767,12 +1779,18 @@
             };
         }
 
-        function salvar(item, redirect = true) {
-            if (!db) return alert("Banco de dados não carregado!");
+        function salvar(item, redirect = true, callback = null) {
+            if (!db) {
+                alert("Banco de dados não carregado!");
+                if (callback) callback(false);
+                return;
+            }
             const tx = db.transaction(historyStore, "readwrite");
             const store = tx.objectStore(historyStore);
             
-            store.add(item).onsuccess = (e) => {
+            const request = store.add(item);
+            
+            request.onsuccess = (e) => {
                 // Se for uma tratativa que veio de uma quebra geral, atualiza o status da quebra
                 if (item.tipo === 'TRATATIVA' && item.quebra_origem_id) {
                     const updateTx = db.transaction(historyStore, "readwrite");
@@ -1785,6 +1803,8 @@
                         }
                     };
                 }
+
+                if (callback) callback(true);
 
                 if (redirect) {
                     alert("✅ Registro Salvo com Sucesso!");
@@ -1805,6 +1825,11 @@
 
                     showScreen('results-screen');
                 }
+            };
+
+            request.onerror = (e) => {
+                console.error("Erro ao salvar:", e);
+                if (callback) callback(false);
             };
         }
 
