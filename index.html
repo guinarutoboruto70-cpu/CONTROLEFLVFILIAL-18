@@ -939,6 +939,11 @@
                 <button class="btn-back-header" onclick="showScreen('results-screen')">
                     ⬅️ VOLTAR
                 </button>
+
+                <!-- BOTÃO DE HARD RESET -->
+                <button onclick="limparCacheApp()" style="background: #ff4444; color: white; border: none; padding: 5px 10px; border-radius: 4px; font-size: 0.65rem; font-weight: bold; cursor: pointer; position: absolute; right: 0; top: 10px;">
+                    🔄 RESTAURAR SISTEMA
+                </button>
             </div>
             <div id="mass-delete-bar" class="mass-delete-bar">
                 <span id="mass-delete-count" style="color: #fff; font-size: 0.9rem; font-weight: bold;">0 itens selecionados</span>
@@ -1050,28 +1055,32 @@
 
         // --- 2. INICIALIZAÇÃO DO BANCO ---
         function initDB() {
-            const request = indexedDB.open(dbName, 24); // Versão incrementada para rebuild
+            if (db) db.close(); // Fecha conexão anterior para evitar bloqueios
+            const request = indexedDB.open(dbName, 25); // Upgrade para v25 para forçar atualização
             request.onupgradeneeded = (e) => {
                 const db = e.target.result;
-                if (!db.objectStoreNames.contains(historyStore)) {
-                    const store = db.createObjectStore(historyStore, { keyPath: "id", autoIncrement: true });
-                    store.createIndex("status", "status", { unique: false });
-                    store.createIndex("data", "data", { unique: false });
-                    store.createIndex("tipo", "tipo", { unique: false });
-                } else {
-                    // Se já existir, adiciona índices se não existirem
-                    const store = e.currentTarget.transaction.objectStore(historyStore);
-                    if (!store.indexNames.contains("status")) store.createIndex("status", "status", { unique: false });
-                    if (!store.indexNames.contains("data")) store.createIndex("data", "data", { unique: false });
-                    if (!store.indexNames.contains("tipo")) store.createIndex("tipo", "tipo", { unique: false });
-                }
+                console.log("Realizando Upgrade do Banco de Dados para Versão 25...");
                 
-                if (!db.objectStoreNames.contains(productStore)) {
-                    db.createObjectStore(productStore, { keyPath: "codigo" });
+                // Rebuild da Store de Histórico (Tratativas e Quebras)
+                if (db.objectStoreNames.contains(historyStore)) {
+                    db.deleteObjectStore(historyStore);
                 }
-                if (!db.objectStoreNames.contains(salesStore)) {
-                    db.createObjectStore(salesStore, { keyPath: "id", autoIncrement: true });
+                const histStore = db.createObjectStore(historyStore, { keyPath: "id", autoIncrement: true });
+                histStore.createIndex("status", "status", { unique: false });
+                histStore.createIndex("data", "data", { unique: false });
+                histStore.createIndex("tipo", "tipo", { unique: false });
+                
+                // Rebuild da Store de Produtos
+                if (db.objectStoreNames.contains(productStore)) {
+                    db.deleteObjectStore(productStore);
                 }
+                db.createObjectStore(productStore, { keyPath: "codigo" });
+
+                // Rebuild da Store de Vendas
+                if (db.objectStoreNames.contains(salesStore)) {
+                    db.deleteObjectStore(salesStore);
+                }
+                db.createObjectStore(salesStore, { keyPath: "id", autoIncrement: true });
             };
             request.onsuccess = (e) => {
                 db = e.target.result;
@@ -1549,7 +1558,11 @@
                         
                         // MUDANÇA OBRIGATÓRIA DE TELA: Vai para a LISTA para confirmar o registro
                         showScreen('history-screen');
-                        renderHistory(); // Força atualização da lista
+                        
+                        // Pequeno delay para garantir que o banco fechou a transação antes de ler
+                        setTimeout(() => {
+                            renderHistory(); 
+                        }, 150);
                     };
                 };
 
@@ -1848,12 +1861,39 @@
         }
 
         function deleteMgmtProduct(cod) {
-            if (!confirm(`Deseja realmente excluir o produto ${PRODUTOS_CACHE[cod].nome}?`)) return;
+            if (!confirm(`⚠️ Deseja realmente excluir o produto ${PRODUTOS_CACHE[cod].nome}?`)) return;
             
-            const tx = db.transaction(productStore, "readwrite");
-            tx.objectStore(productStore).delete(cod).onsuccess = () => {
-                loadProducts().then(() => renderMgmtProductTable());
-            };
+            try {
+                if (db) db.close(); // Fecha conexão para evitar bloqueio
+                
+                const request = indexedDB.open(dbName, 25);
+                request.onsuccess = (e) => {
+                    const database = e.target.result;
+                    const tx = database.transaction(productStore, "readwrite");
+                    const store = tx.objectStore(productStore);
+                    
+                    const delReq = store.delete(cod);
+
+                    delReq.onsuccess = () => {
+                        console.log(`✅ Produto ${cod} deletado.`);
+                        alert("✅ Item deletado com sucesso!");
+                        
+                        // Reabre o banco global e atualiza a UI
+                        initDB(); 
+                        setTimeout(() => {
+                            loadProducts().then(() => renderMgmtProductTable());
+                        }, 100);
+                    };
+
+                    delReq.onerror = (err) => {
+                        console.error("Erro ao deletar produto:", err);
+                        alert("❌ Falha ao deletar item do banco.");
+                    };
+                };
+            } catch (err) {
+                console.error("Exceção ao deletar:", err);
+                alert("❌ Erro catastrófico ao tentar deletar.");
+            }
         }
 
         // --- 6.2 GESTÃO DE VENDAS DIÁRIAS ---
