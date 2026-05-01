@@ -541,7 +541,7 @@
         <div class="nav-bar">
             <button id="nav-dash" class="nav-btn active" onclick="showScreen('results-screen')">📊 PAINEL</button>
             <button id="nav-tratativa" class="nav-btn" onclick="showScreen('cadastro-screen')">🍎 TRATATIVA</button>
-            <button id="nav-geral" class="nav-btn" onclick="showScreen('geral-screen')">🗑️ GERAL</button>
+            <button id="nav-geral" class="nav-btn" onclick="showScreen('geral-screen')">🗑️ QUEBRA</button>
             <button id="nav-vendas" class="nav-btn" onclick="showScreen('vendas-screen')">💰 VENDAS</button>
             <button id="nav-products" class="nav-btn" onclick="showScreen('product-management-screen')">📦 PRODUTOS</button>
             <button id="nav-history" class="nav-btn" onclick="showScreen('history-screen')">📜 LISTA</button>
@@ -689,15 +689,18 @@
                 <button class="btn-back-header" onclick="showScreen('results-screen')">
                     ⬅️ VOLTAR
                 </button>
+                <h2 style="color: var(--primary); font-size: 1.1rem; margin-top: 0; text-align: center; margin-bottom: 15px;">🗑️ LANÇAR QUEBRA DIÁRIA</h2>
                 <form id="geral-form">
+                    <div id="quebra-success-alert" style="display: none; background: rgba(40, 167, 69, 0.2); color: #28a745; padding: 10px; border-radius: 8px; font-size: 0.85rem; text-align: center; margin-bottom: 15px; border: 1px solid #28a745; font-weight: bold;"></div>
                     <div class="form-group">
                         <label>Data da Ocorrência</label>
                         <input type="date" id="geral-data" style="border-color: var(--primary);" onchange="renderRecentGeral()">
                     </div>
                     <div class="row">
-                        <div class="form-group">
+                        <div class="form-group" style="position: relative;">
                             <label>Cód. Produto</label>
                             <input type="number" id="geral-codigo" list="lista-codigos" placeholder="Ex: 7028" inputmode="numeric">
+                            <button type="button" onclick="clearQuebraForm()" style="position: absolute; right: 5px; top: 25px; background: none; border: none; color: #888; font-size: 1.2rem; cursor: pointer; padding: 5px;" title="Limpar Campos">✕</button>
                         </div>
                         <div class="form-group">
                             <label>Unidade</label>
@@ -714,17 +717,17 @@
                     <div class="row">
                         <div class="form-group">
                             <label>Quantidade</label>
-                            <input type="text" id="geral-qtd" placeholder="0.00">
+                            <input type="text" id="geral-qtd" placeholder="0.00" inputmode="decimal">
                         </div>
                         <div class="form-group">
-                            <label>Custo Unitário</label>
-                            <input type="text" id="geral-custo" placeholder="0,00">
+                            <label>Custo Unitário (R$)</label>
+                            <input type="text" id="geral-custo" placeholder="0,00" inputmode="decimal" readonly style="background: #1a1a1a; color: var(--primary); font-weight: bold;">
                         </div>
                     </div>
-                    <div id="geral-calc-preview" style="text-align: center; padding: 10px; color: var(--primary); font-weight: bold; border: 1px dashed #444; border-radius: 8px; margin-bottom: 10px;">
-                        Total: <span id="geral-valor-total">R$ 0,00</span>
+                    <div id="geral-calc-preview" style="text-align: center; padding: 15px; color: #000; background: var(--primary); font-weight: bold; border-radius: 8px; margin-bottom: 15px; font-size: 1.1rem;">
+                        TOTAL: <span id="geral-valor-total">R$ 0,00</span>
                     </div>
-                    <button type="submit" class="btn-save">✅ SALVAR QUEBRA GERAL</button>
+                    <button type="submit" class="btn-save" style="padding: 15px; font-size: 1rem;">✅ SALVAR QUEBRA</button>
                 </form>
             </div>
 
@@ -1394,18 +1397,32 @@
             const tx = db.transaction(historyStore, "readwrite");
             const store = tx.objectStore(historyStore);
             store.add(item).onsuccess = () => {
+                // Feedback de Sucesso
+                const alertBox = document.getElementById('quebra-success-alert');
+                alertBox.innerText = `✅ Quebra de ${prodNome} salva com sucesso!`;
+                alertBox.style.display = 'block';
+                
                 // Limpeza Inteligente e Foco
-                document.getElementById('geral-codigo').value = '';
-                document.getElementById('geral-nome').value = '';
-                document.getElementById('geral-qtd').value = '';
-                document.getElementById('geral-valor-total').innerText = "R$ 0,00";
-                document.getElementById('geral-codigo').focus();
+                clearQuebraForm();
+                
+                // Esconde alerta após 3 segundos
+                setTimeout(() => {
+                    alertBox.style.display = 'none';
+                }, 3000);
                 
                 // Atualiza Dashboard e Lista Recente
                 updateResultsDashboard();
                 renderRecentGeral();
             };
         };
+
+        function clearQuebraForm() {
+            document.getElementById('geral-codigo').value = '';
+            document.getElementById('geral-nome').value = '';
+            document.getElementById('geral-qtd').value = '';
+            document.getElementById('geral-valor-total').innerText = "R$ 0,00";
+            document.getElementById('geral-codigo').focus();
+        }
 
         function renderRecentGeral() {
             if (!db) return;
