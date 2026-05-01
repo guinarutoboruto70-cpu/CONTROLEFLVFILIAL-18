@@ -901,6 +901,31 @@
 
 
 
+        <!-- WHATSAPP CHECKPOINT SCREEN -->
+        <div id="whatsapp-checkpoint-screen" class="screen">
+            <div class="form-card">
+                <h2 style="color: var(--primary); font-size: 1.1rem; margin-top: 0; text-align: center;">📲 CHECKPOINT DE ENVIO</h2>
+                <p style="font-size: 0.8rem; color: #888; text-align: center; margin-bottom: 20px;">
+                    Siga os passos abaixo para enviar a tratativa completa.
+                </p>
+
+                <div class="review-section">
+                    <div class="review-title">PASSO 1: RESUMO</div>
+                    <button class="btn-wa-action" onclick="sendWhatsAppTextOnly()">
+                        💬 ENVIAR TEXTO (RESUMO)
+                    </button>
+                </div>
+
+                <div id="checkpoint-media-sections">
+                    <!-- Dinâmico via JS -->
+                </div>
+
+                <button class="btn-save btn-finalize" onclick="finishAndGoToList()" style="background: #444; margin-top: 20px;">
+                    🏁 FINALIZAR E IR PARA LISTA
+                </button>
+            </div>
+        </div>
+
         <!-- HISTORY -->
         <div id="history-screen" class="screen">
             <div class="form-card" style="position: relative; padding-top: 45px; border: none; background: transparent;">
@@ -1415,12 +1440,78 @@
                 timestamp: Date.now()
             };
 
-            salvar(item);
-            
-            // Abrir WhatsApp após salvar
-            setTimeout(() => {
-                sendWhatsAppTextOnly();
-            }, 500);
+            salvar(item, false); // Não redireciona direto para dashboard
+            renderWhatsAppCheckpoint(item);
+        }
+
+        function renderWhatsAppCheckpoint(item) {
+            const container = document.getElementById('checkpoint-media-sections');
+            container.innerHTML = '';
+
+            const sections = [
+                { id: 'preview-produto', title: 'PASSO 2: FOTOS DO PRODUTO', category: 'PRODUTO' },
+                { id: 'preview-balanca', title: 'PASSO 3: FOTOS DA BALANÇA', category: 'BALANÇA' },
+                { id: 'preview-etiqueta', title: 'PASSO 4: FOTO DA ETIQUETA', category: 'ETIQUETA' }
+            ];
+
+            sections.forEach(sec => {
+                const mediaList = selectedMedia[sec.id];
+                if (mediaList && mediaList.length > 0) {
+                    const sectionDiv = document.createElement('div');
+                    sectionDiv.className = 'review-section';
+                    sectionDiv.innerHTML = `<div class="review-title">${sec.title}</div>`;
+                    
+                    const previewGrid = document.createElement('div');
+                    previewGrid.className = 'preview-container';
+                    
+                    mediaList.forEach((media, idx) => {
+                        const itemDiv = document.createElement('div');
+                        itemDiv.className = 'preview-item';
+                        itemDiv.innerHTML = `
+                            <img src="${media.base64}">
+                            <button type="button" class="btn-wa-photo" onclick="shareCheckpointPhoto('${sec.id}', ${idx})" title="Enviar para WhatsApp">📱</button>
+                        `;
+                        previewGrid.appendChild(itemDiv);
+                        
+                        const btnSend = document.createElement('button');
+                        btnSend.className = 'btn-wa-action';
+                        btnSend.style.marginTop = '5px';
+                        btnSend.innerHTML = `📸 ENVIAR FOTO ${sec.category} ${mediaList.length > 1 ? idx + 1 : ''}`;
+                        btnSend.onclick = () => shareCheckpointPhoto(sec.id, idx);
+                        sectionDiv.appendChild(previewGrid);
+                        sectionDiv.appendChild(btnSend);
+                    });
+                    
+                    container.appendChild(sectionDiv);
+                }
+            });
+
+            showScreen('whatsapp-checkpoint-screen');
+        }
+
+        async function shareCheckpointPhoto(previewId, index) {
+            const mediaObj = selectedMedia[previewId][index];
+            const categoryMap = {
+                'preview-produto': 'PRODUTO',
+                'preview-balanca': 'BALANÇA',
+                'preview-etiqueta': 'ETIQUETA'
+            };
+            const category = categoryMap[previewId];
+            const prodName = document.getElementById('rev-produto').value.toUpperCase();
+
+            if (navigator.canShare && navigator.canShare({ files: [mediaObj.file] })) {
+                try {
+                    await navigator.share({
+                        files: [mediaObj.file],
+                        title: `FOTO DA ${category}`,
+                        text: `*FOTO DA ${category}*\nProduto: ${prodName}`
+                    });
+                } catch (err) {
+                    if (err.name !== 'AbortError') console.error('Erro ao compartilhar:', err);
+                }
+            } else {
+                alert('Compartilhamento nativo não disponível.');
+            }
         }
 
         document.getElementById('geral-form').onsubmit = (e) => {
@@ -1676,7 +1767,7 @@
             };
         }
 
-        function salvar(item) {
+        function salvar(item, redirect = true) {
             if (!db) return alert("Banco de dados não carregado!");
             const tx = db.transaction(historyStore, "readwrite");
             const store = tx.objectStore(historyStore);
@@ -1695,23 +1786,25 @@
                     };
                 }
 
-                alert("✅ Registro Salvo com Sucesso!");
-                document.getElementById('tratativa-form').reset();
-                document.getElementById('geral-form').reset();
-                document.getElementById('geral-valor-total').innerText = "R$ 0,00";
-                currentQuebraId = null;
-                
-                // Limpar mídias
-                selectedMedia = {
-                    'preview-produto': [],
-                    'preview-balanca': [],
-                    'preview-etiqueta': []
-                };
-                document.getElementById('preview-produto').innerHTML = '';
-                document.getElementById('preview-balanca').innerHTML = '';
-                document.getElementById('preview-etiqueta').innerHTML = '';
+                if (redirect) {
+                    alert("✅ Registro Salvo com Sucesso!");
+                    document.getElementById('tratativa-form').reset();
+                    document.getElementById('geral-form').reset();
+                    document.getElementById('geral-valor-total').innerText = "R$ 0,00";
+                    currentQuebraId = null;
+                    
+                    // Limpar mídias
+                    selectedMedia = {
+                        'preview-produto': [],
+                        'preview-balanca': [],
+                        'preview-etiqueta': []
+                    };
+                    document.getElementById('preview-produto').innerHTML = '';
+                    document.getElementById('preview-balanca').innerHTML = '';
+                    document.getElementById('preview-etiqueta').innerHTML = '';
 
-                showScreen('results-screen');
+                    showScreen('results-screen');
+                }
             };
         }
 
@@ -1758,7 +1851,7 @@
                         }
                         
                         statusBadge = `<div class="badge status-tratativa">TRATATIVA</div>`;
-                        statusBadge += `<div class="badge ${statusClass}">${statusText}</div>`;
+                        statusBadge += `<div class="badge ${statusClass}">${status === 'pendente' ? '⏳ AGUARDANDO APROVAÇÃO' : statusText}</div>`;
                         
                         if (status === 'aprovado') {
                             const recuperado = item.valor_aprovado || '0,00';
@@ -2104,18 +2197,20 @@
         function sendWhatsAppTextOnly() {
             const cod = document.getElementById('rev-codigo').value || 'S/C';
             const produto = document.getElementById('rev-produto').value.toUpperCase();
-            const data = new Date().toLocaleDateString('pt-BR');
+            
+            // Pega a data do formulário para garantir que seja a data da ocorrência
+            const dataInput = document.getElementById('tratativa-data').value;
+            const data = dataInput ? new Date(dataInput + 'T00:00:00').toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR');
+            
             const qtdChegou = document.getElementById('rev-qtd-chegou').value || '0';
             const qtdQuebra = document.getElementById('rev-qtd-quebra').value || '0';
             const unidade = document.getElementById('rev-unidade').value;
 
-            const texto = `*RESUMO TRATATIVA*\n\n` +
-                          `*Cód:* ${cod}\n` +
-                          `*Produto:* ${produto}\n` +
-                          `*Data:* ${data}\n` +
-                          `*Qtd Chegou:* ${qtdChegou} ${unidade}\n` +
-                          `*Qtd Quebra:* ${qtdQuebra} ${unidade}\n\n` +
-                          `_Enviado via Sistema TrataFLV_`;
+            const texto = `Cód: ${cod}\n\n` +
+                          `Produto: ${produto}\n\n` +
+                          `Data: ${data}\n\n` +
+                          `Chegou: ${qtdChegou} ${unidade}\n\n` +
+                          `Qtd da Quebra: ${qtdQuebra} ${unidade}`;
 
             const encodedText = encodeURIComponent(texto);
             window.open(`https://wa.me/?text=${encodedText}`, '_blank');
@@ -2222,6 +2317,25 @@
                     showScreen('results-screen');
                 };
             };
+        }
+
+        function finishAndGoToList() {
+            // Limpa o formulário e as mídias antes de sair
+            document.getElementById('tratativa-form').reset();
+            document.getElementById('geral-form').reset();
+            document.getElementById('geral-valor-total').innerText = "R$ 0,00";
+            currentQuebraId = null;
+            
+            selectedMedia = {
+                'preview-produto': [],
+                'preview-balanca': [],
+                'preview-etiqueta': []
+            };
+            document.getElementById('preview-produto').innerHTML = '';
+            document.getElementById('preview-balanca').innerHTML = '';
+            document.getElementById('preview-etiqueta').innerHTML = '';
+
+            showScreen('history-screen');
         }
 
         window.onload = () => {
