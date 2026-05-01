@@ -1005,7 +1005,7 @@
 
     <script>
         // --- 1. CONFIGURAÇÕES E BANCO DE DADOS ---
-        const dbName = "FLVDatabase";
+        const dbName = "trataflv_v4"; // NOVO NOME PARA FORÇAR LIMPEZA
         const historyStore = "historico";
         const productStore = "produtos";
         const salesStore = "vendas";
@@ -1055,31 +1055,18 @@
 
         // --- 2. INICIALIZAÇÃO DO BANCO ---
         function initDB() {
-            if (db) db.close(); // Fecha conexão anterior para evitar bloqueios
-            const request = indexedDB.open(dbName, 25); // Upgrade para v25 para forçar atualização
+            if (db) db.close(); 
+            const request = indexedDB.open(dbName, 1); // Versão 1 do novo banco
             request.onupgradeneeded = (e) => {
                 const db = e.target.result;
-                console.log("Realizando Upgrade do Banco de Dados para Versão 25...");
+                console.log(`Criando novo banco: ${dbName}`);
                 
-                // Rebuild da Store de Histórico (Tratativas e Quebras)
-                if (db.objectStoreNames.contains(historyStore)) {
-                    db.deleteObjectStore(historyStore);
-                }
                 const histStore = db.createObjectStore(historyStore, { keyPath: "id", autoIncrement: true });
                 histStore.createIndex("status", "status", { unique: false });
                 histStore.createIndex("data", "data", { unique: false });
                 histStore.createIndex("tipo", "tipo", { unique: false });
                 
-                // Rebuild da Store de Produtos
-                if (db.objectStoreNames.contains(productStore)) {
-                    db.deleteObjectStore(productStore);
-                }
                 db.createObjectStore(productStore, { keyPath: "codigo" });
-
-                // Rebuild da Store de Vendas
-                if (db.objectStoreNames.contains(salesStore)) {
-                    db.deleteObjectStore(salesStore);
-                }
                 db.createObjectStore(salesStore, { keyPath: "id", autoIncrement: true });
             };
             request.onsuccess = (e) => {
@@ -1588,21 +1575,38 @@
         }
 
         function limparCacheApp() {
-            if (!confirm("⚠️ ATENÇÃO: Isso apagará TODOS os dados do aplicativo (Produtos, Quebras, Vendas e Tratativas) e reiniciará o sistema.\n\nDeseja realmente continuar?")) return;
+            if (!confirm("⚠️ ATENÇÃO: Isso apagará TODOS os dados do aplicativo e reiniciará o sistema do zero.\n\nDeseja realmente continuar?")) return;
             
-            if (!confirm("ÚLTIMO AVISO: Esta ação não pode ser desfeita. Confirmar limpeza total?")) return;
-
-            const req = indexedDB.deleteDatabase(dbName);
-            req.onsuccess = () => {
-                alert("✅ CACHE LIMPO! O aplicativo será reiniciado.");
-                window.location.reload();
-            };
-            req.onerror = () => {
-                alert("❌ Erro ao tentar limpar o banco de dados.");
-            };
-            req.onblocked = () => {
-                alert("⚠️ Ação bloqueada. Por favor, feche outras abas do app e tente novamente.");
-            };
+            console.log("Iniciando Script de Emergência: Force Delete...");
+            
+            try {
+                if (db) db.close();
+                
+                const req = indexedDB.deleteDatabase(dbName);
+                
+                req.onsuccess = () => {
+                    console.log(`✅ Banco '${dbName}' deletado com sucesso.`);
+                    localStorage.clear();
+                    sessionStorage.clear();
+                    alert("✅ SISTEMA RESTAURADO! O app será reiniciado agora.");
+                    window.location.reload(true);
+                };
+                
+                req.onerror = (e) => {
+                    const erro = e.target.error;
+                    console.error("❌ Erro de permissão ao deletar banco:", erro);
+                    alert(`❌ Falha ao deletar: ${erro.name}. Tente fechar outras abas.`);
+                };
+                
+                req.onblocked = () => {
+                    console.warn("⚠️ Deletar banco bloqueado por outras conexões.");
+                    alert("⚠️ O reset está bloqueado. Por favor, feche o app em outros navegadores ou abas e tente novamente.");
+                };
+                
+            } catch (err) {
+                console.error("Erro catastrófico no reset:", err);
+                alert("Erro ao tentar limpar cache.");
+            }
         }
 
         function renderWhatsAppCheckpoint(item) {
