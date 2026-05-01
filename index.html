@@ -560,17 +560,18 @@
             </div>
             
             <div class="dashboard-grid">
-                <div class="stat-card" style="grid-column: span 2;">
-                    <div class="stat-label">Quebra Acumulada Real (Geral - Aprovado)</div>
-                    <div id="total-acumulado-real" class="stat-value" style="color: var(--primary);">R$ 0,00</div>
-                </div>
                 <div class="stat-card">
-                    <div class="stat-label">Total Quebra Geral</div>
+                    <div class="stat-label">QUEBRA BRUTA</div>
                     <div id="total-quebra-geral" class="stat-value">R$ 0,00</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-label">Total Aprovado Central</div>
                     <div id="total-aprovado" class="stat-value" style="color: #25d366;">R$ 0,00</div>
+                </div>
+
+                <div class="stat-card" style="grid-column: span 2; border: 1px solid var(--primary);">
+                    <div class="stat-label">QUEBRA LÍQUIDA</div>
+                    <div id="total-acumulado-real" class="stat-value" style="color: var(--primary);">R$ 0,00</div>
                 </div>
                 
                 <!-- Novos KPIs de Meta e Vendas -->
@@ -579,12 +580,12 @@
                     <div id="dash-venda-total" class="stat-value" style="color: #fff;">R$ 0,00</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">Meta Mensal (3.5%)</div>
-                    <div id="dash-meta-valor" class="stat-value" style="color: #888;">R$ 0,00</div>
+                    <div class="stat-label">ÍNDICE DE QUEBRA BRUTA</div>
+                    <div id="dash-perc-quebra-bruta" class="stat-value" style="color: #888;">0,00%</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">% Quebra Real</div>
-                    <div id="dash-perc-quebra" class="stat-value" style="color: var(--danger);">0.00%</div>
+                    <div class="stat-label">ÍNDICE DE QUEBRA LÍQUIDA</div>
+                    <div id="dash-perc-quebra-liquida" class="stat-value" style="color: var(--danger);">0,00%</div>
                 </div>
             </div>
 
@@ -1840,26 +1841,33 @@
                             cursorSales.continue();
                         } else {
                             // 3. Renderizar Resultados Finais
-                            const acumuladoReal = totalQuebraGeralVal - totalAprovadoVal;
-                            const meta35 = totalVendaVal * 0.035;
-                            const percQuebra = totalVendaVal > 0 ? (acumuladoReal / totalVendaVal) * 100 : 0;
+                            const quebraLiquidaVal = totalQuebraGeralVal - totalAprovadoVal;
+                            const percQuebraBruta = totalVendaVal > 0 ? (totalQuebraGeralVal / totalVendaVal) * 100 : 0;
+                            const percQuebraLiquida = totalVendaVal > 0 ? (quebraLiquidaVal / totalVendaVal) * 100 : 0;
                             
                             document.getElementById('total-quebra-geral').innerText = `R$ ${totalQuebraGeralVal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
                             document.getElementById('total-aprovado').innerText = `R$ ${totalAprovadoVal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-                            document.getElementById('total-acumulado-real').innerText = `R$ ${acumuladoReal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-                            
+                            document.getElementById('total-acumulado-real').innerText = `R$ ${quebraLiquidaVal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
                             document.getElementById('dash-venda-total').innerText = `R$ ${totalVendaVal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-                            document.getElementById('dash-meta-valor').innerText = `R$ ${meta35.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
                             
-                            const percElem = document.getElementById('dash-perc-quebra');
-                            percElem.innerText = `${percQuebra.toFixed(2)}%`;
+                            // Formatação de Porcentagem (Padrão BR: 0,00%)
+                            const formatPerc = (val) => val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
                             
-                            // Visual feedback for meta
+                            const percBrutaElem = document.getElementById('dash-perc-quebra-bruta');
+                            const percLiquidaElem = document.getElementById('dash-perc-quebra-liquida');
+                            
+                            percBrutaElem.innerText = totalVendaVal > 0 ? formatPerc(percQuebraBruta) : "---";
+                            percLiquidaElem.innerText = totalVendaVal > 0 ? formatPerc(percQuebraLiquida) : "---";
+                            
+                            // Cores de Alerta para Índice Líquido (Meta 3,5%)
                             if (totalVendaVal > 0) {
-                                percElem.style.color = percQuebra <= 3.5 ? '#25d366' : 'var(--danger)';
+                                if (percQuebraLiquida <= 3.5) {
+                                    percLiquidaElem.style.color = '#25d366'; // Verde 🟢
+                                } else {
+                                    percLiquidaElem.style.color = 'var(--danger)'; // Vermelho 🔴
+                                }
                             } else {
-                                percElem.style.color = '#888';
-                                percElem.innerText = "---";
+                                percLiquidaElem.style.color = '#888';
                             }
                         }
                     };
