@@ -718,6 +718,13 @@
                         <button type="submit" class="btn-save" style="padding: 15px; font-size: 1rem;">✅ SALVAR TRATATIVA</button>
                     </div>
                 </form>
+
+                <!-- BOTÃO DE EMERGÊNCIA -->
+                <div style="margin-top: 30px; border-top: 1px solid #333; padding-top: 15px; text-align: center;">
+                    <button onclick="limparCacheApp()" style="background: none; border: 1px solid #ff4444; color: #ff4444; padding: 5px 10px; border-radius: 4px; font-size: 0.7rem; cursor: pointer; text-transform: uppercase;">
+                        🧨 LIMPAR CACHE DO APP (Zerar Tudo)
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -1043,12 +1050,22 @@
 
         // --- 2. INICIALIZAÇÃO DO BANCO ---
         function initDB() {
-            const request = indexedDB.open(dbName, 23);
+            const request = indexedDB.open(dbName, 24); // Versão incrementada para rebuild
             request.onupgradeneeded = (e) => {
                 const db = e.target.result;
                 if (!db.objectStoreNames.contains(historyStore)) {
-                    db.createObjectStore(historyStore, { keyPath: "id", autoIncrement: true });
+                    const store = db.createObjectStore(historyStore, { keyPath: "id", autoIncrement: true });
+                    store.createIndex("status", "status", { unique: false });
+                    store.createIndex("data", "data", { unique: false });
+                    store.createIndex("tipo", "tipo", { unique: false });
+                } else {
+                    // Se já existir, adiciona índices se não existirem
+                    const store = e.currentTarget.transaction.objectStore(historyStore);
+                    if (!store.indexNames.contains("status")) store.createIndex("status", "status", { unique: false });
+                    if (!store.indexNames.contains("data")) store.createIndex("data", "data", { unique: false });
+                    if (!store.indexNames.contains("tipo")) store.createIndex("tipo", "tipo", { unique: false });
                 }
+                
                 if (!db.objectStoreNames.contains(productStore)) {
                     db.createObjectStore(productStore, { keyPath: "codigo" });
                 }
@@ -1489,55 +1506,89 @@
         }
 
         function salvarTratativa(item) {
+            console.log("Executando salvarTratativa com Protocolo de Engenharia...");
+            
             if (!db) {
-                alert("❌ ERRO: Banco de dados não carregado!");
+                const erroMsg = "ERRO TÉCNICO: Objeto 'db' é null. O banco de dados não foi inicializado corretamente.";
+                console.error(erroMsg);
+                alert(erroMsg);
                 return;
             }
 
-            const tx = db.transaction(historyStore, "readwrite");
-            const store = tx.objectStore(historyStore);
-            
-            // Auto-increment garante o ID
-            if (item.id) delete item.id;
+            try {
+                const tx = db.transaction(historyStore, "readwrite");
+                const store = tx.objectStore(historyStore);
+                
+                // Limpeza preventiva de ID para garantir auto-incremento limpo
+                if (item.id) delete item.id;
 
-            const request = store.add(item);
+                const request = store.add(item);
 
-            request.onsuccess = (e) => {
-                const idGerado = e.target.result;
-                console.log(`✅ Sucesso: Gravado com ID ${idGerado}`);
+                request.onsuccess = (e) => {
+                    const idGerado = e.target.result;
+                    console.log(`✅ Persistência confirmada. ID gerado: ${idGerado}`);
 
-                // Atualiza vínculo se necessário
-                if (item.quebra_origem_id) {
-                    store.get(item.quebra_origem_id).onsuccess = (ev) => {
-                        const quebra = ev.target.result;
-                        if (quebra) {
-                            quebra.status = 'Finalizado';
-                            store.put(quebra);
-                        }
+                    // Atualiza vínculo com quebra se existir
+                    if (item.quebra_origem_id) {
+                        const getReq = store.get(item.quebra_origem_id);
+                        getReq.onsuccess = (ev) => {
+                            const quebra = ev.target.result;
+                            if (quebra) {
+                                quebra.status = 'Finalizado';
+                                store.put(quebra);
+                            }
+                        };
+                    }
+
+                    tx.oncomplete = () => {
+                        console.log("Transação atômica concluída com sucesso.");
+                        alert("✅ TRATATIVA SALVA E REGISTRADA!");
+                        
+                        // Limpeza de formulários
+                        resetAllForms();
+                        
+                        // MUDANÇA OBRIGATÓRIA DE TELA: Vai para a LISTA para confirmar o registro
+                        showScreen('history-screen');
+                        renderHistory(); // Força atualização da lista
                     };
-                }
-
-                tx.oncomplete = () => {
-                    alert("✅ Tratativa Gravada com Sucesso!");
-                    
-                    // Limpeza e Redirecionamento
-                    resetAllForms();
-                    showScreen('results-screen');
-                    
-                    // Dispara WhatsApp após salvar
-                    // renderWhatsAppCheckpoint(item); 
                 };
-            };
 
-            request.onerror = (e) => {
-                const error = e.target.error;
-                console.error("❌ Erro ao gravar no IndexedDB:", error);
-                alert(`❌ ERRO AO GRAVAR: ${error.name} - ${error.message}`);
-            };
+                request.onerror = (e) => {
+                    const erroTecnico = e.target.error;
+                    const msg = `❌ FALHA NA GRAVAÇÃO: ${erroTecnico.name} - ${erroTecnico.message}`;
+                    console.error(msg);
+                    alert(msg);
+                };
 
-            tx.onerror = (e) => {
-                console.error("❌ Erro na transação:", e.target.error);
-                alert("❌ ERRO DE TRANSAÇÃO: Verifique o espaço no navegador.");
+                tx.onerror = (e) => {
+                    const erroTx = e.target.error;
+                    const msg = `❌ ERRO DE TRANSAÇÃO: ${erroTx ? erroTx.message : 'Desconhecido'}`;
+                    console.error(msg);
+                    alert(msg);
+                };
+
+            } catch (err) {
+                const msgCatastrofica = `❌ ERRO CATASTRÓFICO NO MOTOR DE SALVAMENTO: ${err.message}`;
+                console.error(msgCatastrofica, err);
+                alert(msgCatastrofica);
+            }
+        }
+
+        function limparCacheApp() {
+            if (!confirm("⚠️ ATENÇÃO: Isso apagará TODOS os dados do aplicativo (Produtos, Quebras, Vendas e Tratativas) e reiniciará o sistema.\n\nDeseja realmente continuar?")) return;
+            
+            if (!confirm("ÚLTIMO AVISO: Esta ação não pode ser desfeita. Confirmar limpeza total?")) return;
+
+            const req = indexedDB.deleteDatabase(dbName);
+            req.onsuccess = () => {
+                alert("✅ CACHE LIMPO! O aplicativo será reiniciado.");
+                window.location.reload();
+            };
+            req.onerror = () => {
+                alert("❌ Erro ao tentar limpar o banco de dados.");
+            };
+            req.onblocked = () => {
+                alert("⚠️ Ação bloqueada. Por favor, feche outras abas do app e tente novamente.");
             };
         }
 
