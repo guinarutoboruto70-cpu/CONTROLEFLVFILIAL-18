@@ -634,7 +634,11 @@
                     </div>
                     <div class="form-group">
                         <label>Preço Custo (R$)</label>
-                        <input type="text" id="preco_custo" placeholder="0,00">
+                        <input type="text" id="preco_custo" placeholder="0,00" inputmode="decimal">
+                    </div>
+
+                    <div id="tratativa-calc-preview" style="text-align: center; padding: 15px; color: #000; background: var(--primary); font-weight: bold; border-radius: 8px; margin-bottom: 15px; font-size: 1.1rem;">
+                        TOTAL PREVISTO: <span id="tratativa-valor-total">R$ 0,00</span>
                     </div>
 
                     <!-- SEÇÃO DE MÍDIA -->
@@ -678,7 +682,7 @@
                     </div>
 
                     <div class="actions-row" style="grid-template-columns: 1fr;">
-                        <button type="submit" class="btn-save">✅ SALVAR TRATATIVA</button>
+                        <button type="submit" class="btn-save" style="padding: 15px; font-size: 1rem;">✅ SALVAR TRATATIVA</button>
                     </div>
                 </form>
             </div>
@@ -1245,6 +1249,15 @@
                     const c = parseFloat(cStr) || 0;
                     const total = q * c;
                     document.getElementById('geral-valor-total').innerText = `R$ ${total.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+                }
+
+                // Cálculo automático para Tratativa
+                if (id === 'qtd_quebra' || id === 'preco_custo') {
+                    const q = parseFloat(document.getElementById('qtd_quebra').value) || 0;
+                    const cStr = document.getElementById('preco_custo').value.replace(/\./g, '').replace(',', '.');
+                    const c = parseFloat(cStr) || 0;
+                    const total = q * c;
+                    document.getElementById('tratativa-valor-total').innerText = `R$ ${total.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
                 }
 
                 // Cálculo automático para Cadastro de Produtos
