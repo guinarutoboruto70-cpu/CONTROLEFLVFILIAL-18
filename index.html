@@ -4,199 +4,177 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>TRATAFLV - Filial 1018</title>
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="theme-color" content="#ffcc00">
-    <link rel="manifest" href="manifest.json">
     <style>
-        :root { --bg: #0a0a0a; --card-bg: #1a1a1a; --primary: #ffcc00; --text: #ffffff; --text-dim: #aaaaaa; --border: #333333; --success: #25d366; --danger: #ff4444; }
+        :root { --bg: #0a0a0a; --card-bg: #1a1a1a; --primary: #ffcc00; --text: #ffffff; --border: #333333; --success: #25d366; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { margin: 0; font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
-        .screen { display: none; padding: 20px; animation: fadeIn 0.3s ease; }
-        .screen.active { display: flex; flex-direction: column; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        body { margin: 0; font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); }
+        .screen { display: none; padding: 20px; flex-direction: column; }
+        .screen.active { display: flex; }
         .btn { background: var(--primary); color: #000; border: none; padding: 16px; border-radius: 12px; font-weight: bold; cursor: pointer; width: 100%; margin-bottom: 12px; text-transform: uppercase; }
-        .btn-wa { background: var(--success); color: white; padding: 10px; font-size: 0.7rem; border-radius: 8px; border: none; width: 100%; margin-top: 5px; }
+        .btn-wa { background: var(--success); color: white; padding: 8px; font-size: 0.7rem; border-radius: 5px; width: 100%; border: none; margin-top: 4px; }
         .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 15px; margin-bottom: 15px; }
-        input, select { width: 100%; padding: 14px; background: #252525; border: 1px solid var(--border); border-radius: 10px; color: white; margin-top: 8px; }
+        input { width: 100%; padding: 14px; background: #252525; border: 1px solid var(--border); border-radius: 10px; color: white; margin-top: 8px; }
+        label { color: #aaa; font-size: 0.8rem; font-weight: bold; }
         .preview-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
-        .thumb-box { position: relative; border: 1px solid var(--border); border-radius: 8px; padding: 4px; background: #222; }
-        .thumb-box img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 4px; }
-        .summary-box { background: #000; padding: 15px; border-radius: 10px; border: 1px dashed var(--primary); white-space: pre-wrap; font-family: monospace; font-size: 0.9rem; margin-bottom: 20px; }
+        .thumb { border: 1px solid var(--border); border-radius: 6px; padding: 2px; background: #222; }
+        .thumb img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 4px; }
+        .summary { background: #000; padding: 15px; border-radius: 10px; border: 1px dashed var(--primary); white-space: pre-wrap; font-size: 0.9rem; margin-bottom: 20px; }
         .hidden { display: none; }
     </style>
 </head>
 <body>
 
     <div id="screen-menu" class="screen active">
-        <h1 style="color:var(--primary); text-align: center;">TRATAFLV 1018</h1>
-        <button class="btn" style="height: 100px;" onclick="startNewTratativa()">🍎 NOVA TRATATIVA</button>
-        <button class="btn" style="background:transparent; border: 1px solid var(--border); color:white;" onclick="showScreen('screen-products')">📦 PRODUTOS</button>
-        <button class="btn btn-danger" style="margin-top:auto" onclick="hardReset()">RESETAR APP</button>
+        <h1 style="color:var(--primary); text-align:center">TRATAFLV 1018</h1>
+        <button class="btn" style="height:100px" onclick="startNew()">🍎 NOVA TRATATIVA</button>
+        <button class="btn" style="background:transparent; border:1px solid #444; color:#fff" onclick="showScreen('screen-products')">PRODUTOS</button>
     </div>
 
     <div id="screen-products" class="screen">
-        <h2>GERENCIAR</h2>
         <div class="card">
-            <input type="number" id="prod-code" placeholder="CÓDIGO ERP">
-            <input type="text" id="prod-name" placeholder="NOME DO PRODUTO">
-            <select id="prod-unit"><option value="KG">KG</option><option value="UN">UN</option></select>
-            <button class="btn" style="margin-top:10px" onclick="saveProduct()">SALVAR</button>
+            <input type="number" id="p-code" placeholder="CÓDIGO">
+            <input type="text" id="p-name" placeholder="NOME">
+            <input type="text" id="p-unit" placeholder="UNIDADE (KG/UN)">
+            <button class="btn" style="margin-top:10px" onclick="saveP()">SALVAR</button>
         </div>
-        <div id="product-list-container" style="overflow-y:auto; max-height:250px;"></div>
+        <div id="p-list" style="max-height:300px; overflow-y:auto"></div>
         <button class="btn" onclick="showScreen('screen-menu')">VOLTAR</button>
     </div>
 
-    <div id="screen-tratativa-data" class="screen">
-        <h2>DADOS DA PERDA</h2>
+    <div id="screen-data" class="screen">
         <div class="card">
-            <input type="text" id="search-prod" placeholder="Pesquisar produto..." oninput="searchProducts(this.value)">
-            <div id="search-results"></div>
-            <div id="selected-prod-info" class="hidden">
-                <p id="display-name" style="color:var(--primary); font-weight:bold; margin: 15px 0;"></p>
-                <label>QTDA QUE CHEGOU</label><input type="text" id="trat-chegou" placeholder="0,00" inputmode="decimal">
-                <label>QTDA DA QUEBRA</label><input type="text" id="trat-quebra" placeholder="0,00" inputmode="decimal">
+            <input type="text" id="search" placeholder="Pesquisar produto..." oninput="searchP(this.value)">
+            <div id="results"></div>
+            <div id="info" class="hidden">
+                <p id="detalhe" style="color:var(--primary); font-weight:bold; margin:10px 0"></p>
+                <label>CHEGOU</label><input type="text" id="chegou" inputmode="decimal">
+                <label>QUEBRA</label><input type="text" id="quebra" inputmode="decimal">
             </div>
         </div>
-        <button class="btn" id="btn-next" disabled onclick="showScreen('screen-tratativa-media')">PRÓXIMO: FOTOS</button>
+        <button class="btn" id="next" disabled onclick="showScreen('screen-media')">ADICIONAR FOTOS</button>
     </div>
 
-    <div id="screen-tratativa-media" class="screen">
-        <h2>EVIDÊNCIAS</h2>
+    <div id="screen-media" class="screen">
         <div class="card">
-            <label>FOTOS PRODUTO / BALANÇA / ETIQUETA</label>
-            <input type="file" id="f-all" accept="image/*" capture="environment" multiple onchange="handleFiles(event)" class="hidden">
-            <button class="btn" style="background:#444" onclick="document.getElementById('f-all').click()">📸 TIRAR FOTOS OU GALERIA</button>
-            <div class="preview-grid" id="main-preview"></div>
+            <label>1. FOTOS DO PRODUTO</label>
+            <input type="file" id="f-prod" accept="image/*" multiple onchange="handleImg(event, 'pre-prod')" class="hidden">
+            <button class="btn" style="background:#333" onclick="document.getElementById('f-prod').click()">+ FOTOS PRODUTO</button>
+            <div class="preview-grid" id="pre-prod"></div>
         </div>
-        <button class="btn" onclick="generateFinalReport()">GERAR RELATÓRIO FINAL</button>
+        <div class="card">
+            <label>2. FOTOS DA BALANÇA</label>
+            <input type="file" id="f-bal" accept="image/*" multiple onchange="handleImg(event, 'pre-bal')" class="hidden">
+            <button class="btn" style="background:#333" onclick="document.getElementById('f-bal').click()">+ FOTOS BALANÇA</button>
+            <div class="preview-grid" id="pre-bal"></div>
+        </div>
+        <div class="card">
+            <label>3. FOTO DA ETIQUETA</label>
+            <input type="file" id="f-eti" accept="image/*" onchange="handleImg(event, 'pre-eti')" class="hidden">
+            <button class="btn" style="background:#333" onclick="document.getElementById('f-eti').click()">📸 CÂMERA OU GALERIA</button>
+            <div class="preview-grid" id="pre-eti"></div>
+        </div>
+        <button class="btn" onclick="finish()">GERAR RELATÓRIO</button>
     </div>
 
     <div id="screen-final" class="screen">
-        <h2>RELATÓRIO PRONTO</h2>
-        <div class="summary-box" id="final-summary"></div>
-        <p style="font-size:0.8rem; color:var(--primary)">Clique em "ENVIAR" em cada foto abaixo:</p>
-        <div class="preview-grid" id="final-preview-grid"></div>
-        <button class="btn" style="margin-top:20px; background:transparent; border:1px solid var(--primary); color:var(--primary)" onclick="location.reload()">NOVA TRATATIVA</button>
+        <div class="summary" id="resumo"></div>
+        <div class="preview-grid" id="final-grid"></div>
+        <button class="btn" style="margin-top:20px; background:none; border:1px solid var(--primary); color:var(--primary)" onclick="location.reload()">NOVA TRATATIVA</button>
     </div>
 
     <script>
-        let db;
-        let currentTratativa = { photos: [] };
+        let db; let current = { photos: [] };
 
-        const initDB = () => {
+        const init = () => {
             const req = indexedDB.open("TrataDB", 2);
-            req.onupgradeneeded = e => {
-                const d = e.target.result;
-                if(!d.objectStoreNames.contains("prods")) d.createObjectStore("prods", { keyPath: "codigo" });
-            };
-            req.onsuccess = e => { db = e.target.result; renderProductList(); };
+            req.onupgradeneeded = e => { e.target.result.createObjectStore("prods", { keyPath: "codigo" }); };
+            req.onsuccess = e => { db = e.target.result; renderP(); };
         };
 
         function showScreen(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(id).classList.add('active');
-            window.scrollTo(0,0);
         }
 
-        function handleFiles(event) {
-            const files = Array.from(event.target.files);
-            files.forEach(f => {
-                const reader = new FileReader();
-                reader.onload = (ev) => {
-                    currentTratativa.photos.push(ev.target.result);
-                    const box = document.createElement('div');
-                    box.className = 'thumb-box';
-                    box.innerHTML = `<img src="${ev.target.result}">`;
-                    document.getElementById('main-preview').appendChild(box);
+        function handleImg(e, id) {
+            Array.from(e.target.files).forEach(f => {
+                const r = new FileReader();
+                r.onload = (ev) => {
+                    current.photos.push(ev.target.result);
+                    const div = document.createElement('div');
+                    div.className='thumb'; div.innerHTML=`<img src="${ev.target.result}">`;
+                    document.getElementById(id).appendChild(div);
                 };
-                reader.readAsDataURL(f);
+                r.readAsDataURL(f);
             });
         }
 
-        function generateFinalReport() {
-            const p = currentTratativa.product;
-            const chegou = document.getElementById('trat-chegou').value;
-            const quebra = document.getElementById('trat-quebra').value;
+        function finish() {
+            const p = current.prod;
             const data = new Date().toLocaleDateString('pt-BR');
-
-            const texto = `📌 *TRATATIVA FLV - 1018*\n\n🔢 *CÓD:* ${p.codigo}\n📦 *PRODUTO:* ${p.nome}\n📅 *DATA:* ${data}\n🚚 *CHEGOU:* ${chegou} ${p.unidade}\n❌ *QTDA QUEBRA:* ${quebra} ${p.unidade}`;
+            const txt = `🔢 *CÓD:* ${p.codigo}\n📦 *PRODUTO:* ${p.nome}\n📅 *DATA:* ${data}\n🚚 *CHEGOU:* ${document.getElementById('chegou').value} ${p.unidade}\n❌ *QTDA QUEBRA:* ${document.getElementById('quebra').value} ${p.unidade}`;
             
-            document.getElementById('final-summary').innerText = texto;
-            const grid = document.getElementById('final-preview-grid');
+            document.getElementById('resumo').innerText = txt;
+            const grid = document.getElementById('final-grid');
             grid.innerHTML = '';
-
-            currentTratativa.photos.forEach(imgData => {
-                const box = document.createElement('div');
-                box.className = 'thumb-box';
-                box.innerHTML = `
-                    <img src="${imgData}">
-                    <button class="btn-wa" onclick="sendToWA('${encodeURIComponent(texto)}')">ENVIAR</button>
-                `;
-                grid.appendChild(box);
+            
+            current.photos.forEach(img => {
+                const div = document.createElement('div');
+                div.className='thumb';
+                div.innerHTML = `<img src="${img}"><button class="btn-wa" onclick="sendWA('${encodeURIComponent(txt)}')">ENVIAR</button>`;
+                grid.appendChild(div);
             });
-
             showScreen('screen-final');
         }
 
-        function sendToWA(txt) {
-            navigator.clipboard.writeText(decodeURIComponent(txt));
-            window.open(`https://api.whatsapp.com/send?text=${txt}`, '_blank');
+        function sendWA(t) {
+            navigator.clipboard.writeText(decodeURIComponent(t));
+            window.open(`https://api.whatsapp.com/send?text=${t}`, '_blank');
         }
 
-        function searchProducts(q) {
-            const res = document.getElementById('search-results');
-            res.innerHTML = ''; if(q.length < 1) return;
+        function searchP(q) {
+            const res = document.getElementById('results'); res.innerHTML = '';
             db.transaction("prods").objectStore("prods").getAll().onsuccess = e => {
-                const list = e.target.result.filter(p => p.codigo.includes(q) || p.nome.includes(q.toUpperCase()));
-                list.sort((a,b) => a.nome.localeCompare(b.nome)).slice(0,5).forEach(p => {
-                    const d = document.createElement('div');
-                    d.style.padding = '15px'; d.style.borderBottom = '1px solid #333';
+                e.target.result.filter(p => p.codigo.includes(q) || p.nome.includes(q.toUpperCase())).slice(0,5).forEach(p => {
+                    const d = document.createElement('div'); d.style.padding='15px'; d.style.borderBottom='1px solid #333';
                     d.innerText = `${p.codigo} - ${p.nome}`;
                     d.onclick = () => {
-                        currentTratativa.product = p;
-                        document.getElementById('display-name').innerText = p.nome;
-                        document.getElementById('selected-prod-info').classList.remove('hidden');
-                        document.getElementById('btn-next').disabled = false;
-                        document.getElementById('search-prod').value = p.nome;
-                        res.innerHTML = '';
+                        current.prod = p; document.getElementById('detalhe').innerText = p.nome;
+                        document.getElementById('info').classList.remove('hidden');
+                        document.getElementById('next').disabled = false;
+                        document.getElementById('search').value = p.nome; res.innerHTML = '';
                     };
                     res.appendChild(d);
                 });
             };
         }
 
-        function saveProduct() {
-            const code = document.getElementById('prod-code').value;
-            const name = document.getElementById('prod-name').value.toUpperCase();
-            const unit = document.getElementById('prod-unit').value;
-            db.transaction("prods", "readwrite").objectStore("prods").put({ codigo: code, nome: name, unidade: unit });
-            renderProductList();
+        function saveP() {
+            const c = document.getElementById('p-code').value;
+            const n = document.getElementById('p-name').value.toUpperCase();
+            const u = document.getElementById('p-unit').value.toUpperCase();
+            db.transaction("prods", "readwrite").objectStore("prods").put({codigo:c, nome:n, unidade:u});
+            renderP();
         }
 
-        function renderProductList() {
-            const cont = document.getElementById('product-list-container');
-            if(!cont) return; cont.innerHTML = '';
+        function renderP() {
+            const l = document.getElementById('p-list'); if(!l) return; l.innerHTML = '';
             db.transaction("prods").objectStore("prods").getAll().onsuccess = e => {
-                e.target.result.sort((a,b) => a.nome.localeCompare(b.nome)).forEach(p => {
-                    const d = document.createElement('div');
-                    d.style.fontSize = '0.8rem'; d.style.padding = '5px';
-                    d.innerHTML = `• ${p.nome} (${p.codigo})`;
-                    cont.appendChild(d);
+                e.target.result.sort((a,b)=>a.nome.localeCompare(b.nome)).forEach(p => {
+                    const d = document.createElement('div'); d.style.padding='5px'; d.style.fontSize='0.8rem';
+                    d.innerText = `• ${p.nome} (${p.codigo})`; l.appendChild(d);
                 });
             };
         }
 
-        function startNewTratativa() {
-            currentTratativa = { photos: [] };
-            document.getElementById('main-preview').innerHTML = '';
-            document.getElementById('search-prod').value = '';
-            document.getElementById('selected-prod-info').classList.add('hidden');
-            showScreen('screen-tratativa-data');
+        function startNew() {
+            current = { photos: [] };
+            document.getElementById('pre-prod').innerHTML=''; document.getElementById('pre-bal').innerHTML=''; document.getElementById('pre-eti').innerHTML='';
+            document.getElementById('search').value=''; document.getElementById('info').classList.add('hidden');
+            showScreen('screen-data');
         }
 
-        function hardReset() { if(confirm("Apagar tudo?")) { indexedDB.deleteDatabase("TrataDB"); location.reload(); } }
-
-        initDB();
+        init();
     </script>
 </body>
 </html>
