@@ -300,16 +300,7 @@
 
         <div class="upload-block">
             <div class="upload-header">
-                <span>📄 NOTA FISCAL (1 foto)</span>
-                <button class="btn btn-small" onclick="triggerUpload('input-nf')">+ FOTO</button>
-                <input type="file" id="input-nf" class="hidden" accept="image/*" capture="camera" onchange="handleFiles(event, 'preview-nf', true)">
-            </div>
-            <div class="preview-grid" id="preview-nf"></div>
-        </div>
-
-        <div class="upload-block">
-            <div class="upload-header">
-                <span>📸 PRODUTOS</span>
+                <span> PRODUTOS</span>
                 <button class="btn btn-small" onclick="triggerUpload('input-prod')">+ FOTO</button>
                 <input type="file" id="input-prod" class="hidden" accept="image/*" multiple onchange="handleFiles(event, 'preview-prod')">
             </div>
@@ -329,7 +320,7 @@
             <div class="upload-header">
                 <span>🏷️ ETIQUETA (1 foto)</span>
                 <button class="btn btn-small" onclick="triggerUpload('input-eti')">+ FOTO</button>
-                <input type="file" id="input-eti" class="hidden" accept="image/*" capture="environment" onchange="handleFiles(event, 'preview-eti', true)">
+                <input type="file" id="input-eti" class="hidden" accept="image/*" onchange="handleFiles(event, 'preview-eti', true)">
             </div>
             <div class="preview-grid" id="preview-eti"></div>
         </div>
@@ -624,7 +615,8 @@
             document.getElementById('search-prod').value = `${p.codigo} - ${p.nome}`;
             
             // Feedback Visual
-            document.getElementById('search-prod').style.borderColor = 'var(--success)';
+            const searchInput = document.getElementById('search-prod');
+            searchInput.style.borderColor = 'var(--success)';
             document.getElementById('search-check').style.display = 'block';
 
             document.getElementById('selected-prod-info').classList.remove('hidden');
@@ -632,7 +624,10 @@
             document.getElementById('trat-price').value = p.preco;
             document.getElementById('trat-unit').value = p.unidade;
             
-            document.getElementById('btn-go-evidence').disabled = false;
+            // Habilita e muda cor do botão Prosseguir
+            const btnGo = document.getElementById('btn-go-evidence');
+            btnGo.disabled = false;
+            btnGo.style.backgroundColor = 'var(--success)';
             
             // Foca no campo 'Chegou' imediatamente
             setTimeout(() => document.getElementById('trat-chegou').focus(), 100);
@@ -707,23 +702,15 @@
             const p = currentTratativa.product;
             const data = new Date().toLocaleDateString('pt-BR');
             
-            // Gerar padrão de texto solicitado:
-            // Cod: [CÓDIGO]
-            // [NOME EM MAIÚSCULO]
-            // [DATA ATUAL]
-            // Chegou: [VALOR] [kg/un]
-            // Qtd da quebra: [VALOR] [kg/un]
             const text = `Cod: ${p.codigo}\n${p.nome}\n${data}\nChegou: ${currentTratativa.chegou} ${currentTratativa.unidade_final}\nQtd da quebra: ${currentTratativa.quebra} ${currentTratativa.unidade_final}`;
             
             currentTratativa.generatedText = text;
             document.getElementById('final-text-summary').innerText = text;
 
-            // Renderizar lista de fotos para envio
             const list = document.getElementById('send-photos-list');
             list.innerHTML = '';
 
             const categories = [
-                { key: 'preview-nf', label: 'NOTA FISCAL' },
                 { key: 'preview-prod', label: 'PRODUTO' },
                 { key: 'preview-bal', label: 'BALANÇA' },
                 { key: 'preview-eti', label: 'ETIQUETA' }
@@ -736,7 +723,7 @@
                     div.innerHTML = `
                         <img src="${m.base64}" class="photo-send-thumb">
                         <div style="flex-grow:1; font-size:0.8rem; font-weight:bold;">${cat.label} #${idx+1}</div>
-                        <button class="btn btn-small" onclick="sharePhoto('${cat.key}', ${idx})">ENVIAR PARA WHATSAPP</button>
+                        <button class="btn btn-small" onclick="sharePhoto('${cat.key}', ${idx})">ENVIAR FOTO</button>
                     `;
                     list.appendChild(div);
                 });
@@ -753,8 +740,11 @@
                     text: text
                 }).catch(err => console.error('Erro ao compartilhar texto:', err));
             } else {
-                alert("Seu navegador não suporta compartilhamento nativo. O texto foi copiado.");
-                navigator.clipboard.writeText(text);
+                // Fallback sem forçar download
+                navigator.clipboard.writeText(text).then(() => {
+                    alert("Texto copiado! Cole no WhatsApp.");
+                    window.open('https://wa.me/', '_blank');
+                });
             }
         }
 
@@ -765,11 +755,11 @@
                 if (navigator.share && navigator.canShare && navigator.canShare({ files: [media.file] })) {
                     await navigator.share({
                         files: [media.file],
-                        title: 'Evidência FLV',
-                        text: currentTratativa.generatedText
+                        title: 'Evidência FLV'
                     });
                 } else {
-                    alert("Seu navegador não suporta o envio nativo de arquivos.");
+                    // Fallback sem forçar download
+                    alert("Seu navegador não suporta o envio nativo de arquivos. Tente usar o Chrome no Android.");
                 }
             } catch (err) {
                 console.error("Erro ao compartilhar foto:", err);
@@ -792,9 +782,9 @@
         // Registro Service Worker Estável
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js').then(reg => {
-                    console.log('SW registrado.');
-                }).catch(err => console.log('Erro SW:', err));
+                navigator.serviceWorker.register('service-worker.js').then(reg => {
+                    console.log('Service Worker registrado.');
+                }).catch(err => console.log('Erro ao registrar Service Worker:', err));
             });
         }
     </script>
