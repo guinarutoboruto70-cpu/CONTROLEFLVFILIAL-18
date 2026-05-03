@@ -4,41 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>TRATAFLV - Filial 1018</title>
-    
     <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#ffcc00">
     <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/1041/1041310.png">
-
     <style>
-        :root {
-            --bg: #0a0a0a; --card-bg: #1a1a1a; --primary: #ffcc00;
-            --text: #ffffff; --text-dim: #aaaaaa; --border: #333333;
-            --success: #25d366; --danger: #ff4444;
-        }
+        :root { --bg: #0a0a0a; --card-bg: #1a1a1a; --primary: #ffcc00; --text: #ffffff; --text-dim: #aaaaaa; --border: #333333; --success: #25d366; --danger: #ff4444; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body {
-            margin: 0; font-family: -apple-system, sans-serif; background: var(--bg);
-            color: var(--text); min-height: 100vh; display: flex; flex-direction: column;
-        }
+        body { margin: 0; font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
         .screen { display: none; padding: 20px; flex-grow: 1; animation: fadeIn 0.3s ease; }
         .screen.active { display: flex; flex-direction: column; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        
-        .btn {
-            background: var(--primary); color: #000; border: none; padding: 16px;
-            border-radius: 12px; font-weight: bold; cursor: pointer; width: 100%;
-            margin-bottom: 12px; text-transform: uppercase; font-size: 1rem;
-        }
+        .btn { background: var(--primary); color: #000; border: none; padding: 16px; border-radius: 12px; font-weight: bold; cursor: pointer; width: 100%; margin-bottom: 12px; text-transform: uppercase; font-size: 1rem; }
         .btn-outline { background: transparent; border: 2px solid var(--primary); color: var(--primary); }
         .btn-danger { background: var(--danger); color: #fff; }
-        
         .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 15px; margin-bottom: 15px; }
-        input, select {
-            width: 100%; padding: 14px; background: #252525; border: 1px solid var(--border);
-            border-radius: 10px; color: white; margin-top: 8px; font-size: 1rem;
-        }
+        input, select { width: 100%; padding: 14px; background: #252525; border: 1px solid var(--border); border-radius: 10px; color: white; margin-top: 8px; font-size: 1rem; }
         label { color: var(--text-dim); font-size: 0.8rem; font-weight: bold; }
         .preview-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
         .preview-item { position: relative; aspect-ratio: 1; background: #252525; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
@@ -48,7 +28,6 @@
     </style>
 </head>
 <body>
-
     <div id="screen-start" class="screen active" style="justify-content: center; align-items: center; text-align: center;">
         <div style="font-size: 80px; margin-bottom: 20px;">🍎</div>
         <h1 style="color:var(--primary); margin:0;">TRATAFLV</h1>
@@ -86,7 +65,6 @@
             <label>PESQUISAR PRODUTO</label>
             <input type="text" id="search-prod" placeholder="Digite código ou nome..." oninput="searchProducts(this.value)">
             <div id="search-results" style="background:#222; border-radius:0 0 10px 10px; max-height:150px; overflow-y:auto;"></div>
-            
             <div id="selected-prod-info" class="hidden" style="margin-top:15px; border-top:1px solid #333; padding-top:10px">
                 <p id="display-name" style="color:var(--primary); font-weight:bold; font-size:1.2rem; margin-bottom:10px;"></p>
                 <label>QUANTIDADE QUE CHEGOU</label>
@@ -132,8 +110,101 @@
                 const d = e.target.result;
                 if(!d.objectStoreNames.contains("prods")) d.createObjectStore("prods", { keyPath: "codigo" });
             };
-            req.onsuccess = e => { db = e.target.result; renderProductList(); };
+            req.onsuccess = e => { 
+                db = e.target.result; 
+                verificarPreCarga(); 
+                renderProductList(); 
+            };
         };
+
+        function verificarPreCarga() {
+            const tx = db.transaction("prods", "readonly");
+            const store = tx.objectStore("prods");
+            const countReq = store.count();
+
+            countReq.onsuccess = () => {
+                if (countReq.result === 0) {
+                    const cargaInicial = [
+                        {codigo: "1124", nome: "ABACATE KG", unidade: "KG"},
+                        {codigo: "1125", nome: "ABACAXI", unidade: "UN"},
+                        {codigo: "1129", nome: "ABOBORA ITALIA KG", unidade: "KG"},
+                        {codigo: "1130", nome: "ABOBORA JAPONESA KG", unidade: "KG"},
+                        {codigo: "1134", nome: "ABOBORA MORANGA KG", unidade: "KG"},
+                        {codigo: "242", nome: "ALHO KG 5", unidade: "KG"},
+                        {codigo: "744", nome: "AMEIXA BDJ 500G", unidade: "UN"},
+                        {codigo: "739", nome: "AMEIXA KG", unidade: "KG"},
+                        {codigo: "537", nome: "BANANA MACA KG", unidade: "KG"},
+                        {codigo: "538", nome: "BANANA NANICA KG", unidade: "KG"},
+                        {codigo: "541", nome: "BANANA PRATA KG", unidade: "KG"},
+                        {codigo: "543", nome: "BANANA TERRA KG", unidade: "KG"},
+                        {codigo: "681", nome: "BATATA DOCE KG", unidade: "KG"},
+                        {codigo: "688", nome: "BATATA KG", unidade: "KG"},
+                        {codigo: "7714", nome: "BETERRABA KG", unidade: "KG"},
+                        {codigo: "8459", nome: "CAQUI BDJ 500G", unidade: "UN"},
+                        {codigo: "8572", nome: "CEBOLA KG", unidade: "KG"},
+                        {codigo: "8574", nome: "CEBOLA ROXA KG", unidade: "KG"},
+                        {codigo: "8589", nome: "CENOURA KG", unidade: "KG"},
+                        {codigo: "7547", nome: "CHUCHU KG", unidade: "KG"},
+                        {codigo: "7620", nome: "COCO SECO KG INT", unidade: "KG"},
+                        {codigo: "7622", nome: "COCO VERDE", unidade: "UN"},
+                        {codigo: "5022", nome: "GENGIBRE KG", unidade: "KG"},
+                        {codigo: "5213", nome: "INHAME KG", unidade: "KG"},
+                        {codigo: "5473", nome: "KIWI BDJ 600G", unidade: "UN"},
+                        {codigo: "5558", nome: "LARANJA PERA KG", unidade: "KG"},
+                        {codigo: "4362", nome: "LIMAO KG", unidade: "KG"},
+                        {codigo: "10750", nome: "MACA FUJI KG", unidade: "KG"},
+                        {codigo: "3280", nome: "MACA GALA NAC KG", unidade: "KG"},
+                        {codigo: "3284", nome: "MACA PCT 1KG", unidade: "UN"},
+                        {codigo: "3343", nome: "MAMAO FORMOSA KG", unidade: "KG"},
+                        {codigo: "3346", nome: "MAMAO PAPAYA KG", unidade: "KG"},
+                        {codigo: "3369", nome: "MANGA PALMER KG", unidade: "KG"},
+                        {codigo: "3370", nome: "MANGA TOMMY KG", unidade: "KG"},
+                        {codigo: "3422", nome: "MARACUJA AZEDO KG", unidade: "KG"},
+                        {codigo: "3560", nome: "MELANCIA KG", unidade: "KG"},
+                        {codigo: "3563", nome: "MELANCIA PINGO DOCE KG", unidade: "KG"},
+                        {codigo: "3565", nome: "MELAO AMARELO KG", unidade: "KG"},
+                        {codigo: "3582", nome: "MEXERICA PONKAN KG", unidade: "KG"},
+                        {codigo: "3585", nome: "MILHO VERDE BDJ 5UN", unidade: "UN"},
+                        {codigo: "1766", nome: "PEPINO COMUM KG", unidade: "KG"},
+                        {codigo: "1768", nome: "PEPINO JAPONES KG", unidade: "KG"},
+                        {codigo: "1778", nome: "PERA KG", unidade: "KG"},
+                        {codigo: "1895", nome: "PIMENTAO VERDE KG", unidade: "KG"},
+                        {codigo: "1327", nome: "REPOLHO BCO KG", unidade: "KG"},
+                        {codigo: "1329", nome: "REPOLHO ROXO KG", unidade: "KG"},
+                        {codigo: "7018", nome: "TOMATE GRAPE 180G", unidade: "UN"},
+                        {codigo: "7021", nome: "TOMATE GRAPE KG", unidade: "KG"},
+                        {codigo: "7028", nome: "TOMATE KG", unidade: "KG"},
+                        {codigo: "7049", nome: "TOMATE MEL TREBESCHI 180G", unidade: "UN"},
+                        {codigo: "7089", nome: "UVA VERDE 500G S/ SEMENTE", unidade: "UN"},
+                        {codigo: "7088", nome: "UVA VERM 500G S/ SEMENTE", unidade: "UN"},
+                        {codigo: "7094", nome: "UVA VITORIA MIMO SELECAO 400G", unidade: "UN"}
+                    ];
+                    const writeTx = db.transaction("prods", "readwrite");
+                    const writeStore = writeTx.objectStore("prods");
+                    cargaInicial.forEach(p => writeStore.put(p));
+                    writeTx.oncomplete = () => renderProductList();
+                }
+            };
+        }
+
+        function renderProductList() {
+            const cont = document.getElementById('product-list-container');
+            if(!cont) return;
+            cont.innerHTML = '';
+            db.transaction("prods").objectStore("prods").getAll().onsuccess = e => {
+                let produtos = e.target.result;
+                // ORDENAÇÃO ALFABÉTICA SEMPRE
+                produtos.sort((a, b) => a.nome.localeCompare(b.nome));
+
+                produtos.forEach(p => {
+                    const d = document.createElement('div');
+                    d.className = 'card';
+                    d.style.display = 'flex'; d.style.justifyContent = 'space-between'; d.style.alignItems = 'center';
+                    d.innerHTML = `<span><b>${p.codigo}</b> - ${p.nome}</span> <span onclick="deleteProd('${p.codigo}')" style="color:var(--danger); cursor:pointer; font-weight:bold;">EXCLUIR</span>`;
+                    cont.appendChild(d);
+                });
+            };
+        }
 
         function showScreen(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -153,21 +224,6 @@
             renderProductList();
         }
 
-        function renderProductList() {
-            const cont = document.getElementById('product-list-container');
-            if(!cont) return;
-            cont.innerHTML = '';
-            db.transaction("prods").objectStore("prods").getAll().onsuccess = e => {
-                e.target.result.forEach(p => {
-                    const d = document.createElement('div');
-                    d.className = 'card';
-                    d.style.display = 'flex'; d.style.justifyContent = 'space-between';
-                    d.innerHTML = `<span><b>${p.codigo}</b> - ${p.nome}</span> <span onclick="deleteProd('${p.codigo}')" style="color:var(--danger); cursor:pointer">EXCLUIR</span>`;
-                    cont.appendChild(d);
-                });
-            };
-        }
-
         function deleteProd(c) {
             if(confirm("Excluir produto?")) {
                 db.transaction("prods", "readwrite").objectStore("prods").delete(c);
@@ -181,6 +237,7 @@
             if(q.length < 1) return;
             db.transaction("prods").objectStore("prods").getAll().onsuccess = e => {
                 const list = e.target.result.filter(p => p.codigo.includes(q) || p.nome.includes(q.toUpperCase()));
+                list.sort((a, b) => a.nome.localeCompare(b.nome));
                 list.slice(0, 5).forEach(p => {
                     const d = document.createElement('div');
                     d.style.padding = '15px'; d.style.borderBottom = '1px solid #333'; d.style.cursor = 'pointer';
@@ -198,8 +255,8 @@
             };
         }
 
-        function handleFiles(e, id) {
-            const files = Array.from(e.target.files);
+        function handleFiles(event, id) {
+            const files = Array.from(event.target.files);
             files.forEach(f => {
                 const reader = new FileReader();
                 reader.onload = (ev) => {
@@ -218,14 +275,7 @@
             const chegou = document.getElementById('trat-chegou').value.replace(',', '.');
             const quebra = document.getElementById('trat-quebra').value.replace(',', '.');
             const data = new Date().toLocaleDateString('pt-BR');
-            
-            const texto = `📌 *TRATATIVA FLV - 1018*\n\n` +
-                          `📦 *PROD:* ${p.nome}\n` +
-                          `🔢 *COD:* ${p.codigo}\n` +
-                          `📅 *DATA:* ${data}\n` +
-                          `🚚 *CHEGOU:* ${chegou} ${p.unidade}\n` +
-                          `❌ *QUEBRA:* ${quebra} ${p.unidade}`;
-            
+            const texto = `📌 *TRATATIVA FLV - 1018*\n\n📦 *PROD:* ${p.nome}\n🔢 *COD:* ${p.codigo}\n📅 *DATA:* ${data}\n🚚 *CHEGOU:* ${chegou} ${p.unidade}\n❌ *QUEBRA:* ${quebra} ${p.unidade}`;
             currentTratativa.resumo = texto;
             document.getElementById('final-text-summary').innerText = texto;
             navigator.clipboard.writeText(texto);
@@ -256,18 +306,11 @@
             } 
         }
 
-        // PWA Registration & Lifecycle
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                .then(reg => {
-                    console.log('SW registrado');
-                    reg.update();
-                })
-                .catch(err => console.log('Erro SW:', err));
+                navigator.serviceWorker.register('./sw.js').then(reg => reg.update());
             });
         }
-
         initDB();
     </script>
 </body>
