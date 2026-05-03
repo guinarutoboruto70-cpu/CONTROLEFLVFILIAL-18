@@ -633,6 +633,9 @@
             document.getElementById('trat-unit').value = p.unidade;
             
             document.getElementById('btn-go-evidence').disabled = false;
+            
+            // Foca no campo 'Chegou' imediatamente
+            setTimeout(() => document.getElementById('trat-chegou').focus(), 100);
         }
 
         function goToEvidence() {
@@ -745,11 +748,13 @@
         function copyTextAndOpenWA() {
             const text = currentTratativa.generatedText;
             if (navigator.share) {
-                navigator.share({ text: text }).catch(err => console.log('Erro ao compartilhar texto:', err));
+                navigator.share({
+                    title: 'Tratativa FLV',
+                    text: text
+                }).catch(err => console.error('Erro ao compartilhar texto:', err));
             } else {
-                navigator.clipboard.writeText(text).then(() => {
-                    window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
-                });
+                alert("Seu navegador não suporta compartilhamento nativo. O texto foi copiado.");
+                navigator.clipboard.writeText(text);
             }
         }
 
@@ -764,16 +769,7 @@
                         text: currentTratativa.generatedText
                     });
                 } else {
-                    // Fallback para download se o navegador não suportar Web Share API para arquivos
-                    const link = document.createElement('a');
-                    link.href = media.base64;
-                    link.download = `tratativa_foto.jpg`;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    setTimeout(() => {
-                        window.open("https://wa.me/", "_blank");
-                    }, 1000);
+                    alert("Seu navegador não suporta o envio nativo de arquivos.");
                 }
             } catch (err) {
                 console.error("Erro ao compartilhar foto:", err);
