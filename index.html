@@ -14,9 +14,9 @@
         .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 15px; margin-bottom: 15px; }
         input { width: 100%; padding: 12px; background: #252525; border: 1px solid var(--border); border-radius: 8px; color: white; margin: 8px 0; font-size: 1rem; }
         .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
-        .thumb { border: 1px solid var(--border); border-radius: 6px; overflow: hidden; background: #000; padding: 2px; text-align: center; }
+        .thumb { border: 1px solid var(--border); border-radius: 6px; overflow: hidden; background: #000; padding: 2px; }
         .thumb img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 4px; }
-        .section-title { color: var(--primary); font-size: 0.8rem; margin-top: 15px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+        .section-title { color: var(--primary); font-size: 0.8rem; margin-top: 15px; font-weight: bold; text-transform: uppercase; border-left: 3px solid var(--primary); padding-left: 8px; }
         .text-clean { background: #000; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 1rem; line-height: 1.5; margin-bottom: 10px; border: 1px solid #444; }
         .hidden { display: none; }
     </style>
@@ -24,63 +24,62 @@
 <body>
 
     <div id="screen-menu" class="screen active">
-        <h1 style="text-align:center; color:var(--primary); margin-bottom: 40px;">TRATAFLV 1018</h1>
-        <button class="btn" style="height:150px; font-size: 1.2rem;" onclick="startNew()">🍎 NOVA TRATATIVA</button>
-        <button class="btn" style="background:none; border:1px solid #444; color:#aaa; font-size: 0.8rem;" onclick="showScreen('screen-products')">GERENCIAR LISTA DE PRODUTOS</button>
+        <h1 style="text-align:center; color:var(--primary)">TRATAFLV 1018</h1>
+        <button class="btn" style="height:150px" onclick="startNew()">🍎 NOVA TRATATIVA</button>
+        <button class="btn" style="background:none; border:1px solid #444; color:#aaa" onclick="showScreen('screen-products')">GERENCIAR PRODUTOS</button>
     </div>
 
     <div id="screen-products" class="screen">
         <div class="card">
             <input type="number" id="p-code" placeholder="CÓDIGO">
-            <input type="text" id="p-name" placeholder="NOME DO PRODUTO (Ex: BATATA)">
-            <input type="text" id="p-unit" placeholder="UNIDADE (KG ou UN)">
+            <input type="text" id="p-name" placeholder="NOME DO PRODUTO">
+            <input type="text" id="p-unit" placeholder="UNIDADE (KG/UN)">
             <button class="btn" onclick="saveP()">SALVAR PRODUTO</button>
         </div>
-        <div id="p-list" style="max-height:300px; overflow-y:auto; font-size: 0.9rem; color: #aaa;"></div>
-        <button class="btn" style="margin-top: 20px;" onclick="showScreen('screen-menu')">VOLTAR</button>
+        <div id="p-list" style="max-height:200px; overflow-y:auto"></div>
+        <button class="btn" onclick="showScreen('screen-menu')">VOLTAR</button>
     </div>
 
     <div id="screen-data" class="screen">
         <div class="card">
-            <input type="text" id="search" placeholder="Pesquisar produto ou código..." oninput="searchP(this.value)">
+            <input type="text" id="search" placeholder="Pesquisar..." oninput="searchP(this.value)">
             <div id="results"></div>
             <div id="info" class="hidden">
-                <p id="detalhe" style="color:var(--primary); font-weight:bold; font-size: 1.2rem; margin: 15px 0;"></p>
-                <label>Chegou:</label><input type="text" id="chegou" placeholder="Ex: 500" inputmode="decimal">
-                <label>Qtd da quebra:</label><input type="text" id="quebra" placeholder="Ex: 25" inputmode="decimal">
+                <p id="detalhe" style="color:var(--primary); font-weight:bold; font-size: 1.2rem;"></p>
+                <input type="text" id="chegou" placeholder="Chegou" inputmode="decimal">
+                <input type="text" id="quebra" placeholder="Quebra" inputmode="decimal">
             </div>
         </div>
-        <button class="btn" id="btn-next" disabled onclick="showScreen('screen-media')">PRÓXIMO: TIRAR FOTOS</button>
+        <button class="btn" id="btn-next" disabled onclick="showScreen('screen-media')">PRÓXIMO</button>
     </div>
 
     <div id="screen-media" class="screen">
         <div class="card">
-            <div class="section-title">1. FOTOS DO PRODUTO</div>
+            <div class="section-title">PRODUTO</div>
             <input type="file" id="f-prod" accept="image/*" multiple onchange="preview(event, 'pre-prod', 'prod')" class="hidden">
-            <button class="btn" style="background:#333; margin-top: 10px;" onclick="document.getElementById('f-prod').click()">+ ADICIONAR PRODUTO</button>
+            <button class="btn" style="background:#333" onclick="document.getElementById('f-prod').click()">+ FOTO PRODUTO</button>
             <div class="grid" id="pre-prod"></div>
         </div>
         <div class="card">
-            <div class="section-title">2. FOTOS DA BALANÇA</div>
+            <div class="section-title">BALANÇA</div>
             <input type="file" id="f-bal" accept="image/*" multiple onchange="preview(event, 'pre-bal', 'bal')" class="hidden">
-            <button class="btn" style="background:#333; margin-top: 10px;" onclick="document.getElementById('f-bal').click()">+ ADICIONAR BALANÇA</button>
+            <button class="btn" style="background:#333" onclick="document.getElementById('f-bal').click()">+ FOTO BALANÇA</button>
             <div class="grid" id="pre-bal"></div>
         </div>
         <div class="card">
-            <div class="section-title">3. FOTO DA ETIQUETA</div>
+            <div class="section-title">ETIQUETA</div>
             <input type="file" id="f-eti" accept="image/*" onchange="preview(event, 'pre-eti', 'eti')" class="hidden">
-            <button class="btn" style="background:#333; margin-top: 10px;" onclick="document.getElementById('f-eti').click()">📸 ESCOLHER FOTO OU CÂMERA</button>
+            <button class="btn" style="background:#333" onclick="document.getElementById('f-eti').click()">📸 CÂMERA / GALERIA</button>
             <div class="grid" id="pre-eti"></div>
         </div>
-        <button class="btn" onclick="generate()">GERAR RELATÓRIO FINAL</button>
+        <button class="btn" onclick="generate()">GERAR RELATÓRIO</button>
     </div>
 
     <div id="screen-final" class="screen">
-        <div class="section-title" style="margin-bottom: 10px;">RELATÓRIO DE TEXTO</div>
         <div class="text-clean" id="txt-final"></div>
-        <button class="btn" style="background:var(--success); color:white; height: 60px;" id="btn-send-text">ENVIAR TEXTO NO GRUPO</button>
+        <button class="btn" style="background:var(--success); color:white" onclick="sendText()">ENVIAR TEXTO</button>
         <div id="final-media-container"></div>
-        <button class="btn" style="margin-top:40px; background:none; border:1px solid var(--primary); color:var(--primary)" onclick="location.reload()">NOVA TRATATIVA (LIMPAR)</button>
+        <button class="btn" style="margin-top:30px; background:none; border:1px solid var(--primary); color:var(--primary)" onclick="location.reload()">LIMPAR TUDO</button>
     </div>
 
     <script>
@@ -95,14 +94,13 @@
         function showScreen(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(id).classList.add('active');
-            window.scrollTo(0,0);
         }
 
         function preview(e, gridId, type) {
             Array.from(e.target.files).forEach(f => {
                 const r = new FileReader();
                 r.onload = (ev) => {
-                    current.photos[type].push(ev.target.result);
+                    current.photos[type].push({ data: ev.target.result, file: f });
                     const d = document.createElement('div'); d.className='thumb';
                     d.innerHTML = `<img src="${ev.target.result}">`;
                     document.getElementById(gridId).appendChild(d);
@@ -114,22 +112,24 @@
         function generate() {
             const p = current.prod;
             const data = new Date().toLocaleDateString('pt-BR');
-            const chegou = document.getElementById('chegou').value;
-            const quebra = document.getElementById('quebra').value;
-            const txt = `Cod: ${p.codigo}\n${p.nome}\n${data}\nChegou: ${chegou} ${p.unidade}\nQuebra: ${quebra} ${p.unidade}`;
+            const txt = `Cod: ${p.codigo}\n${p.nome}\n${data}\nChegou: ${document.getElementById('chegou').value} ${p.unidade}\nQuebra: ${document.getElementById('quebra').value} ${p.unidade}`;
             document.getElementById('txt-final').innerText = txt;
-            document.getElementById('btn-send-text').onclick = () => sendWA(txt);
+
             const container = document.getElementById('final-media-container');
             container.innerHTML = '';
-            const sections = { prod: 'FOTOS DO PRODUTO', bal: 'FOTOS DA BALANÇA', eti: 'FOTO DA ETIQUETA' };
+            const sections = { prod: 'PRODUTO', bal: 'BALANÇA', eti: 'ETIQUETA' };
+
             for (let key in sections) {
                 if (current.photos[key].length > 0) {
                     const title = document.createElement('div'); title.className='section-title'; title.innerText = sections[key];
                     const grid = document.createElement('div'); grid.className='grid';
-                    current.photos[key].forEach(img => {
+                    current.photos[key].forEach((imgObj, idx) => {
                         const d = document.createElement('div'); d.className='thumb';
-                        // SOLUÇÃO DO ERRO: Adicionado um ponto (.) para o WhatsApp aceitar abrir a conversa
-                        d.innerHTML = `<img src="${img}"><button class="btn-wa" onclick="sendWA('.')">ENVIAR</button>`;
+                        d.innerHTML = `<img src="${imgObj.data}">`;
+                        const btn = document.createElement('button');
+                        btn.className = 'btn-wa'; btn.innerText = 'ENVIAR';
+                        btn.onclick = () => shareImage(imgObj.file);
+                        d.appendChild(btn);
                         grid.appendChild(d);
                     });
                     container.appendChild(title); container.appendChild(grid);
@@ -138,16 +138,25 @@
             showScreen('screen-final');
         }
 
-        function sendWA(t) {
-            // EncodeURIComponent garante que o link seja válido para o sistema
-            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(t)}`, '_blank');
+        async function shareImage(file) {
+            if (navigator.share) {
+                try {
+                    await navigator.share({ files: [file] });
+                } catch (err) { console.error("Erro ao compartilhar", err); }
+            } else {
+                alert("Seu navegador não suporta envio direto de arquivos.");
+            }
+        }
+
+        function sendText() {
+            const txt = document.getElementById('txt-final').innerText;
+            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(txt)}`, '_blank');
         }
 
         function searchP(q) {
             const res = document.getElementById('results'); res.innerHTML = '';
             db.transaction("prods").objectStore("prods").getAll().onsuccess = e => {
-                const filtered = e.target.result.filter(p => p.codigo.includes(q) || p.nome.includes(q.toUpperCase()));
-                filtered.slice(0,5).forEach(p => {
+                e.target.result.filter(p => p.codigo.includes(q) || p.nome.includes(q.toUpperCase())).slice(0,3).forEach(p => {
                     const d = document.createElement('div'); d.style.padding='15px'; d.style.borderBottom='1px solid #333';
                     d.innerText = `${p.codigo} - ${p.nome}`;
                     d.onclick = () => {
@@ -172,8 +181,8 @@
         function renderP() {
             const l = document.getElementById('p-list'); if(!l) return; l.innerHTML = '';
             db.transaction("prods").objectStore("prods").getAll().onsuccess = e => {
-                e.target.result.sort((a,b)=>a.nome.localeCompare(b.nome)).forEach(p => {
-                    const d = document.createElement('div'); d.style.padding='5px';
+                e.target.result.forEach(p => {
+                    const d = document.createElement('div'); d.style.fontSize='0.7rem';
                     d.innerText = `• ${p.nome} (${p.codigo})`; l.appendChild(d);
                 });
             };
@@ -181,8 +190,8 @@
 
         function startNew() {
             current = { prod: null, photos: { prod: [], bal: [], eti: [] } };
-            document.getElementById('pre-prod').innerHTML=''; document.getElementById('pre-bal').innerHTML=''; document.getElementById('pre-eti').innerHTML='';
-            document.getElementById('search').value=''; document.getElementById('info').classList.add('hidden');
+            document.querySelectorAll('.grid').forEach(g => g.innerHTML='');
+            document.getElementById('info').classList.add('hidden');
             showScreen('screen-data');
         }
 
