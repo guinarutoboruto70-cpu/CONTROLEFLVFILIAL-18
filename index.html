@@ -329,7 +329,7 @@
             <div class="upload-header">
                 <span>🏷️ ETIQUETA (1 foto)</span>
                 <button class="btn btn-small" onclick="triggerUpload('input-eti')">+ FOTO</button>
-                <input type="file" id="input-eti" class="hidden" accept="image/*" capture="camera" onchange="handleFiles(event, 'preview-eti', true)">
+                <input type="file" id="input-eti" class="hidden" accept="image/*" capture="environment" onchange="handleFiles(event, 'preview-eti', true)">
             </div>
             <div class="preview-grid" id="preview-eti"></div>
         </div>
@@ -344,10 +344,10 @@
             <h2>RESUMO DE ENVIO</h2>
         </div>
 
+        <button class="btn" onclick="copyTextAndOpenWA()">📋 COMPARTILHAR TEXTO</button>
         <div class="summary-text" id="final-text-summary"></div>
-        <button class="btn" onclick="copyTextAndOpenWA()">📋 COPIAR TEXTO E WHATSAPP</button>
 
-        <h3 style="color: var(--text-dim); font-size: 0.9rem; margin: 20px 0 10px;">ENVIAR EVIDÊNCIAS (UMA POR UMA)</h3>
+        <h3 style="color: var(--text-dim); font-size: 0.9rem; margin: 20px 0 10px;">ENVIAR EVIDÊNCIAS</h3>
         <div id="send-photos-list">
             <!-- Itens via JS -->
         </div>
@@ -733,7 +733,7 @@
                     div.innerHTML = `
                         <img src="${m.base64}" class="photo-send-thumb">
                         <div style="flex-grow:1; font-size:0.8rem; font-weight:bold;">${cat.label} #${idx+1}</div>
-                        <button class="btn btn-small" onclick="sharePhoto('${cat.key}', ${idx})">ENVIAR ESTA FOTO</button>
+                        <button class="btn btn-small" onclick="sharePhoto('${cat.key}', ${idx})">ENVIAR PARA WHATSAPP</button>
                     `;
                     list.appendChild(div);
                 });
@@ -744,29 +744,39 @@
 
         function copyTextAndOpenWA() {
             const text = currentTratativa.generatedText;
-            navigator.clipboard.writeText(text).then(() => {
-                window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
-            });
+            if (navigator.share) {
+                navigator.share({ text: text }).catch(err => console.log('Erro ao compartilhar texto:', err));
+            } else {
+                navigator.clipboard.writeText(text).then(() => {
+                    window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
+                });
+            }
         }
 
         async function sharePhoto(key, idx) {
             const media = currentTratativa.media[key][idx];
-            const fileName = `tratativa_foto.jpg`;
             
             try {
-                const link = document.createElement('a');
-                link.href = media.base64;
-                link.download = fileName;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                
-                // Abre o WhatsApp logo em seguida
-                setTimeout(() => {
-                    window.open("https://wa.me/", "_blank");
-                }, 1000);
+                if (navigator.share && navigator.canShare && navigator.canShare({ files: [media.file] })) {
+                    await navigator.share({
+                        files: [media.file],
+                        title: 'Evidência FLV',
+                        text: currentTratativa.generatedText
+                    });
+                } else {
+                    // Fallback para download se o navegador não suportar Web Share API para arquivos
+                    const link = document.createElement('a');
+                    link.href = media.base64;
+                    link.download = `tratativa_foto.jpg`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    setTimeout(() => {
+                        window.open("https://wa.me/", "_blank");
+                    }, 1000);
+                }
             } catch (err) {
-                console.error("Erro ao baixar:", err);
+                console.error("Erro ao compartilhar foto:", err);
             }
         }
 
@@ -785,9 +795,11 @@
 
         // Registro Service Worker Estável
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js').then(reg => {
-                console.log('SW registrado.');
-            }).catch(err => console.log('Erro SW:', err));
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').then(reg => {
+                    console.log('SW registrado.');
+                }).catch(err => console.log('Erro SW:', err));
+            });
         }
     </script>
 </body>
