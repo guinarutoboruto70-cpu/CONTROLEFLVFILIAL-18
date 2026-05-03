@@ -1,0 +1,16 @@
+{
+  "name": "TRATAFLV 1018",
+  "short_name": "TRATAFLV",
+  "description": "Controle de Perdas FLV - Filial 1018",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#ffcc00",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/1041/1041310.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
