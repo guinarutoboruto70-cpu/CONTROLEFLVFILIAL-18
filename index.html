@@ -320,7 +320,7 @@
             <div class="upload-header">
                 <span>🏷️ ETIQUETA (1 foto)</span>
                 <button class="btn btn-small" onclick="triggerUpload('input-eti')">+ FOTO</button>
-                <input type="file" id="input-eti" class="hidden" accept="image/*" onchange="handleFiles(event, 'preview-eti', true)">
+                <input type="file" accept="image/*" id="input-eti" class="hidden" onchange="handleFiles(event, 'preview-eti', true)">
             </div>
             <div class="preview-grid" id="preview-eti"></div>
         </div>
@@ -333,6 +333,7 @@
         <div class="header-nav">
             <button class="btn-back" onclick="showScreen('screen-tratativa-media')">←</button>
             <h2>RESUMO DE ENVIO</h2>
+            <button class="btn btn-small btn-outline" style="margin-left: auto;" onclick="showScreen('screen-menu')">MENU</button>
         </div>
 
         <button class="btn" onclick="copyTextAndOpenWA()">📋 COMPARTILHAR TEXTO</button>
@@ -343,7 +344,8 @@
             <!-- Itens via JS -->
         </div>
 
-        <button class="btn btn-outline mt-auto" onclick="resetAndHome()">CONCLUIR TUDO</button>
+        <button class="btn btn-outline mt-auto" onclick="resetAndStay()">CONCLUIR E NOVA CONSULTA</button>
+        <button class="btn btn-small" style="background:transparent; color:var(--text-dim); border:none;" onclick="showScreen('screen-menu')">VOLTAR AO MENU PRINCIPAL</button>
     </div>
 
     <script>
@@ -766,7 +768,7 @@
             }
         }
 
-        function resetAndHome() {
+        function resetAndStay() {
             // Salva no histórico (opcional para v5 estável)
             const tx = db.transaction(stores.TRATS, "readwrite");
             tx.objectStore(stores.TRATS).add({
@@ -774,7 +776,9 @@
                 timestamp: Date.now(),
                 media: null // Não salva base64 pesado por enquanto para manter DB leve
             });
-            showScreen('screen-start');
+            
+            // Em vez de voltar ao início, volta para a tela de busca de produtos (Tela 4)
+            startNewTratativa();
         }
 
         window.onload = initDB;
