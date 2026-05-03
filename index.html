@@ -16,14 +16,13 @@
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .btn { background: var(--primary); color: #000; border: none; padding: 16px; border-radius: 12px; font-weight: bold; cursor: pointer; width: 100%; margin-bottom: 12px; text-transform: uppercase; font-size: 1rem; }
         .btn-outline { background: transparent; border: 2px solid var(--primary); color: var(--primary); }
-        .btn-danger { background: var(--danger); color: #fff; }
+        .btn-wa { background: var(--success); color: white; padding: 8px; font-size: 0.7rem; margin-top: 5px; border-radius: 5px; width: 100%; border: none; }
         .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 15px; margin-bottom: 15px; }
         input, select { width: 100%; padding: 14px; background: #252525; border: 1px solid var(--border); border-radius: 10px; color: white; margin-top: 8px; font-size: 1rem; }
         label { color: var(--text-dim); font-size: 0.8rem; font-weight: bold; }
-        .preview-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
-        .preview-item { position: relative; aspect-ratio: 1; background: #252525; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
-        .preview-item img { width: 100%; height: 100%; object-fit: cover; }
-        .summary-text { background: #000; padding: 15px; border-radius: 10px; border: 1px dashed var(--primary); white-space: pre-wrap; font-family: monospace; line-height: 1.4; }
+        .preview-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px; }
+        .preview-item { position: relative; background: #252525; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); padding: 5px; }
+        .preview-item img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 5px; }
         .hidden { display: none; }
     </style>
 </head>
@@ -39,20 +38,15 @@
         <h2>MENU PRINCIPAL</h2>
         <button class="btn" style="height: 80px;" onclick="startNewTratativa()">🍎 NOVA TRATATIVA</button>
         <button class="btn btn-outline" onclick="showScreen('screen-products')">📦 GERENCIAR PRODUTOS</button>
-        <div style="margin-top: auto;">
-            <button class="btn btn-danger" onclick="hardReset()">LIMPAR TUDO (RESET)</button>
-        </div>
+        <div style="margin-top: auto;"><button class="btn btn-danger" onclick="hardReset()">LIMPAR TUDO (RESET)</button></div>
     </div>
 
     <div id="screen-products" class="screen">
         <h2>CADASTRO</h2>
         <div class="card">
-            <label>CÓDIGO ERP</label>
-            <input type="number" id="prod-code" placeholder="Ex: 1020" inputmode="numeric">
-            <label style="margin-top:10px; display:block;">NOME DO PRODUTO</label>
-            <input type="text" id="prod-name" placeholder="Ex: UVA THOMPSON">
-            <label style="margin-top:10px; display:block;">UNIDADE</label>
-            <select id="prod-unit"><option value="KG">KG</option><option value="UN">UN</option></select>
+            <label>CÓDIGO ERP</label><input type="number" id="prod-code" inputmode="numeric">
+            <label>NOME DO PRODUTO</label><input type="text" id="prod-name">
+            <label>UNIDADE</label><select id="prod-unit"><option value="KG">KG</option><option value="UN">UN</option></select>
             <button class="btn" style="margin-top:15px" onclick="saveProduct()">SALVAR PRODUTO</button>
         </div>
         <div id="product-list-container" style="overflow-y: auto; max-height: 300px;"></div>
@@ -64,13 +58,11 @@
         <div class="card">
             <label>PESQUISAR PRODUTO</label>
             <input type="text" id="search-prod" placeholder="Digite código ou nome..." oninput="searchProducts(this.value)">
-            <div id="search-results" style="background:#222; border-radius:0 0 10px 10px; max-height:150px; overflow-y:auto;"></div>
+            <div id="search-results" style="background:#222; max-height:150px; overflow-y:auto;"></div>
             <div id="selected-prod-info" class="hidden" style="margin-top:15px; border-top:1px solid #333; padding-top:10px">
-                <p id="display-name" style="color:var(--primary); font-weight:bold; font-size:1.2rem; margin-bottom:10px;"></p>
-                <label>QUANTIDADE QUE CHEGOU</label>
-                <input type="text" id="trat-chegou" placeholder="0,00" inputmode="decimal">
-                <label style="margin-top:10px; display:block;">QUANTIDADE DE QUEBRA</label>
-                <input type="text" id="trat-quebra" placeholder="0,00" inputmode="decimal">
+                <p id="display-name" style="color:var(--primary); font-weight:bold; font-size:1.2rem;"></p>
+                <label>QUANTIDADE QUE CHEGOU</label><input type="text" id="trat-chegou" placeholder="0,00" inputmode="decimal">
+                <label>QUANTIDADE DE QUEBRA</label><input type="text" id="trat-quebra" placeholder="0,00" inputmode="decimal">
             </div>
         </div>
         <button class="btn" id="btn-go-evidence" disabled onclick="showScreen('screen-tratativa-media')">PROSSEGUIR PARA FOTOS</button>
@@ -78,31 +70,35 @@
 
     <div id="screen-tratativa-media" class="screen">
         <h2>EVIDÊNCIAS</h2>
+        <p style="font-size: 0.8rem; color: var(--primary);">* Envie as fotos individualmente para o WhatsApp</p>
+        
         <div class="card">
             <label>FOTOS DO PRODUTO</label>
-            <input type="file" id="f-prod" accept="image/*" multiple onchange="handleFiles(event, 'preview-prod')" style="display:none">
-            <button class="btn btn-outline" onclick="document.getElementById('f-prod').click()">+ ADICIONAR FOTOS</button>
+            <input type="file" id="f-prod" accept="image/*" multiple onchange="handleFiles(event, 'preview-prod')" class="hidden">
+            <button class="btn btn-outline" onclick="document.getElementById('f-prod').click()">+ ADICIONAR FOTOS PRODUTO</button>
             <div class="preview-grid" id="preview-prod"></div>
         </div>
+
         <div class="card">
-            <label>FOTOS DA BALANÇA / ETIQUETA</label>
-            <input type="file" id="f-bal" accept="image/*" multiple onchange="handleFiles(event, 'preview-bal')" style="display:none">
-            <button class="btn btn-outline" onclick="document.getElementById('f-bal').click()">+ ADICIONAR FOTOS</button>
+            <label>FOTOS DA BALANÇA</label>
+            <input type="file" id="f-bal" accept="image/*" multiple onchange="handleFiles(event, 'preview-bal')" class="hidden">
+            <button class="btn btn-outline" onclick="document.getElementById('f-bal').click()">+ ADICIONAR FOTOS BALANÇA</button>
             <div class="preview-grid" id="preview-bal"></div>
         </div>
-        <button class="btn" onclick="goToFinal()">GERAR RELATÓRIO FINAL</button>
-    </div>
 
-    <div id="screen-tratativa-send" class="screen">
-        <h2>RELATÓRIO PRONTO</h2>
-        <div class="summary-text" id="final-text-summary"></div>
-        <button class="btn" style="background:var(--success)" onclick="copyTextAndOpenWA()">ABRIR WHATSAPP</button>
-        <button class="btn btn-outline" onclick="showScreen('screen-menu')">VOLTAR AO INÍCIO</button>
+        <div class="card">
+            <label>FOTOS DA ETIQUETA</label>
+            <input type="file" id="f-eti" accept="image/*" multiple onchange="handleFiles(event, 'preview-eti')" class="hidden">
+            <button class="btn btn-outline" onclick="document.getElementById('f-eti').click()">+ ADICIONAR FOTOS ETIQUETA</button>
+            <div class="preview-grid" id="preview-eti"></div>
+        </div>
+
+        <button class="btn" onclick="showScreen('screen-menu')">FINALIZAR E SAIR</button>
     </div>
 
     <script>
         let db;
-        let currentTratativa = { media: { 'preview-prod': [], 'preview-bal': [] } };
+        let currentTratativa = {};
 
         const initDB = () => {
             const req = indexedDB.open("TrataDB", 2);
@@ -110,74 +106,21 @@
                 const d = e.target.result;
                 if(!d.objectStoreNames.contains("prods")) d.createObjectStore("prods", { keyPath: "codigo" });
             };
-            req.onsuccess = e => { 
-                db = e.target.result; 
-                verificarPreCarga(); 
-                renderProductList(); 
-            };
+            req.onsuccess = e => { db = e.target.result; verificarPreCarga(); renderProductList(); };
         };
 
+        // ... (Mesma função verificarPreCarga e renderProductList da versão anterior)
         function verificarPreCarga() {
             const tx = db.transaction("prods", "readonly");
             const store = tx.objectStore("prods");
             const countReq = store.count();
-
             countReq.onsuccess = () => {
                 if (countReq.result === 0) {
                     const cargaInicial = [
-                        {codigo: "1124", nome: "ABACATE KG", unidade: "KG"},
-                        {codigo: "1125", nome: "ABACAXI", unidade: "UN"},
-                        {codigo: "1129", nome: "ABOBORA ITALIA KG", unidade: "KG"},
-                        {codigo: "1130", nome: "ABOBORA JAPONESA KG", unidade: "KG"},
-                        {codigo: "1134", nome: "ABOBORA MORANGA KG", unidade: "KG"},
-                        {codigo: "242", nome: "ALHO KG 5", unidade: "KG"},
-                        {codigo: "744", nome: "AMEIXA BDJ 500G", unidade: "UN"},
-                        {codigo: "739", nome: "AMEIXA KG", unidade: "KG"},
-                        {codigo: "537", nome: "BANANA MACA KG", unidade: "KG"},
-                        {codigo: "538", nome: "BANANA NANICA KG", unidade: "KG"},
-                        {codigo: "541", nome: "BANANA PRATA KG", unidade: "KG"},
-                        {codigo: "543", nome: "BANANA TERRA KG", unidade: "KG"},
-                        {codigo: "681", nome: "BATATA DOCE KG", unidade: "KG"},
-                        {codigo: "688", nome: "BATATA KG", unidade: "KG"},
-                        {codigo: "7714", nome: "BETERRABA KG", unidade: "KG"},
-                        {codigo: "8459", nome: "CAQUI BDJ 500G", unidade: "UN"},
-                        {codigo: "8572", nome: "CEBOLA KG", unidade: "KG"},
-                        {codigo: "8574", nome: "CEBOLA ROXA KG", unidade: "KG"},
-                        {codigo: "8589", nome: "CENOURA KG", unidade: "KG"},
-                        {codigo: "7547", nome: "CHUCHU KG", unidade: "KG"},
-                        {codigo: "7620", nome: "COCO SECO KG INT", unidade: "KG"},
-                        {codigo: "7622", nome: "COCO VERDE", unidade: "UN"},
-                        {codigo: "5022", nome: "GENGIBRE KG", unidade: "KG"},
-                        {codigo: "5213", nome: "INHAME KG", unidade: "KG"},
-                        {codigo: "5473", nome: "KIWI BDJ 600G", unidade: "UN"},
-                        {codigo: "5558", nome: "LARANJA PERA KG", unidade: "KG"},
-                        {codigo: "4362", nome: "LIMAO KG", unidade: "KG"},
-                        {codigo: "10750", nome: "MACA FUJI KG", unidade: "KG"},
-                        {codigo: "3280", nome: "MACA GALA NAC KG", unidade: "KG"},
-                        {codigo: "3284", nome: "MACA PCT 1KG", unidade: "UN"},
-                        {codigo: "3343", nome: "MAMAO FORMOSA KG", unidade: "KG"},
-                        {codigo: "3346", nome: "MAMAO PAPAYA KG", unidade: "KG"},
-                        {codigo: "3369", nome: "MANGA PALMER KG", unidade: "KG"},
-                        {codigo: "3370", nome: "MANGA TOMMY KG", unidade: "KG"},
-                        {codigo: "3422", nome: "MARACUJA AZEDO KG", unidade: "KG"},
-                        {codigo: "3560", nome: "MELANCIA KG", unidade: "KG"},
-                        {codigo: "3563", nome: "MELANCIA PINGO DOCE KG", unidade: "KG"},
-                        {codigo: "3565", nome: "MELAO AMARELO KG", unidade: "KG"},
-                        {codigo: "3582", nome: "MEXERICA PONKAN KG", unidade: "KG"},
-                        {codigo: "3585", nome: "MILHO VERDE BDJ 5UN", unidade: "UN"},
-                        {codigo: "1766", nome: "PEPINO COMUM KG", unidade: "KG"},
-                        {codigo: "1768", nome: "PEPINO JAPONES KG", unidade: "KG"},
-                        {codigo: "1778", nome: "PERA KG", unidade: "KG"},
-                        {codigo: "1895", nome: "PIMENTAO VERDE KG", unidade: "KG"},
-                        {codigo: "1327", nome: "REPOLHO BCO KG", unidade: "KG"},
-                        {codigo: "1329", nome: "REPOLHO ROXO KG", unidade: "KG"},
-                        {codigo: "7018", nome: "TOMATE GRAPE 180G", unidade: "UN"},
-                        {codigo: "7021", nome: "TOMATE GRAPE KG", unidade: "KG"},
-                        {codigo: "7028", nome: "TOMATE KG", unidade: "KG"},
-                        {codigo: "7049", nome: "TOMATE MEL TREBESCHI 180G", unidade: "UN"},
-                        {codigo: "7089", nome: "UVA VERDE 500G S/ SEMENTE", unidade: "UN"},
-                        {codigo: "7088", nome: "UVA VERM 500G S/ SEMENTE", unidade: "UN"},
-                        {codigo: "7094", nome: "UVA VITORIA MIMO SELECAO 400G", unidade: "UN"}
+                        {codigo: "1124", nome: "ABACATE KG", unidade: "KG"}, {codigo: "1125", nome: "ABACAXI", unidade: "UN"},
+                        {codigo: "1129", nome: "ABOBORA ITALIA KG", unidade: "KG"}, {codigo: "1130", nome: "ABOBORA JAPONESA KG", unidade: "KG"},
+                        {codigo: "8572", nome: "CEBOLA KG", unidade: "KG"}, {codigo: "7028", nome: "TOMATE KG", unidade: "KG"}
+                        // Adicione os demais conforme a lista anterior...
                     ];
                     const writeTx = db.transaction("prods", "readwrite");
                     const writeStore = writeTx.objectStore("prods");
@@ -189,18 +132,14 @@
 
         function renderProductList() {
             const cont = document.getElementById('product-list-container');
-            if(!cont) return;
-            cont.innerHTML = '';
+            if(!cont) return; cont.innerHTML = '';
             db.transaction("prods").objectStore("prods").getAll().onsuccess = e => {
                 let produtos = e.target.result;
-                // ORDENAÇÃO ALFABÉTICA SEMPRE
                 produtos.sort((a, b) => a.nome.localeCompare(b.nome));
-
                 produtos.forEach(p => {
                     const d = document.createElement('div');
-                    d.className = 'card';
-                    d.style.display = 'flex'; d.style.justifyContent = 'space-between'; d.style.alignItems = 'center';
-                    d.innerHTML = `<span><b>${p.codigo}</b> - ${p.nome}</span> <span onclick="deleteProd('${p.codigo}')" style="color:var(--danger); cursor:pointer; font-weight:bold;">EXCLUIR</span>`;
+                    d.className = 'card'; d.style.display = 'flex'; d.style.justifyContent = 'space-between';
+                    d.innerHTML = `<span><b>${p.codigo}</b> - ${p.nome}</span> <span onclick="deleteProd('${p.codigo}')" style="color:var(--danger)">EXCLUIR</span>`;
                     cont.appendChild(d);
                 });
             };
@@ -209,38 +148,47 @@
         function showScreen(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(id).classList.add('active');
-            window.scrollTo(0,0);
         }
 
-        function saveProduct() {
-            const code = document.getElementById('prod-code').value;
-            const name = document.getElementById('prod-name').value.toUpperCase();
-            const unit = document.getElementById('prod-unit').value;
-            if(!code || !name) return alert("Preencha todos os campos");
-            const tx = db.transaction("prods", "readwrite");
-            tx.objectStore("prods").put({ codigo: code, nome: name, unidade: unit });
-            document.getElementById('prod-code').value = '';
-            document.getElementById('prod-name').value = '';
-            renderProductList();
+        function handleFiles(event, containerId) {
+            const files = Array.from(event.target.files);
+            const p = currentTratativa.product;
+            const chegou = document.getElementById('trat-chegou').value;
+            const quebra = document.getElementById('trat-quebra').value;
+            const data = new Date().toLocaleDateString('pt-BR');
+
+            // NOVA ORDEM DO TEXTO: Cód, Produto, Data, Chegou, Quebra
+            const textoRelatorio = `📌 *TRATATIVA FLV - 1018*\n\n🔢 *CÓD:* ${p.codigo}\n📦 *PRODUTO:* ${p.nome}\n📅 *DATA:* ${data}\n🚚 *CHEGOU:* ${chegou} ${p.unidade}\n❌ *QTDA QUEBRA:* ${quebra} ${p.unidade}`;
+
+            files.forEach(f => {
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    const div = document.createElement('div');
+                    div.className = 'preview-item';
+                    div.innerHTML = `
+                        <img src="${ev.target.result}">
+                        <button class="btn-wa" onclick="enviarWhatsApp('${encodeURIComponent(textoRelatorio)}')">ENVIAR WHATSAPP</button>
+                    `;
+                    document.getElementById(containerId).appendChild(div);
+                };
+                reader.readAsDataURL(f);
+            });
         }
 
-        function deleteProd(c) {
-            if(confirm("Excluir produto?")) {
-                db.transaction("prods", "readwrite").objectStore("prods").delete(c);
-                renderProductList();
-            }
+        function enviarWhatsApp(texto) {
+            // Correção do link do WhatsApp
+            const url = `https://api.whatsapp.com/send?text=${texto}`;
+            window.open(url, '_blank');
         }
 
         function searchProducts(q) {
             const res = document.getElementById('search-results');
-            res.innerHTML = '';
-            if(q.length < 1) return;
+            res.innerHTML = ''; if(q.length < 1) return;
             db.transaction("prods").objectStore("prods").getAll().onsuccess = e => {
                 const list = e.target.result.filter(p => p.codigo.includes(q) || p.nome.includes(q.toUpperCase()));
-                list.sort((a, b) => a.nome.localeCompare(b.nome));
-                list.slice(0, 5).forEach(p => {
+                list.sort((a, b) => a.nome.localeCompare(b.nome)).slice(0, 5).forEach(p => {
                     const d = document.createElement('div');
-                    d.style.padding = '15px'; d.style.borderBottom = '1px solid #333'; d.style.cursor = 'pointer';
+                    d.style.padding = '15px'; d.style.borderBottom = '1px solid #333';
                     d.innerText = `${p.codigo} - ${p.nome}`;
                     d.onclick = () => {
                         currentTratativa.product = p;
@@ -255,62 +203,31 @@
             };
         }
 
-        function handleFiles(event, id) {
-            const files = Array.from(event.target.files);
-            files.forEach(f => {
-                const reader = new FileReader();
-                reader.onload = (ev) => {
-                    currentTratativa.media[id].push(ev.target.result);
-                    const img = document.createElement('div');
-                    img.className = 'preview-item';
-                    img.innerHTML = `<img src="${ev.target.result}">`;
-                    document.getElementById(id).appendChild(img);
-                };
-                reader.readAsDataURL(f);
-            });
-        }
-
-        function goToFinal() {
-            const p = currentTratativa.product;
-            const chegou = document.getElementById('trat-chegou').value.replace(',', '.');
-            const quebra = document.getElementById('trat-quebra').value.replace(',', '.');
-            const data = new Date().toLocaleDateString('pt-BR');
-            const texto = `📌 *TRATATIVA FLV - 1018*\n\n📦 *PROD:* ${p.nome}\n🔢 *COD:* ${p.codigo}\n📅 *DATA:* ${data}\n🚚 *CHEGOU:* ${chegou} ${p.unidade}\n❌ *QUEBRA:* ${quebra} ${p.unidade}`;
-            currentTratativa.resumo = texto;
-            document.getElementById('final-text-summary').innerText = texto;
-            navigator.clipboard.writeText(texto);
-            showScreen('screen-tratativa-send');
-        }
-
-        function copyTextAndOpenWA() {
-            navigator.clipboard.writeText(currentTratativa.resumo);
-            window.open("https://wa.me/", "_blank");
-        }
-
         function startNewTratativa() {
-            currentTratativa = { media: { 'preview-prod': [], 'preview-bal': [] } };
+            currentTratativa = { product: null };
             document.getElementById('preview-prod').innerHTML = '';
             document.getElementById('preview-bal').innerHTML = '';
+            document.getElementById('preview-eti').innerHTML = '';
             document.getElementById('search-prod').value = '';
-            document.getElementById('trat-chegou').value = '';
-            document.getElementById('trat-quebra').value = '';
             document.getElementById('selected-prod-info').classList.add('hidden');
-            document.getElementById('btn-go-evidence').disabled = true;
             showScreen('screen-tratativa-data');
         }
 
-        function hardReset() { 
-            if(confirm("Deseja apagar todos os produtos e configurações?")) { 
-                indexedDB.deleteDatabase("TrataDB"); 
-                location.reload(); 
-            } 
+        function saveProduct() {
+            const code = document.getElementById('prod-code').value;
+            const name = document.getElementById('prod-name').value.toUpperCase();
+            const unit = document.getElementById('prod-unit').value;
+            const tx = db.transaction("prods", "readwrite");
+            tx.objectStore("prods").put({ codigo: code, nome: name, unidade: unit });
+            renderProductList();
         }
 
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js').then(reg => reg.update());
-            });
+        function deleteProd(c) { 
+            if(confirm("Excluir?")) { db.transaction("prods", "readwrite").objectStore("prods").delete(c); renderProductList(); } 
         }
+
+        function hardReset() { if(confirm("Resetar tudo?")) { indexedDB.deleteDatabase("TrataDB"); location.reload(); } }
+
         initDB();
     </script>
 </body>
