@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>TRATAFLV - Filial 1018</title>
     
-    <!-- Configurações de Instalação (PWA) -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#ffcc00">
@@ -88,11 +87,11 @@
             <input type="text" id="search-prod" placeholder="Digite código ou nome..." oninput="searchProducts(this.value)">
             <div id="search-results" style="background:#222; border-radius:0 0 10px 10px; max-height:150px; overflow-y:auto;"></div>
             
-            <div id="selected-prod-info" class="hidden" style="margin-top:15px; border-top:1px solid #333; pt-10">
+            <div id="selected-prod-info" class="hidden" style="margin-top:15px; border-top:1px solid #333; padding-top:10px">
                 <p id="display-name" style="color:var(--primary); font-weight:bold; font-size:1.2rem; margin-bottom:10px;"></p>
                 <label>QUANTIDADE QUE CHEGOU</label>
                 <input type="text" id="trat-chegou" placeholder="0,00" inputmode="decimal">
-                <label style="margin-top:10px; display:block;">QUANTIDADE DE QUEBRA (AVARIADO)</label>
+                <label style="margin-top:10px; display:block;">QUANTIDADE DE QUEBRA</label>
                 <input type="text" id="trat-quebra" placeholder="0,00" inputmode="decimal">
             </div>
         </div>
@@ -102,7 +101,7 @@
     <div id="screen-tratativa-media" class="screen">
         <h2>EVIDÊNCIAS</h2>
         <div class="card">
-            <label>FOTOS DO PRODUTO (QUALIDADE)</label>
+            <label>FOTOS DO PRODUTO</label>
             <input type="file" id="f-prod" accept="image/*" multiple onchange="handleFiles(event, 'preview-prod')" style="display:none">
             <button class="btn btn-outline" onclick="document.getElementById('f-prod').click()">+ ADICIONAR FOTOS</button>
             <div class="preview-grid" id="preview-prod"></div>
@@ -119,7 +118,6 @@
     <div id="screen-tratativa-send" class="screen">
         <h2>RELATÓRIO PRONTO</h2>
         <div class="summary-text" id="final-text-summary"></div>
-        <p style="font-size:0.8rem; color:var(--text-dim); margin:15px 0;">O texto acima foi copiado. Ao abrir o WhatsApp, basta colar e anexar as fotos da sua galeria.</p>
         <button class="btn" style="background:var(--success)" onclick="copyTextAndOpenWA()">ABRIR WHATSAPP</button>
         <button class="btn btn-outline" onclick="showScreen('screen-menu')">VOLTAR AO INÍCIO</button>
     </div>
@@ -157,13 +155,14 @@
 
         function renderProductList() {
             const cont = document.getElementById('product-list-container');
+            if(!cont) return;
             cont.innerHTML = '';
             db.transaction("prods").objectStore("prods").getAll().onsuccess = e => {
                 e.target.result.forEach(p => {
                     const d = document.createElement('div');
                     d.className = 'card';
                     d.style.display = 'flex'; d.style.justifyContent = 'space-between';
-                    d.innerHTML = `<span><b>${p.codigo}</b> - ${p.nome}</span> <span onclick="deleteProd('${p.codigo}')" style="color:var(--danger)">EXCLUIR</span>`;
+                    d.innerHTML = `<span><b>${p.codigo}</b> - ${p.nome}</span> <span onclick="deleteProd('${p.codigo}')" style="color:var(--danger); cursor:pointer">EXCLUIR</span>`;
                     cont.appendChild(d);
                 });
             };
@@ -184,7 +183,7 @@
                 const list = e.target.result.filter(p => p.codigo.includes(q) || p.nome.includes(q.toUpperCase()));
                 list.slice(0, 5).forEach(p => {
                     const d = document.createElement('div');
-                    d.style.padding = '15px'; d.style.borderBottom = '1px solid #333';
+                    d.style.padding = '15px'; d.style.borderBottom = '1px solid #333'; d.style.cursor = 'pointer';
                     d.innerText = `${p.codigo} - ${p.nome}`;
                     d.onclick = () => {
                         currentTratativa.product = p;
@@ -234,6 +233,7 @@
         }
 
         function copyTextAndOpenWA() {
+            navigator.clipboard.writeText(currentTratativa.resumo);
             window.open("https://wa.me/", "_blank");
         }
 
@@ -249,11 +249,23 @@
             showScreen('screen-tratativa-data');
         }
 
-        function hardReset() { if(confirm("Deseja apagar todos os produtos e configurações?")) { indexedDB.deleteDatabase("TrataDB"); location.reload(); } }
+        function hardReset() { 
+            if(confirm("Deseja apagar todos os produtos e configurações?")) { 
+                indexedDB.deleteDatabase("TrataDB"); 
+                location.reload(); 
+            } 
+        }
 
-        // PWA Registration
+        // PWA Registration & Lifecycle
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js');
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                .then(reg => {
+                    console.log('SW registrado');
+                    reg.update();
+                })
+                .catch(err => console.log('Erro SW:', err));
+            });
         }
 
         initDB();
