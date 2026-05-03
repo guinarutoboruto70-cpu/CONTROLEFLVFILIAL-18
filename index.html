@@ -69,7 +69,7 @@
         <div class="card">
             <div class="section-title">3. FOTO DA ETIQUETA</div>
             <input type="file" id="f-eti" accept="image/*" onchange="preview(event, 'pre-eti', 'eti')" class="hidden">
-            <button class="btn" style="background:#333; margin-top: 10px;" onclick="document.getElementById('f-eti').click()">📸 CÂMERA OU GALERIA</button>
+            <button class="btn" style="background:#333; margin-top: 10px;" onclick="document.getElementById('f-eti').click()">📸 ESCOLHER FOTO OU CÂMERA</button>
             <div class="grid" id="pre-eti"></div>
         </div>
         <button class="btn" onclick="generate()">GERAR RELATÓRIO FINAL</button>
@@ -79,9 +79,7 @@
         <div class="section-title" style="margin-bottom: 10px;">RELATÓRIO DE TEXTO</div>
         <div class="text-clean" id="txt-final"></div>
         <button class="btn" style="background:var(--success); color:white; height: 60px;" id="btn-send-text">ENVIAR TEXTO NO GRUPO</button>
-        
         <div id="final-media-container"></div>
-        
         <button class="btn" style="margin-top:40px; background:none; border:1px solid var(--primary); color:var(--primary)" onclick="location.reload()">NOVA TRATATIVA (LIMPAR)</button>
     </div>
 
@@ -118,16 +116,11 @@
             const data = new Date().toLocaleDateString('pt-BR');
             const chegou = document.getElementById('chegou').value;
             const quebra = document.getElementById('quebra').value;
-            
-            // FORMATO EXATO DO SEU PRINT REAL
             const txt = `Cod: ${p.codigo}\n${p.nome}\n${data}\nChegou: ${chegou} ${p.unidade}\nQuebra: ${quebra} ${p.unidade}`;
-            
             document.getElementById('txt-final').innerText = txt;
             document.getElementById('btn-send-text').onclick = () => sendWA(txt);
-
             const container = document.getElementById('final-media-container');
             container.innerHTML = '';
-
             const sections = { prod: 'FOTOS DO PRODUTO', bal: 'FOTOS DA BALANÇA', eti: 'FOTO DA ETIQUETA' };
             for (let key in sections) {
                 if (current.photos[key].length > 0) {
@@ -135,8 +128,8 @@
                     const grid = document.createElement('div'); grid.className='grid';
                     current.photos[key].forEach(img => {
                         const d = document.createElement('div'); d.className='thumb';
-                        // BOTÃO DE FOTO AGORA NÃO LEVA TEXTO (CONFORME PRINT REAL)
-                        d.innerHTML = `<img src="${img}"><button class="btn-wa" onclick="sendWA('')">ENVIAR</button>`;
+                        // SOLUÇÃO DO ERRO: Adicionado um ponto (.) para o WhatsApp aceitar abrir a conversa
+                        d.innerHTML = `<img src="${img}"><button class="btn-wa" onclick="sendWA('.')">ENVIAR</button>`;
                         grid.appendChild(d);
                     });
                     container.appendChild(title); container.appendChild(grid);
@@ -146,6 +139,7 @@
         }
 
         function sendWA(t) {
+            // EncodeURIComponent garante que o link seja válido para o sistema
             window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(t)}`, '_blank');
         }
 
