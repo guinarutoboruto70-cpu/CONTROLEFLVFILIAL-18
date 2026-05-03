@@ -250,7 +250,10 @@
         <div class="card">
             <div class="form-group">
                 <label>Buscar Produto (Cód ou Nome)</label>
-                <input type="text" id="search-prod" placeholder="Digite para buscar..." oninput="searchProducts(this.value)">
+                <div style="position: relative;">
+                    <input type="text" id="search-prod" placeholder="Digite para buscar..." oninput="searchProducts(this.value)" onkeydown="handleSearchKeyDown(event)">
+                    <span id="search-check" style="position: absolute; right: 10px; top: 10px; display: none;">✅</span>
+                </div>
                 <div id="search-results" style="background: #252525; border-radius: 0 0 8px 8px; max-height: 150px; overflow-y: auto; border: 1px solid var(--border); display: none;"></div>
             </div>
 
@@ -534,8 +537,14 @@
         function startNewTratativa() {
             currentTratativa = { product: null, media: { 'preview-nf': [], 'preview-prod': [], 'preview-bal': [], 'preview-eti': [] } };
             document.getElementById('search-prod').value = '';
+            document.getElementById('search-prod').style.borderColor = 'var(--border)';
+            document.getElementById('search-check').style.display = 'none';
             document.getElementById('selected-prod-info').classList.add('hidden');
             document.getElementById('btn-go-evidence').disabled = true;
+            
+            // Limpa campos de valores
+            document.getElementById('trat-chegou').value = '';
+            document.getElementById('trat-quebra').value = '';
             
             // Limpa previews
             ['preview-nf', 'preview-prod', 'preview-bal', 'preview-eti'].forEach(id => {
@@ -548,7 +557,12 @@
 
         function searchProducts(query) {
             const resultsDiv = document.getElementById('search-results');
-            if (query.length < 1) { resultsDiv.style.display = 'none'; return; }
+            if (query.length < 1) { 
+                resultsDiv.style.display = 'none'; 
+                document.getElementById('search-check').style.display = 'none';
+                document.getElementById('search-prod').style.borderColor = 'var(--border)';
+                return; 
+            }
 
             const tx = db.transaction(stores.PRODS, "readonly");
             const store = tx.objectStore(stores.PRODS);
@@ -574,11 +588,45 @@
             };
         }
 
+        function handleSearchKeyDown(event) {
+            if (event.key === 'Enter') {
+                const query = event.target.value;
+                if (!query) return;
+
+                const tx = db.transaction(stores.PRODS, "readonly");
+                const store = tx.objectStore(stores.PRODS);
+                store.getAll().onsuccess = e => {
+                    const list = e.target.result.filter(p => 
+                        p.codigo === query || p.nome === query.toUpperCase()
+                    );
+                    
+                    if (list.length > 0) {
+                        selectProduct(list[0]);
+                        // Foca no próximo campo importante
+                        document.getElementById('trat-chegou').focus();
+                    } else {
+                        // Se não houver match exato, tenta o primeiro da lista filtrada
+                        const partialList = e.target.result.filter(p => 
+                            p.codigo.includes(query) || p.nome.includes(query.toUpperCase())
+                        );
+                        if (partialList.length > 0) {
+                            selectProduct(partialList[0]);
+                            document.getElementById('trat-chegou').focus();
+                        }
+                    }
+                };
+            }
+        }
+
         function selectProduct(p) {
             currentTratativa.product = p;
             document.getElementById('search-results').style.display = 'none';
             document.getElementById('search-prod').value = `${p.codigo} - ${p.nome}`;
             
+            // Feedback Visual
+            document.getElementById('search-prod').style.borderColor = 'var(--success)';
+            document.getElementById('search-check').style.display = 'block';
+
             document.getElementById('selected-prod-info').classList.remove('hidden');
             document.getElementById('trat-name').value = p.nome;
             document.getElementById('trat-price').value = p.preco;
