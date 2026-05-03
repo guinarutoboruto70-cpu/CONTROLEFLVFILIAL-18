@@ -320,7 +320,7 @@
             <div class="upload-header">
                 <span>🏷️ ETIQUETA (1 foto)</span>
                 <button class="btn btn-small" onclick="triggerUpload('input-eti')">+ FOTO</button>
-                <input type="file" accept="image/*" id="input-eti" class="hidden" onchange="handleFiles(event, 'preview-eti', true)">
+                <input type="file" id="input-eti" class="hidden" accept="image/*" onchange="handleFiles(event, 'preview-eti', true)">
             </div>
             <div class="preview-grid" id="preview-eti"></div>
         </div>
@@ -333,7 +333,6 @@
         <div class="header-nav">
             <button class="btn-back" onclick="showScreen('screen-tratativa-media')">←</button>
             <h2>RESUMO DE ENVIO</h2>
-            <button class="btn btn-small btn-outline" style="margin-left: auto;" onclick="showScreen('screen-menu')">MENU</button>
         </div>
 
         <button class="btn" onclick="copyTextAndOpenWA()">📋 COMPARTILHAR TEXTO</button>
@@ -345,7 +344,7 @@
         </div>
 
         <button class="btn btn-outline mt-auto" onclick="resetAndStay()">CONCLUIR E NOVA CONSULTA</button>
-        <button class="btn btn-small" style="background:transparent; color:var(--text-dim); border:none;" onclick="showScreen('screen-menu')">VOLTAR AO MENU PRINCIPAL</button>
+        <button class="btn btn-small btn-danger" style="margin-top: 10px;" onclick="showScreen('screen-menu')">VOLTAR AO MENU INICIAL</button>
     </div>
 
     <script>
@@ -786,9 +785,9 @@
         // Registro Service Worker Estável
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('service-worker.js').then(reg => {
-                    console.log('Service Worker registrado.');
-                }).catch(err => console.log('Erro ao registrar Service Worker:', err));
+                navigator.serviceWorker.register('./service-worker.js')
+                    .then(reg => console.log('PWA: Service Worker registrado com sucesso.'))
+                    .catch(err => console.error('PWA: Falha ao registrar Service Worker:', err));
             });
         }
     </script>
