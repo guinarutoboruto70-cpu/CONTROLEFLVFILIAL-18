@@ -44,7 +44,6 @@
 
         h1, h2 { text-align: center; color: var(--primary); margin-top: 0; }
 
-        /* Componentes Comuns */
         .btn {
             background-color: var(--primary);
             color: #000;
@@ -92,7 +91,6 @@
 
         .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
-        /* Tela 1: Início */
         #screen-start { justify-content: center; align-items: center; text-align: center; }
         .logo-circle {
             width: 120px;
@@ -108,17 +106,8 @@
             box-shadow: 0 0 20px rgba(255, 204, 0, 0.3);
         }
 
-        /* Tela 3: Lista de Produtos */
-        .product-list-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px;
-            border-bottom: 1px solid var(--border);
-        }
-        .product-list-item:last-child { border-bottom: none; }
+        .product-list-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; }
 
-        /* Tela 5: Evidências */
         .upload-block { margin-bottom: 25px; }
         .upload-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .preview-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
@@ -132,46 +121,26 @@
         }
         .preview-item img { width: 100%; height: 100%; object-fit: cover; }
         .preview-remove {
-            position: absolute;
-            top: 2px;
-            right: 2px;
-            background: rgba(0,0,0,0.7);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            font-size: 12px;
-            cursor: pointer;
+            position: absolute; top: 2px; right: 2px;
+            background: rgba(0,0,0,0.7); color: white; border: none;
+            border-radius: 50%; width: 20px; height: 20px; font-size: 12px; cursor: pointer;
         }
 
-        /* Tela 6: Envio */
         .summary-text {
-            background: #252525;
-            padding: 15px;
-            border-radius: 8px;
-            font-family: monospace;
-            white-space: pre-wrap;
-            margin-bottom: 20px;
-            border: 1px dashed var(--primary);
-            font-size: 0.9rem;
+            background: #252525; padding: 15px; border-radius: 8px;
+            font-family: monospace; white-space: pre-wrap; margin-bottom: 20px;
+            border: 1px dashed var(--primary); font-size: 0.9rem;
         }
         .photo-send-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            background: var(--card-bg);
-            padding: 10px;
-            border-radius: 10px;
-            margin-bottom: 10px;
+            display: flex; align-items: center; gap: 10px;
+            background: var(--card-bg); padding: 10px; border-radius: 10px; margin-bottom: 10px;
         }
         .photo-send-thumb { width: 50px; height: 50px; border-radius: 6px; object-fit: cover; }
 
-        /* Utilitários */
         .hidden { display: none !important; }
         .mt-auto { margin-top: auto; }
         .header-nav { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
-        .btn-back { background: transparent; border: none; color: var(--primary); font-size: 1.5rem; cursor: pointer; padding: 0; }
+        .btn-back { background: transparent; border: none; color: var(--primary); font-size: 1.5rem; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -232,13 +201,11 @@
         <div class="card">
             <div class="form-group">
                 <label>Pesquisar na Lista</label>
-                <input type="text" id="search-prod-list" placeholder="Filtrar por código ou nome..." oninput="renderProductList(this.value)">
+                <input type="text" id="search-prod-list" placeholder="Filtrar..." oninput="renderProductList(this.value)">
             </div>
         </div>
 
-        <div id="product-list-container" style="overflow-y: auto;">
-            <!-- Itens via JS -->
-        </div>
+        <div id="product-list-container" style="overflow-y: auto;"></div>
     </div>
 
     <!-- TELA 4: DADOS DA TRATATIVA -->
@@ -252,7 +219,7 @@
             <div class="form-group">
                 <label>Buscar Produto (Cód ou Nome)</label>
                 <div style="position: relative;">
-                    <input type="text" id="search-prod" placeholder="Digite para buscar..." oninput="searchProducts(this.value)" onkeydown="handleSearchKeyDown(event)">
+                    <input type="text" id="search-prod" placeholder="Digite para buscar..." oninput="searchProducts(this.value)">
                     <span id="search-check" style="position: absolute; right: 10px; top: 10px; display: none;">✅</span>
                 </div>
                 <div id="search-results" style="background: #252525; border-radius: 0 0 8px 8px; max-height: 150px; overflow-y: auto; border: 1px solid var(--border); display: none;"></div>
@@ -292,7 +259,7 @@
         <button class="btn mt-auto" id="btn-go-evidence" onclick="goToEvidence()" disabled>PROSSEGUIR PARA FOTOS</button>
     </div>
 
-    <!-- TELA 5: EVIDÊNCIAS (FOTOS) -->
+    <!-- TELA 5: EVIDÊNCIAS -->
     <div id="screen-tratativa-media" class="screen">
         <div class="header-nav">
             <button class="btn-back" onclick="showScreen('screen-tratativa-data')">←</button>
@@ -301,7 +268,7 @@
 
         <div class="upload-block">
             <div class="upload-header">
-                <span> PRODUTOS</span>
+                <span>📦 PRODUTOS</span>
                 <button class="btn btn-small" onclick="triggerUpload('input-prod')">+ FOTO</button>
                 <input type="file" id="input-prod" class="hidden" accept="image/*" multiple onchange="handleFiles(event, 'preview-prod')">
             </div>
@@ -319,7 +286,7 @@
 
         <div class="upload-block">
             <div class="upload-header">
-                <span>🏷️ ETIQUETA (1 foto)</span>
+                <span>🏷️ ETIQUETA</span>
                 <button class="btn btn-small" onclick="triggerUpload('input-eti')">+ FOTO</button>
                 <input type="file" id="input-eti" class="hidden" accept="image/*" onchange="handleFiles(event, 'preview-eti', true)">
             </div>
@@ -329,7 +296,7 @@
         <button class="btn mt-auto" onclick="goToFinal()">FINALIZAR E ENVIAR</button>
     </div>
 
-    <!-- TELA 6: ENVIO INDIVIDUAL -->
+    <!-- TELA 6: RESUMO -->
     <div id="screen-tratativa-send" class="screen">
         <div class="header-nav">
             <button class="btn-back" onclick="showScreen('screen-tratativa-media')">←</button>
@@ -340,76 +307,17 @@
         <div class="summary-text" id="final-text-summary"></div>
 
         <h3 style="color: var(--text-dim); font-size: 0.9rem; margin: 20px 0 10px;">ENVIAR EVIDÊNCIAS</h3>
-        <div id="send-photos-list">
-            <!-- Itens via JS -->
-        </div>
+        <div id="send-photos-list"></div>
 
-        <button class="btn btn-outline mt-auto" onclick="resetAndStay()">CONCLUIR E NOVA CONSULTA</button>
-        <button class="btn btn-small btn-danger" style="margin-top: 10px;" onclick="showScreen('screen-menu')">VOLTAR AO MENU INICIAL</button>
+        <button class="btn btn-outline mt-auto" onclick="startNewTratativa()">CONCLUIR E NOVA CONSULTA</button>
     </div>
 
     <script>
-        // --- CONFIGURAÇÃO BANCO ---
-        const dbName = "trataflv_v5";
+        const dbName = "trataflv_db";
         let db;
         const stores = { PRODS: "produtos", TRATS: "tratativas" };
 
-        const initialProducts = [
-            {codigo: "242", nome: "ALHO KG 5", unidade: "kg", preco: "0,00"},
-            {codigo: "1124", nome: "ABACATE KG", unidade: "kg", preco: "0,00"},
-            {codigo: "1125", nome: "ABACAXI", unidade: "un", preco: "0,00"},
-            {codigo: "1129", nome: "ABOBORA ITALIA KG", unidade: "kg", preco: "0,00"},
-            {codigo: "1130", nome: "ABOBORA JAPONESA KG", unidade: "kg", preco: "0,00"},
-            {codigo: "1134", nome: "ABOBORA MORANGA KG", unidade: "kg", preco: "0,00"},
-            {codigo: "744", nome: "AMEIXA BDJ 500G", unidade: "un", preco: "0,00"},
-            {codigo: "739", nome: "AMEIXA KG", unidade: "kg", preco: "0,00"},
-            {codigo: "537", nome: "BANANA MACA KG", unidade: "kg", preco: "0,00"},
-            {codigo: "538", nome: "BANANA NANICA KG", unidade: "kg", preco: "0,00"},
-            {codigo: "541", nome: "BANANA PRATA KG", unidade: "kg", preco: "0,00"},
-            {codigo: "543", nome: "BANANA TERRA KG", unidade: "kg", preco: "0,00"},
-            {codigo: "681", nome: "BATATA DOCE KG", unidade: "kg", preco: "0,00"},
-            {codigo: "688", nome: "BATATA KG", unidade: "kg", preco: "0,00"},
-            {codigo: "7714", nome: "BETERRABA KG", unidade: "kg", preco: "0,00"},
-            {codigo: "8459", nome: "CAQUI BDJ 500G", unidade: "un", preco: "0,00"},
-            {codigo: "8572", nome: "CEBOLA KG", unidade: "kg", preco: "0,00"},
-            {codigo: "8574", nome: "CEBOLA ROXA KG", unidade: "kg", preco: "0,00"},
-            {codigo: "8589", nome: "CENOURA KG", unidade: "kg", preco: "0,00"},
-            {codigo: "7547", nome: "CHUCHU KG", unidade: "kg", preco: "0,00"},
-            {codigo: "7620", nome: "COCO SECO KG INT", unidade: "kg", preco: "0,00"},
-            {codigo: "7622", nome: "COCO VERDE", unidade: "un", preco: "0,00"},
-            {codigo: "5022", nome: "GENGIBRE KG", unidade: "kg", preco: "0,00"},
-            {codigo: "5213", nome: "INHAME KG", unidade: "kg", preco: "0,00"},
-            {codigo: "5473", nome: "KIWI BDJ 600G", unidade: "un", preco: "0,00"},
-            {codigo: "5558", nome: "LARANJA PERA KG", unidade: "kg", preco: "0,00"},
-            {codigo: "4362", nome: "LIMAO KG", unidade: "kg", preco: "0,00"},
-            {codigo: "10750", nome: "MACA FUJI KG", unidade: "kg", preco: "0,00"},
-            {codigo: "3280", nome: "MACA GALA NAC KG", unidade: "kg", preco: "0,00"},
-            {codigo: "3284", nome: "MACA PCT 1KG", unidade: "un", preco: "0,00"},
-            {codigo: "3343", nome: "MAMAO FORMOSA KG", unidade: "kg", preco: "0,00"},
-            {codigo: "3346", nome: "MAMAO PAPAYA KG", unidade: "kg", preco: "0,00"},
-            {codigo: "3369", nome: "MANGA PALMER KG", unidade: "kg", preco: "0,00"},
-            {codigo: "3370", nome: "MANGA TOMMY KG", unidade: "kg", preco: "0,00"},
-            {codigo: "3422", nome: "MARACUJA AZEDO KG", unidade: "kg", preco: "0,00"},
-            {codigo: "3560", nome: "MELANCIA KG", unidade: "kg", preco: "0,00"},
-            {codigo: "3563", nome: "MELANCIA PINGO DOCE KG", unidade: "kg", preco: "0,00"},
-            {codigo: "3565", nome: "MELAO AMARELO KG", unidade: "kg", preco: "0,00"},
-            {codigo: "3582", nome: "MEXERICA PONKAN KG", unidade: "kg", preco: "0,00"},
-            {codigo: "3585", nome: "MILHO VERDE BDJ 5UN", unidade: "un", preco: "0,00"},
-            {codigo: "1766", nome: "PEPINO COMUM KG", unidade: "kg", preco: "0,00"},
-            {codigo: "1768", nome: "PEPINO JAPONES KG", unidade: "kg", preco: "0,00"},
-            {codigo: "1778", nome: "PERA KG", unidade: "kg", preco: "0,00"},
-            {codigo: "1895", nome: "PIMENTAO VERDE KG", unidade: "kg", preco: "0,00"},
-            {codigo: "1327", nome: "REPOLHO BCO KG", unidade: "kg", preco: "0,00"},
-            {codigo: "1329", nome: "REPOLHO ROXO KG", unidade: "kg", preco: "0,00"},
-            {codigo: "7018", nome: "TOMATE GRAPE 180G", unidade: "un", preco: "0,00"},
-            {codigo: "7021", nome: "TOMATE GRAPE KG", unidade: "kg", preco: "0,00"},
-            {codigo: "7028", nome: "TOMATE KG", unidade: "kg", preco: "0,00"},
-            {codigo: "7049", nome: "TOMATE MEL TREBESCHI 180G", unidade: "un", preco: "0,00"},
-            {codigo: "7089", nome: "UVA VERDE 500G S SEMENTE", unidade: "un", preco: "0,00"},
-            {codigo: "7088", nome: "UVA VERM 500G S SEMENTE", unidade: "un", preco: "0,00"},
-            {codigo: "7094", nome: "UVA VITORIA MIMO SELECAO 400G", unidade: "un", preco: "0,00"}
-        ];
-
+        // Banco de Dados
         function initDB() {
             const request = indexedDB.open(dbName, 1);
             request.onupgradeneeded = e => {
@@ -419,49 +327,26 @@
             };
             request.onsuccess = e => {
                 db = e.target.result;
-                console.log("Banco v5 conectado.");
-                checkInitialData();
                 renderProductList();
             };
-            request.onerror = e => alert("Erro ao iniciar banco de dados: " + e.target.error);
         }
 
-        function checkInitialData() {
-            const tx = db.transaction(stores.PRODS, "readwrite");
-            const store = tx.objectStore(stores.PRODS);
-            store.count().onsuccess = e => {
-                if (e.target.result === 0) {
-                    console.log("Populando dados iniciais...");
-                    initialProducts.forEach(p => store.put(p));
-                }
-            };
-        }
-
-        // --- NAVEGAÇÃO ---
-        function showScreen(screenId) {
+        function showScreen(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById(screenId).classList.add('active');
+            document.getElementById(id).classList.add('active');
             window.scrollTo(0, 0);
         }
 
-        // --- GESTÃO DE PRODUTOS ---
         async function saveProduct() {
             const code = document.getElementById('prod-code').value;
             const name = document.getElementById('prod-name').value.toUpperCase();
-            const price = document.getElementById('prod-price').value;
-            const unit = document.getElementById('prod-unit').value;
-
-            if (!code || !name) return alert("Preencha Código e Nome.");
-
+            if (!code || !name) return alert("Preencha código e nome.");
             const tx = db.transaction(stores.PRODS, "readwrite");
-            const store = tx.objectStore(stores.PRODS);
-            await store.put({ codigo: code, nome: name, preco: price, unidade: unit });
-            
-            // Limpa form
-            document.getElementById('prod-code').value = '';
-            document.getElementById('prod-name').value = '';
-            document.getElementById('prod-price').value = '';
-            document.getElementById('btn-save-prod').innerText = "ADICIONAR PRODUTO";
+            await tx.objectStore(stores.PRODS).put({
+                codigo: code, nome: name, 
+                preco: document.getElementById('prod-price').value,
+                unidade: document.getElementById('prod-unit').value
+            });
             renderProductList();
         }
 
@@ -469,328 +354,150 @@
             if (!db) return;
             const container = document.getElementById('product-list-container');
             container.innerHTML = '';
-            
             const tx = db.transaction(stores.PRODS, "readonly");
-            const store = tx.objectStore(stores.PRODS);
-            store.getAll().onsuccess = e => {
-                let products = e.target.result;
-                
-                if (filter) {
-                    const q = filter.toUpperCase();
-                    products = products.filter(p => p.codigo.includes(q) || p.nome.includes(q));
-                }
-
-                // Ordenar por nome
-                products.sort((a, b) => a.nome.localeCompare(b.nome));
-                products.forEach(p => {
-                    const item = document.createElement('div');
-                    item.className = 'product-list-item card';
-                    item.innerHTML = `
-                        <div style="flex-grow:1;">
-                            <div style="font-weight:bold;">${p.codigo} - ${p.nome}</div>
-                            <div style="color:var(--text-dim); font-size:0.8rem;">R$ ${p.preco} / ${p.unidade}</div>
-                        </div>
-                        <div style="display:flex; gap:10px;">
-                            <button class="btn btn-small" onclick="editProduct('${p.codigo}')">✏️</button>
-                            <button class="btn btn-small btn-danger" onclick="deleteProduct('${p.codigo}')">🗑️</button>
-                        </div>
-                    `;
-                    container.appendChild(item);
+            tx.objectStore(stores.PRODS).getAll().onsuccess = e => {
+                let list = e.target.result;
+                if (filter) list = list.filter(p => p.codigo.includes(filter) || p.nome.includes(filter.toUpperCase()));
+                list.forEach(p => {
+                    const div = document.createElement('div');
+                    div.className = 'product-list-item card';
+                    div.innerHTML = `<div><b>${p.codigo}</b> - ${p.nome}</div>
+                        <button class="btn btn-small btn-danger" onclick="deleteProduct('${p.codigo}')">🗑️</button>`;
+                    container.appendChild(div);
                 });
             };
         }
 
-        function deleteProduct(codigo) {
-            if (!confirm("Deseja excluir este produto?")) return;
+        function deleteProduct(code) {
             const tx = db.transaction(stores.PRODS, "readwrite");
-            tx.objectStore(stores.PRODS).delete(codigo);
-            tx.oncomplete = () => renderProductList();
+            tx.objectStore(stores.PRODS).delete(code);
+            renderProductList();
         }
 
-        function editProduct(codigo) {
-            const tx = db.transaction(stores.PRODS, "readonly");
-            const store = tx.objectStore(stores.PRODS);
-            store.get(codigo).onsuccess = e => {
-                const p = e.target.result;
-                document.getElementById('prod-code').value = p.codigo;
-                document.getElementById('prod-name').value = p.nome;
-                document.getElementById('prod-price').value = p.preco;
-                document.getElementById('prod-unit').value = p.unidade;
-                document.getElementById('btn-save-prod').innerText = "ATUALIZAR PRODUTO";
-                window.scrollTo(0, 0);
-            };
-        }
-
-        // --- FLUXO TRATATIVA ---
-        let currentTratativa = {
-            product: null,
-            media: { 'preview-nf': [], 'preview-prod': [], 'preview-bal': [], 'preview-eti': [] }
-        };
+        // Fluxo de Tratativa
+        let currentTratativa = { media: { 'preview-prod': [], 'preview-bal': [], 'preview-eti': [] } };
 
         function startNewTratativa() {
-            currentTratativa = { product: null, media: { 'preview-nf': [], 'preview-prod': [], 'preview-bal': [], 'preview-eti': [] } };
+            currentTratativa = { media: { 'preview-prod': [], 'preview-bal': [], 'preview-eti': [] } };
             document.getElementById('search-prod').value = '';
-            document.getElementById('search-prod').style.borderColor = 'var(--border)';
-            document.getElementById('search-check').style.display = 'none';
             document.getElementById('selected-prod-info').classList.add('hidden');
             document.getElementById('btn-go-evidence').disabled = true;
-            
-            // Limpa campos de valores
-            document.getElementById('trat-chegou').value = '';
-            document.getElementById('trat-quebra').value = '';
-            
-            // Limpa previews
-            ['preview-nf', 'preview-prod', 'preview-bal', 'preview-eti'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.innerHTML = '';
-            });
-
             showScreen('screen-tratativa-data');
         }
 
-        function searchProducts(query) {
-            const resultsDiv = document.getElementById('search-results');
-            if (query.length < 1) { 
-                resultsDiv.style.display = 'none'; 
-                document.getElementById('search-check').style.display = 'none';
-                document.getElementById('search-prod').style.borderColor = 'var(--border)';
-                return; 
-            }
-
+        function searchProducts(q) {
+            const res = document.getElementById('search-results');
+            if (q.length < 1) return res.style.display = 'none';
             const tx = db.transaction(stores.PRODS, "readonly");
-            const store = tx.objectStore(stores.PRODS);
-            store.getAll().onsuccess = e => {
-                const list = e.target.result.filter(p => 
-                    p.codigo.includes(query) || p.nome.includes(query.toUpperCase())
-                );
-                
-                resultsDiv.innerHTML = '';
-                if (list.length > 0) {
-                    resultsDiv.style.display = 'block';
+            tx.objectStore(stores.PRODS).getAll().onsuccess = e => {
+                const list = e.target.result.filter(p => p.codigo.includes(q) || p.nome.includes(q.toUpperCase()));
+                res.innerHTML = '';
+                if (list.length) {
+                    res.style.display = 'block';
                     list.forEach(p => {
                         const d = document.createElement('div');
-                        d.style.padding = '12px';
-                        d.style.borderBottom = '1px solid #333';
-                        d.innerText = `${p.codigo} - ${p.nome}`;
+                        d.style.padding = '10px'; d.innerText = `${p.codigo} - ${p.nome}`;
                         d.onclick = () => selectProduct(p);
-                        resultsDiv.appendChild(d);
+                        res.appendChild(d);
                     });
-                } else {
-                    resultsDiv.style.display = 'none';
-                }
+                } else res.style.display = 'none';
             };
-        }
-
-        function handleSearchKeyDown(event) {
-            if (event.key === 'Enter') {
-                const query = event.target.value;
-                if (!query) return;
-
-                const tx = db.transaction(stores.PRODS, "readonly");
-                const store = tx.objectStore(stores.PRODS);
-                store.getAll().onsuccess = e => {
-                    const list = e.target.result.filter(p => 
-                        p.codigo === query || p.nome === query.toUpperCase()
-                    );
-                    
-                    if (list.length > 0) {
-                        selectProduct(list[0]);
-                        // Foca no próximo campo importante
-                        document.getElementById('trat-chegou').focus();
-                    } else {
-                        // Se não houver match exato, tenta o primeiro da lista filtrada
-                        const partialList = e.target.result.filter(p => 
-                            p.codigo.includes(query) || p.nome.includes(query.toUpperCase())
-                        );
-                        if (partialList.length > 0) {
-                            selectProduct(partialList[0]);
-                            document.getElementById('trat-chegou').focus();
-                        }
-                    }
-                };
-            }
         }
 
         function selectProduct(p) {
             currentTratativa.product = p;
             document.getElementById('search-results').style.display = 'none';
-            document.getElementById('search-prod').value = `${p.codigo} - ${p.nome}`;
-            
-            // Feedback Visual
-            const searchInput = document.getElementById('search-prod');
-            searchInput.style.borderColor = 'var(--success)';
-            document.getElementById('search-check').style.display = 'block';
-
+            document.getElementById('search-prod').value = p.nome;
             document.getElementById('selected-prod-info').classList.remove('hidden');
             document.getElementById('trat-name').value = p.nome;
             document.getElementById('trat-price').value = p.preco;
             document.getElementById('trat-unit').value = p.unidade;
-            
-            // Habilita e muda cor do botão Prosseguir
-            const btnGo = document.getElementById('btn-go-evidence');
-            btnGo.disabled = false;
-            btnGo.style.backgroundColor = 'var(--success)';
-            
-            // Foca no campo 'Chegou' imediatamente
-            setTimeout(() => document.getElementById('trat-chegou').focus(), 100);
+            document.getElementById('btn-go-evidence').disabled = false;
         }
 
         function goToEvidence() {
-            const chegou = document.getElementById('trat-chegou').value;
-            const quebra = document.getElementById('trat-quebra').value;
-            
-            if (!chegou || !quebra) {
-                return alert("Por favor, preencha os valores de 'Chegou' e 'Quebra'.");
-            }
-
-            currentTratativa.chegou = chegou;
-            currentTratativa.quebra = quebra;
-            currentTratativa.preco_final = document.getElementById('trat-price').value;
+            currentTratativa.chegou = document.getElementById('trat-chegou').value;
+            currentTratativa.quebra = document.getElementById('trat-quebra').value;
             currentTratativa.unidade_final = document.getElementById('trat-unit').value;
             showScreen('screen-tratativa-media');
         }
 
-        function hardReset() {
-            if (!confirm("Isso apagará TODOS os dados (produtos e histórico) e resetará o app. Tem certeza?")) return;
-            indexedDB.deleteDatabase(dbName);
-            localStorage.clear();
-            location.reload();
-        }
-
-        // --- MÍDIA ---
+        // Mídia
         function triggerUpload(id) { document.getElementById(id).click(); }
 
-        async function handleFiles(event, previewId, single = false) {
-            const files = Array.from(event.target.files);
-            if (single) currentTratativa.media[previewId] = [];
-
-            for (const file of files) {
-                const base64 = await fileToBase64(file);
-                currentTratativa.media[previewId].push({ file, base64 });
+        async function handleFiles(e, id, single = false) {
+            const files = Array.from(e.target.files);
+            if (single) currentTratativa.media[id] = [];
+            for (const f of files) {
+                const base64 = await fileToBase64(f);
+                currentTratativa.media[id].push({ base64 });
             }
-            renderPreviews(previewId);
+            renderPreviews(id);
         }
 
         function fileToBase64(file) {
             return new Promise((r, j) => {
                 const reader = new FileReader();
                 reader.onload = () => r(reader.result);
-                reader.onerror = j;
                 reader.readAsDataURL(file);
             });
         }
 
         function renderPreviews(id) {
-            const container = document.getElementById(id);
-            container.innerHTML = '';
-            currentTratativa.media[id].forEach((m, idx) => {
-                const div = document.createElement('div');
-                div.className = 'preview-item';
-                div.innerHTML = `
-                    <img src="${m.base64}">
-                    <button class="preview-remove" onclick="removeMedia('${id}', ${idx})">×</button>
-                `;
-                container.appendChild(div);
+            const cont = document.getElementById(id);
+            cont.innerHTML = '';
+            currentTratativa.media[id].forEach((m, i) => {
+                const d = document.createElement('div');
+                d.className = 'preview-item';
+                d.innerHTML = `<img src="${m.base64}"><button class="preview-remove" onclick="removeMedia('${id}', ${i})">×</button>`;
+                cont.appendChild(d);
             });
         }
 
-        function removeMedia(id, idx) {
-            currentTratativa.media[id].splice(idx, 1);
+        function removeMedia(id, i) {
+            currentTratativa.media[id].splice(i, 1);
             renderPreviews(id);
         }
 
-        // --- FINALIZAÇÃO E ENVIO ---
+        // Finalização
         function goToFinal() {
             const p = currentTratativa.product;
             const data = new Date().toLocaleDateString('pt-BR');
+            const text = `Cod: ${p.codigo}\n${p.nome}\nData: ${data}\nChegou: ${currentTratativa.chegou} ${currentTratativa.unidade_final}\nQuebra: ${currentTratativa.quebra} ${currentTratativa.unidade_final}`;
             
-            const text = `Cod: ${p.codigo}\n${p.nome}\n${data}\nChegou: ${currentTratativa.chegou} ${currentTratativa.unidade_final}\nQtd da quebra: ${currentTratativa.quebra} ${currentTratativa.unidade_final}`;
-            
-            currentTratativa.generatedText = text;
             document.getElementById('final-text-summary').innerText = text;
+            currentTratativa.generatedText = text;
 
             const list = document.getElementById('send-photos-list');
             list.innerHTML = '';
+            const allMedia = [...currentTratativa.media['preview-prod'], ...currentTratativa.media['preview-bal'], ...currentTratativa.media['preview-eti']];
 
-            const categories = [
-                { key: 'preview-prod', label: 'PRODUTO' },
-                { key: 'preview-bal', label: 'BALANÇA' },
-                { key: 'preview-eti', label: 'ETIQUETA' }
-            ];
-
-            categories.forEach(cat => {
-                currentTratativa.media[cat.key].forEach((m, idx) => {
-                    const div = document.createElement('div');
-                    div.className = 'photo-send-item';
-                    div.innerHTML = `
-                        <img src="${m.base64}" class="photo-send-thumb">
-                        <div style="flex-grow:1; font-size:0.8rem; font-weight:bold;">${cat.label} #${idx+1}</div>
-                        <button class="btn btn-small" onclick="sharePhoto('${cat.key}', ${idx})">ENVIAR FOTO</button>
-                    `;
-                    list.appendChild(div);
-                });
+            allMedia.forEach((m, idx) => {
+                const item = document.createElement('div');
+                item.className = 'photo-send-item';
+                item.innerHTML = `<img src="${m.base64}" class="photo-send-thumb"> <span>Foto ${idx+1}</span>
+                    <button class="btn btn-small" onclick="alert('Abra o WhatsApp e anexe a imagem da galeria.')">ENVIAR</button>`;
+                list.appendChild(item);
             });
-
             showScreen('screen-tratativa-send');
         }
 
         function copyTextAndOpenWA() {
-            const text = currentTratativa.generatedText;
-            if (navigator.share) {
-                navigator.share({
-                    title: 'Tratativa FLV',
-                    text: text
-                }).catch(err => console.error('Erro ao compartilhar texto:', err));
-            } else {
-                // Fallback sem forçar download
-                navigator.clipboard.writeText(text).then(() => {
-                    alert("Texto copiado! Cole no WhatsApp.");
-                    window.open('https://wa.me/', '_blank');
-                });
-            }
+            navigator.clipboard.writeText(currentTratativa.generatedText);
+            alert("Texto copiado! Cole no WhatsApp.");
+            window.open("https://wa.me/", "_blank");
         }
 
-        async function sharePhoto(key, idx) {
-            const media = currentTratativa.media[key][idx];
-            
-            try {
-                if (navigator.share && navigator.canShare && navigator.canShare({ files: [media.file] })) {
-                    await navigator.share({
-                        files: [media.file],
-                        title: 'Evidência FLV'
-                    });
-                } else {
-                    // Fallback sem forçar download
-                    alert("Seu navegador não suporta o envio nativo de arquivos. Tente usar o Chrome no Android.");
-                }
-            } catch (err) {
-                console.error("Erro ao compartilhar foto:", err);
-            }
-        }
+        function hardReset() { if(confirm("Apagar tudo?")) { indexedDB.deleteDatabase(dbName); location.reload(); } }
 
-        function resetAndStay() {
-            // Salva no histórico (opcional para v5 estável)
-            const tx = db.transaction(stores.TRATS, "readwrite");
-            tx.objectStore(stores.TRATS).add({
-                ...currentTratativa,
-                timestamp: Date.now(),
-                media: null // Não salva base64 pesado por enquanto para manter DB leve
-            });
-            
-            // Em vez de voltar ao início, volta para a tela de busca de produtos (Tela 4)
-            startNewTratativa();
-        }
-
-        window.onload = initDB;
-
-        // Registro Service Worker Estável
+        // PWA - Registro do Service Worker (Essencial para instalação)
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./service-worker.js')
-                    .then(reg => console.log('PWA: Service Worker registrado com sucesso.'))
-                    .catch(err => console.error('PWA: Falha ao registrar:', err));
+                navigator.serviceWorker.register('sw.js').catch(err => console.log('SW error', err));
             });
         }
+
+        initDB();
     </script>
 </body>
 </html>
