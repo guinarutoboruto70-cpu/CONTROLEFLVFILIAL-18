@@ -5,8 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>TRATAFLV - Filial 1018</title>
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#121212">
+    <meta name="theme-color" content="#ffcc00">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="TRATAFLV">
     <link rel="apple-touch-icon" href="https://img.icons8.com/color/192/apple.png">
+    <link rel="icon" type="image/png" href="https://img.icons8.com/color/192/apple.png">
     <style>
         :root {
             --bg: #0a0a0a;
@@ -785,8 +789,21 @@
         // Registro Service Worker Estável
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./service-worker.js')
-                    .then(reg => console.log('PWA: Service Worker registrado com sucesso.'))
+                navigator.serviceWorker.register('./service-worker.js', { scope: './' })
+                    .then(reg => {
+                        console.log('PWA: Service Worker registrado com sucesso (v6).');
+                        // Força atualização se houver novo SW
+                        reg.onupdatefound = () => {
+                            const installingWorker = reg.installing;
+                            installingWorker.onstatechange = () => {
+                                if (installingWorker.state === 'installed') {
+                                    if (navigator.serviceWorker.controller) {
+                                        console.log('Novo conteúdo disponível; por favor, recarregue.');
+                                    }
+                                }
+                            };
+                        };
+                    })
                     .catch(err => console.error('PWA: Falha ao registrar Service Worker:', err));
             });
         }
