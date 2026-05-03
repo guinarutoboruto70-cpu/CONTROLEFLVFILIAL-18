@@ -300,16 +300,16 @@
 
         <div class="upload-block">
             <div class="upload-header">
-                <span>� NOTA FISCAL (1 foto)</span>
+                <span>📄 NOTA FISCAL (1 foto)</span>
                 <button class="btn btn-small" onclick="triggerUpload('input-nf')">+ FOTO</button>
-                <input type="file" id="input-nf" class="hidden" accept="image/*" onchange="handleFiles(event, 'preview-nf', true)">
+                <input type="file" id="input-nf" class="hidden" accept="image/*" capture="camera" onchange="handleFiles(event, 'preview-nf', true)">
             </div>
             <div class="preview-grid" id="preview-nf"></div>
         </div>
 
         <div class="upload-block">
             <div class="upload-header">
-                <span>� PRODUTOS</span>
+                <span>📸 PRODUTOS</span>
                 <button class="btn btn-small" onclick="triggerUpload('input-prod')">+ FOTO</button>
                 <input type="file" id="input-prod" class="hidden" accept="image/*" multiple onchange="handleFiles(event, 'preview-prod')">
             </div>
@@ -329,7 +329,7 @@
             <div class="upload-header">
                 <span>🏷️ ETIQUETA (1 foto)</span>
                 <button class="btn btn-small" onclick="triggerUpload('input-eti')">+ FOTO</button>
-                <input type="file" id="input-eti" class="hidden" accept="image/*" onchange="handleFiles(event, 'preview-eti', true)">
+                <input type="file" id="input-eti" class="hidden" accept="image/*" capture="camera" onchange="handleFiles(event, 'preview-eti', true)">
             </div>
             <div class="preview-grid" id="preview-eti"></div>
         </div>
@@ -745,19 +745,18 @@
         function copyTextAndOpenWA() {
             const text = currentTratativa.generatedText;
             navigator.clipboard.writeText(text).then(() => {
-                alert("Texto copiado para a área de transferência!");
-                window.open("https://wa.me/", "_blank");
+                window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
             });
         }
 
         async function sharePhoto(key, idx) {
             const media = currentTratativa.media[key][idx];
+            const fileName = `tratativa_foto.jpg`;
             
-            // Tenta baixar primeiro como solicitado: "baixa o arquivo e abre o WhatsApp"
             try {
                 const link = document.createElement('a');
                 link.href = media.base64;
-                link.download = `trataflv_${key}_${idx+1}.jpg`;
+                link.download = fileName;
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
@@ -765,17 +764,9 @@
                 // Abre o WhatsApp logo em seguida
                 setTimeout(() => {
                     window.open("https://wa.me/", "_blank");
-                }, 500);
+                }, 1000);
             } catch (err) {
                 console.error("Erro ao baixar:", err);
-                // Fallback para share se o download falhar por algum motivo
-                if (navigator.canShare && navigator.canShare({ files: [media.file] })) {
-                    await navigator.share({
-                        files: [media.file],
-                        title: 'Evidência FLV',
-                        text: currentTratativa.generatedText
-                    });
-                }
             }
         }
 
