@@ -1,42 +1,26 @@
-const CACHE_NAME = 'trataflv-v1.2';
-const ASSETS = [
-  'index.html',
-  'manifest.json'
-];
+const CACHE_NAME = 'trataflv-v2';
 
 self.addEventListener('install', (e) => {
-  self.skipWaiting(); // Força a ativação imediata
   e.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
-  );
-});
-
-self.addEventListener('activate', (e) => {
-  e.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
-      );
-    }).then(() => {
-      return self.clients.claim(); // Assume o controle das páginas abertas imediatamente
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll([
+        './',
+        './index.html',
+        './manifest.json'
+      ]).catch(err => console.log("Erro de cache inicial:", err));
     })
   );
+  self.skipWaiting(); // Força o novo Service Worker a assumir o controle na hora
 });
 
-self.addEventListener('fetch', (e) => {
-  e.respondWith(
-    caches.match(e.request).then((response) => {
-      // Estratégia Stale-While-Revalidate: serve do cache e atualiza em background
-      const fetchPromise = fetch(e.request).then((networkResponse) => {
-        if (networkResponse && networkResponse.status === 200) {
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(e.request, networkResponse.clone());
-          });
-        }
-        return networkResponse;
-      }).catch(() => {});
+self.addEventListener('activate', (event) => {
+  event.waitUntil(self.clients.claim()); // Assume o controle das páginas abertas imediatamente
+});
 
-      return response || fetchPromise;
+self.addEventListener('fetch', (event) => {
+  event.respondWith(
+    fetch(event.request).catch(() => {
+      return caches.match(event.request);
     })
   );
 });
