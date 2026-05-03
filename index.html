@@ -5,136 +5,182 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>TRATAFLV 1018</title>
     <style>
-        :root { --bg: #0a0a0a; --card-bg: #1a1a1a; --primary: #ffcc00; --text: #ffffff; }
-        body { margin: 0; font-family: sans-serif; background: var(--bg); color: var(--text); padding: 20px; }
+        :root { --bg: #0a0a0a; --card: #1a1a1a; --gold: #ffcc00; --txt: #ffffff; --green: #25d366; }
+        body { margin: 0; font-family: sans-serif; background: var(--bg); color: var(--txt); -webkit-tap-highlight-color: transparent; }
+        .app { max-width: 500px; margin: 0 auto; padding: 15px; }
         .screen { display: none; flex-direction: column; }
         .active { display: flex; }
-        .btn { background: var(--primary); color: #000; border: none; padding: 15px; border-radius: 10px; font-weight: bold; width: 100%; margin-bottom: 10px; cursor: pointer; text-transform: uppercase; }
-        .card { background: var(--card-bg); border: 1px solid #333; border-radius: 12px; padding: 15px; margin-bottom: 15px; }
-        input { width: 100%; padding: 12px; background: #252525; border: 1px solid #333; border-radius: 8px; color: white; margin: 8px 0; box-sizing: border-box; }
+        
+        /* Estética Profissional */
+        .card { background: var(--card); border-radius: 12px; padding: 15px; margin-bottom: 12px; border: 1px solid #333; }
+        h2 { color: var(--gold); font-size: 0.8rem; text-transform: uppercase; margin: 0 0 10px 0; letter-spacing: 1px; }
+        
+        input { width: 100%; padding: 14px; background: #222; border: 1px solid #444; border-radius: 8px; color: #fff; margin-bottom: 10px; box-sizing: border-box; font-size: 1rem; }
+        .btn { background: var(--gold); color: #000; border: none; padding: 16px; border-radius: 10px; font-weight: bold; width: 100%; cursor: pointer; text-transform: uppercase; margin-top: 5px; }
+        .btn-wa { background: var(--green); color: #fff; margin-top: 8px; font-size: 0.8rem; padding: 12px; }
+        
+        /* Busca */
+        #results { max-height: 180px; overflow-y: auto; background: #111; border-radius: 8px; border: 1px solid #333; margin-bottom: 10px; }
+        .item { padding: 15px; border-bottom: 1px solid #222; cursor: pointer; font-size: 0.9rem; }
+        .item:active { background: #333; }
+
+        /* Fotos */
         .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
-        .thumb { border: 1px solid #333; border-radius: 6px; overflow: hidden; background: #000; text-align: center; padding: 2px; }
-        .thumb img { width: 100%; aspect-ratio: 1; object-fit: cover; }
-        .btn-wa { background: #25d366; color: white; border: none; width: 100%; padding: 8px 0; font-size: 0.7rem; font-weight: bold; border-radius: 4px; margin-top: 4px; }
-        .text-clean { background: #000; padding: 15px; border-radius: 8px; font-family: monospace; white-space: pre-wrap; border: 1px solid #444; margin-bottom: 15px; }
+        .thumb { background: #000; aspect-ratio: 1; border-radius: 6px; border: 1px solid #444; overflow: hidden; position: relative; }
+        .thumb img { width: 100%; height: 100%; object-fit: cover; }
+        
+        .report { background: #000; padding: 15px; border-radius: 8px; border: 1px solid #444; font-family: monospace; white-space: pre-wrap; margin-bottom: 15px; font-size: 1rem; line-height: 1.4; }
     </style>
 </head>
 <body>
 
-    <div id="screen-data" class="screen active">
+<div class="app">
+    <div id="scr1" class="screen active">
         <div class="card">
-            <input type="text" id="search" placeholder="CÓDIGO OU PRODUTO..." oninput="searchP(this.value)">
+            <h2>📦 Iniciar Tratativa</h2>
+            <input type="text" id="search" placeholder="Digite o código ou nome..." oninput="buscar(this.value)">
             <div id="results"></div>
-            <div id="info" style="display:none; margin-top:10px">
-                <p id="detalhe" style="color:var(--primary); font-weight:bold"></p>
-                <input type="text" id="chegou" placeholder="Qtd Chegou" inputmode="decimal">
-                <input type="text" id="quebra" placeholder="Qtd Quebra" inputmode="decimal">
+            
+            <div id="form-tratativa" style="display:none">
+                <p id="nome-selecionado" style="color:var(--gold); font-weight:bold; font-size: 1.1rem; margin-bottom: 15px;"></p>
+                <input type="text" id="chegou" placeholder="Quantidade Chegou" inputmode="decimal">
+                <input type="text" id="quebra" placeholder="Quantidade Quebra" inputmode="decimal">
+                <button class="btn" onclick="irPara(2)">Próximo: Fotos</button>
             </div>
         </div>
-        <button class="btn" id="btn-next" disabled onclick="showScreen('screen-media')">ADICIONAR FOTOS</button>
-        <button class="btn" style="background:none; border:1px solid #444; color:#aaa; font-size:0.7rem" onclick="toggleConfig()">CADASTRAR PRODUTOS</button>
-        
-        <div id="config-area" style="display:none; margin-top:20px" class="card">
-            <input type="number" id="p-code" placeholder="CÓDIGO">
-            <input type="text" id="p-name" placeholder="NOME">
-            <input type="text" id="p-unit" placeholder="KG ou UN">
-            <button class="btn" onclick="saveP()">SALVAR</button>
-        </div>
+        <button class="btn" style="background:none; border:1px solid #444; color:#666; font-size:0.7rem" onclick="abrirCadastro()">+ Cadastrar novo produto manualmente</button>
     </div>
 
-    <div id="screen-media" class="screen">
+    <div id="scr2" class="screen">
         <div class="card">
-            <button class="btn" style="background:#333" onclick="document.getElementById('f-all').click()">📸 TIRAR FOTOS</button>
-            <input type="file" id="f-all" accept="image/*" multiple onchange="handleFiles(event)" style="display:none">
-            <div class="grid" id="pre-all"></div>
-        </div>
-        <button class="btn" onclick="generate()">GERAR TRATATIVA</button>
-    </div>
-
-    <div id="screen-final" class="screen">
-        <div class="text-clean" id="txt-final"></div>
-        <button class="btn" style="background:#25d366; color:white" onclick="sendText()">ENVIAR TEXTO</button>
-        <div id="final-media" class="grid"></div>
-        <button class="btn" style="margin-top:30px; background:none; border:1px solid var(--primary); color:var(--primary)" onclick="location.reload()">LIMPAR / NOVO</button>
-    </div>
-
-    <script>
-        let db; let current = { prod: null, photos: [] };
-
-        const init = () => {
-            const req = indexedDB.open("TrataDB", 1);
-            req.onupgradeneeded = e => e.target.result.createObjectStore("prods", { keyPath: "codigo" });
-            req.onsuccess = e => db = e.target.result;
-        };
-
-        function showScreen(id) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-        }
-
-        function toggleConfig() {
-            const area = document.getElementById('config-area');
-            area.style.display = area.style.display === 'none' ? 'block' : 'none';
-        }
-
-        function saveP() {
-            const p = { codigo: document.getElementById('p-code').value, nome: document.getElementById('p-name').value.toUpperCase(), unidade: document.getElementById('p-unit').value.toUpperCase() };
-            db.transaction("prods", "readwrite").objectStore("prods").put(p);
-            alert("Salvo!"); toggleConfig();
-        }
-
-        function searchP(q) {
-            const res = document.getElementById('results'); res.innerHTML = '';
-            db.transaction("prods").objectStore("prods").getAll().onsuccess = e => {
-                e.target.result.filter(p => p.codigo.includes(q) || p.nome.includes(q.toUpperCase())).slice(0,3).forEach(p => {
-                    const d = document.createElement('div'); d.style.padding='15px'; d.style.borderBottom='1px solid #333';
-                    d.innerText = `${p.codigo} - ${p.nome}`;
-                    d.onclick = () => {
-                        current.prod = p; document.getElementById('detalhe').innerText = p.nome;
-                        document.getElementById('info').style.display='block'; document.getElementById('btn-next').disabled=false;
-                        document.getElementById('search').value = p.nome; res.innerHTML = '';
-                    };
-                    res.appendChild(d);
-                });
-            };
-        }
-
-        function handleFiles(e) {
-            Array.from(e.target.files).forEach(f => {
-                const r = new FileReader();
-                r.onload = ev => {
-                    current.photos.push({ data: ev.target.result, file: f });
-                    const d = document.createElement('div'); d.className='thumb';
-                    d.innerHTML = `<img src="${ev.target.result}">`;
-                    document.getElementById('pre-all').appendChild(d);
-                };
-                r.readAsDataURL(f);
-            });
-        }
-
-        function generate() {
-            const p = current.prod;
-            const txt = `Cod: ${p.codigo}\n${p.nome}\n${new Date().toLocaleDateString('pt-BR')}\nChegou: ${document.getElementById('chegou').value} ${p.unidade}\nQuebra: ${document.getElementById('quebra').value} ${p.unidade}`;
-            document.getElementById('txt-final').innerText = txt;
+            <h2>📸 Fotos Obrigatórias</h2>
             
-            const grid = document.getElementById('final-media'); grid.innerHTML = '';
-            current.photos.forEach(img => {
-                const d = document.createElement('div'); d.className='thumb';
-                d.innerHTML = `<img src="${img.data}"><button class="btn-wa" onclick="shareImg(${current.photos.indexOf(img)})">ENVIAR</button>`;
-                grid.appendChild(d);
+            <button class="btn" style="background:#333; margin-bottom:15px" onclick="pedirFoto('f-prod')">1. FOTO DO PRODUTO</button>
+            <input type="file" id="f-prod" accept="image/*" multiple hidden onchange="pre-visualizar(this, 'g-prod', 'prod')">
+            <div class="grid" id="g-prod"></div>
+
+            <button class="btn" style="background:#333; margin-bottom:15px" onclick="pedirFoto('f-bal')">2. FOTO DA BALANÇA</button>
+            <input type="file" id="f-bal" accept="image/*" multiple hidden onchange="pre-visualizar(this, 'g-bal', 'bal')">
+            <div class="grid" id="g-bal"></div>
+
+            <button class="btn" style="background:#333" onclick="pedirFoto('f-eti')">3. FOTO DA ETIQUETA</button>
+            <input type="file" id="f-eti" accept="image/*" hidden onchange="pre-visualizar(this, 'g-eti', 'eti')">
+            <div class="grid" id="g-eti"></div>
+        </div>
+        <button class="btn" onclick="finalizar()">Gerar Relatório Final</button>
+        <button class="btn" style="background:none; color:#aaa" onclick="irPara(1)">Voltar</button>
+    </div>
+
+    <div id="scr3" class="screen">
+        <div class="card">
+            <h2>Texto da Tratativa</h2>
+            <div class="report" id="txt-final"></div>
+            <button class="btn" style="background:var(--green); color:#fff" onclick="enviarTexto()">ENVIAR TEXTO NO GRUPO</button>
+        </div>
+        
+        <div id="lista-fotos-final"></div>
+        
+        <button class="btn" style="margin-top:30px; background:none; border:1px solid var(--gold); color:var(--gold)" onclick="location.reload()">LIMPAR E COMEÇAR OUTRA</button>
+    </div>
+</div>
+
+<script>
+    let db;
+    let produtoAtivo = null;
+    let arquivos = { prod: [], bal: [], eti: [] };
+
+    // PRODUTOS INICIAIS (Para você não precisar cadastrar tudo de novo)
+    const cargaInicial = [
+        { cod: "688", nome: "BATATA KG", un: "KG" },
+        { cod: "123", nome: "CEBOLA KG", un: "KG" },
+        { cod: "456", nome: "TOMATE KG", un: "KG" }
+    ];
+
+    const reqDB = indexedDB.open("DB_TRATA_1018_FINAL", 1);
+    reqDB.onupgradeneeded = e => {
+        let store = e.target.result.createObjectStore("produtos", { keyPath: "cod" });
+        cargaInicial.forEach(p => store.add(p));
+    };
+    reqDB.onsuccess = e => { db = e.target.result; };
+
+    function irPara(n) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById('scr' + n).classList.add('active');
+        window.scrollTo(0,0);
+    }
+
+    function buscar(q) {
+        const res = document.getElementById('results');
+        res.innerHTML = '';
+        if(!q) return;
+
+        db.transaction("produtos").objectStore("produtos").getAll().onsuccess = e => {
+            const itens = e.target.result.filter(p => p.cod.includes(q) || p.nome.includes(q.toUpperCase()));
+            itens.slice(0,5).forEach(p => {
+                const div = document.createElement('div');
+                div.className = 'item';
+                div.innerText = `${p.cod} - ${p.nome}`;
+                div.onclick = () => {
+                    produtoAtivo = p;
+                    document.getElementById('nome-selecionado').innerText = p.nome;
+                    document.getElementById('form-tratativa').style.display = 'block';
+                    document.getElementById('search').value = p.nome;
+                    res.innerHTML = '';
+                };
+                res.appendChild(div);
             });
-            showScreen('screen-final');
-        }
+        };
+    }
 
-        function sendText() {
-            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(document.getElementById('txt-final').innerText)}`, '_blank');
-        }
+    function pedirFoto(id) { document.getElementById(id).click(); }
 
-        function shareImg(idx) {
-            if (navigator.share) navigator.share({ files: [current.photos[idx].file] });
-        }
+    function pre-visualizar(input, gridId, tipo) {
+        Array.from(input.files).forEach(f => {
+            const rd = new FileReader();
+            rd.onload = e => {
+                arquivos[tipo].push({ data: e.target.result, file: f });
+                const d = document.createElement('div'); d.className = 'thumb';
+                d.innerHTML = `<img src="${e.target.result}">`;
+                document.getElementById(gridId).appendChild(d);
+            };
+            rd.readAsDataURL(f);
+        });
+    }
 
-        init();
-    </script>
+    function finalizar() {
+        const d = new Date().toLocaleDateString('pt-BR');
+        const txt = `Cod: ${produtoAtivo.cod}\n${produtoAtivo.nome}\n${d}\nChegou: ${document.getElementById('chegou').value} ${produtoAtivo.un}\nQuebra: ${document.getElementById('quebra').value} ${produtoAtivo.un}`;
+        document.getElementById('txt-final').innerText = txt;
+
+        const listFinal = document.getElementById('lista-fotos-final');
+        listFinal.innerHTML = '<h2>Fotos para Enviar</h2>';
+
+        ['prod', 'bal', 'eti'].forEach(cat => {
+            arquivos[cat].forEach(img => {
+                const btn = document.createElement('button');
+                btn.className = 'btn btn-wa';
+                btn.innerText = `ENVIAR FOTO (${cat.toUpperCase()})`;
+                btn.onclick = () => { if(navigator.share) navigator.share({ files: [img.file] }); };
+                listFinal.appendChild(btn);
+            });
+        });
+        irPara(3);
+    }
+
+    function enviarTexto() {
+        const t = document.getElementById('txt-final').innerText;
+        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(t)}`);
+    }
+
+    function abrirCadastro() {
+        let c = prompt("Código:");
+        let n = prompt("Nome:").toUpperCase();
+        let u = prompt("Unidade (KG/UN):").toUpperCase();
+        if(c && n) {
+            db.transaction("produtos", "readwrite").objectStore("produtos").add({cod:c, nome:n, un:u});
+            alert("Salvo!");
+        }
+    }
+</script>
 </body>
 </html>
