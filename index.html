@@ -12,12 +12,12 @@
         .btn { background: var(--primary); color: #000; border: none; padding: 15px; border-radius: 10px; font-weight: bold; width: 100%; margin-bottom: 10px; text-transform: uppercase; cursor: pointer; }
         .btn-wa { background: var(--success); color: white; padding: 10px; border-radius: 6px; border: none; width: 100%; font-size: 0.7rem; margin-top: 5px; font-weight: bold; }
         .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 15px; margin-bottom: 15px; }
-        input { width: 100%; padding: 12px; background: #252525; border: 1px solid var(--border); border-radius: 8px; color: white; margin: 8px 0; font-size: 1rem; }
+        input { width: 100%; padding: 12px; background: #252525; border: 1px solid var(--border); border-radius: 8px; color: white; margin: 8px 0; font-size: 1rem; box-sizing: border-box; }
         .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
-        .thumb { border: 1px solid var(--border); border-radius: 6px; overflow: hidden; background: #000; padding: 2px; }
+        .thumb { border: 1px solid var(--border); border-radius: 6px; overflow: hidden; background: #000; padding: 2px; text-align: center; }
         .thumb img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 4px; }
-        .section-title { color: var(--primary); font-size: 0.8rem; margin-top: 15px; font-weight: bold; text-transform: uppercase; border-left: 3px solid var(--primary); padding-left: 8px; }
-        .text-clean { background: #000; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 1rem; line-height: 1.5; margin-bottom: 10px; border: 1px solid #444; }
+        .section-title { color: var(--primary); font-size: 0.8rem; margin-top: 15px; font-weight: bold; text-transform: uppercase; }
+        .text-clean { background: #000; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 1rem; line-height: 1.5; margin-bottom: 10px; border: 1px solid #444; white-space: pre-wrap; }
         .hidden { display: none; }
     </style>
 </head>
@@ -25,8 +25,8 @@
 
     <div id="screen-menu" class="screen active">
         <h1 style="text-align:center; color:var(--primary)">TRATAFLV 1018</h1>
-        <button class="btn" style="height:150px" onclick="startNew()">🍎 NOVA TRATATIVA</button>
-        <button class="btn" style="background:none; border:1px solid #444; color:#aaa" onclick="showScreen('screen-products')">GERENCIAR PRODUTOS</button>
+        <button class="btn" style="height:120px" onclick="startNew()">🍎 NOVA TRATATIVA</button>
+        <button class="btn" style="background:none; border:1px solid #444; color:#aaa" onclick="showScreen('screen-products')">PRODUTOS</button>
     </div>
 
     <div id="screen-products" class="screen">
@@ -34,7 +34,7 @@
             <input type="number" id="p-code" placeholder="CÓDIGO">
             <input type="text" id="p-name" placeholder="NOME DO PRODUTO">
             <input type="text" id="p-unit" placeholder="UNIDADE (KG/UN)">
-            <button class="btn" onclick="saveP()">SALVAR PRODUTO</button>
+            <button class="btn" onclick="saveP()">SALVAR</button>
         </div>
         <div id="p-list" style="max-height:200px; overflow-y:auto"></div>
         <button class="btn" onclick="showScreen('screen-menu')">VOLTAR</button>
@@ -42,12 +42,12 @@
 
     <div id="screen-data" class="screen">
         <div class="card">
-            <input type="text" id="search" placeholder="Pesquisar..." oninput="searchP(this.value)">
+            <input type="text" id="search" placeholder="Buscar produto..." oninput="searchP(this.value)">
             <div id="results"></div>
             <div id="info" class="hidden">
-                <p id="detalhe" style="color:var(--primary); font-weight:bold; font-size: 1.2rem;"></p>
-                <input type="text" id="chegou" placeholder="Chegou" inputmode="decimal">
-                <input type="text" id="quebra" placeholder="Quebra" inputmode="decimal">
+                <p id="detalhe" style="color:var(--primary); font-weight:bold;"></p>
+                <input type="text" id="chegou" placeholder="Qtd Chegou" inputmode="decimal">
+                <input type="text" id="quebra" placeholder="Qtd Quebra" inputmode="decimal">
             </div>
         </div>
         <button class="btn" id="btn-next" disabled onclick="showScreen('screen-media')">PRÓXIMO</button>
@@ -55,20 +55,20 @@
 
     <div id="screen-media" class="screen">
         <div class="card">
-            <div class="section-title">PRODUTO</div>
-            <input type="file" id="f-prod" accept="image/*" multiple onchange="preview(event, 'pre-prod', 'prod')" class="hidden">
+            <div class="section-title">1. PRODUTO</div>
+            <input type="file" id="f-prod" accept="image/*" multiple onchange="handleFiles(event, 'pre-prod', 'prod')" class="hidden">
             <button class="btn" style="background:#333" onclick="document.getElementById('f-prod').click()">+ FOTO PRODUTO</button>
             <div class="grid" id="pre-prod"></div>
         </div>
         <div class="card">
-            <div class="section-title">BALANÇA</div>
-            <input type="file" id="f-bal" accept="image/*" multiple onchange="preview(event, 'pre-bal', 'bal')" class="hidden">
+            <div class="section-title">2. BALANÇA</div>
+            <input type="file" id="f-bal" accept="image/*" multiple onchange="handleFiles(event, 'pre-bal', 'bal')" class="hidden">
             <button class="btn" style="background:#333" onclick="document.getElementById('f-bal').click()">+ FOTO BALANÇA</button>
             <div class="grid" id="pre-bal"></div>
         </div>
         <div class="card">
-            <div class="section-title">ETIQUETA</div>
-            <input type="file" id="f-eti" accept="image/*" onchange="preview(event, 'pre-eti', 'eti')" class="hidden">
+            <div class="section-title">3. ETIQUETA</div>
+            <input type="file" id="f-eti" accept="image/*" onchange="handleFiles(event, 'pre-eti', 'eti')" class="hidden">
             <button class="btn" style="background:#333" onclick="document.getElementById('f-eti').click()">📸 CÂMERA / GALERIA</button>
             <div class="grid" id="pre-eti"></div>
         </div>
@@ -77,9 +77,9 @@
 
     <div id="screen-final" class="screen">
         <div class="text-clean" id="txt-final"></div>
-        <button class="btn" style="background:var(--success); color:white" onclick="sendText()">ENVIAR TEXTO</button>
+        <button class="btn" style="background:var(--success); color:white" onclick="sendTextWA()">ENVIAR TEXTO</button>
         <div id="final-media-container"></div>
-        <button class="btn" style="margin-top:30px; background:none; border:1px solid var(--primary); color:var(--primary)" onclick="location.reload()">LIMPAR TUDO</button>
+        <button class="btn" style="margin-top:30px; background:none; border:1px solid var(--primary); color:var(--primary)" onclick="location.reload()">NOVA TRATATIVA</button>
     </div>
 
     <script>
@@ -94,9 +94,10 @@
         function showScreen(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(id).classList.add('active');
+            window.scrollTo(0,0);
         }
 
-        function preview(e, gridId, type) {
+        function handleFiles(e, gridId, type) {
             Array.from(e.target.files).forEach(f => {
                 const r = new FileReader();
                 r.onload = (ev) => {
@@ -123,14 +124,12 @@
                 if (current.photos[key].length > 0) {
                     const title = document.createElement('div'); title.className='section-title'; title.innerText = sections[key];
                     const grid = document.createElement('div'); grid.className='grid';
-                    current.photos[key].forEach((imgObj, idx) => {
+                    current.photos[key].forEach(imgObj => {
                         const d = document.createElement('div'); d.className='thumb';
                         d.innerHTML = `<img src="${imgObj.data}">`;
-                        const btn = document.createElement('button');
-                        btn.className = 'btn-wa'; btn.innerText = 'ENVIAR';
-                        btn.onclick = () => shareImage(imgObj.file);
-                        d.appendChild(btn);
-                        grid.appendChild(d);
+                        const b = document.createElement('button'); b.className='btn-wa'; b.innerText='ENVIAR';
+                        b.onclick = () => shareFile(imgObj.file);
+                        d.appendChild(b); grid.appendChild(d);
                     });
                     container.appendChild(title); container.appendChild(grid);
                 }
@@ -138,19 +137,16 @@
             showScreen('screen-final');
         }
 
-        async function shareImage(file) {
-            if (navigator.share) {
-                try {
-                    await navigator.share({ files: [file] });
-                } catch (err) { console.error("Erro ao compartilhar", err); }
-            } else {
-                alert("Seu navegador não suporta envio direto de arquivos.");
-            }
+        async function shareFile(f) {
+            try {
+                if (navigator.share) { await navigator.share({ files: [f] }); }
+                else { alert("Navegador não suporta envio direto."); }
+            } catch (e) { console.log("Compartilhamento cancelado."); }
         }
 
-        function sendText() {
-            const txt = document.getElementById('txt-final').innerText;
-            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(txt)}`, '_blank');
+        function sendTextWA() {
+            const t = document.getElementById('txt-final').innerText;
+            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(t)}`, '_blank');
         }
 
         function searchP(q) {
@@ -182,15 +178,15 @@
             const l = document.getElementById('p-list'); if(!l) return; l.innerHTML = '';
             db.transaction("prods").objectStore("prods").getAll().onsuccess = e => {
                 e.target.result.forEach(p => {
-                    const d = document.createElement('div'); d.style.fontSize='0.7rem';
-                    d.innerText = `• ${p.nome} (${p.codigo})`; l.appendChild(d);
+                    const d = document.createElement('div'); d.innerText = `• ${p.nome} (${p.codigo})`; l.appendChild(d);
                 });
             };
         }
 
         function startNew() {
             current = { prod: null, photos: { prod: [], bal: [], eti: [] } };
-            document.querySelectorAll('.grid').forEach(g => g.innerHTML='');
+            document.querySelectorAll('.grid').forEach(g => g.innerHTML = '');
+            document.getElementById('search').value = '';
             document.getElementById('info').classList.add('hidden');
             showScreen('screen-data');
         }
