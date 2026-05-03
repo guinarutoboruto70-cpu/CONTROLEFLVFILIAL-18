@@ -5,148 +5,82 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>TRATAFLV 1018</title>
     <style>
-        :root { --bg: #0a0a0a; --card-bg: #1a1a1a; --primary: #ffcc00; --text: #ffffff; --border: #333; --success: #25d366; }
-        body { margin: 0; font-family: sans-serif; background: var(--bg); color: var(--text); padding-bottom: 40px; }
-        .screen { display: none; padding: 20px; flex-direction: column; }
+        :root { --bg: #0a0a0a; --card-bg: #1a1a1a; --primary: #ffcc00; --text: #ffffff; }
+        body { margin: 0; font-family: sans-serif; background: var(--bg); color: var(--text); padding: 20px; }
+        .screen { display: none; flex-direction: column; }
         .active { display: flex; }
-        .btn { background: var(--primary); color: #000; border: none; padding: 15px; border-radius: 10px; font-weight: bold; width: 100%; margin-bottom: 10px; text-transform: uppercase; cursor: pointer; }
-        .btn-wa { background: var(--success); color: white; padding: 10px; border-radius: 6px; border: none; width: 100%; font-size: 0.7rem; margin-top: 5px; font-weight: bold; }
-        .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 15px; margin-bottom: 15px; }
-        input { width: 100%; padding: 12px; background: #252525; border: 1px solid var(--border); border-radius: 8px; color: white; margin: 8px 0; font-size: 1rem; box-sizing: border-box; }
+        .btn { background: var(--primary); color: #000; border: none; padding: 15px; border-radius: 10px; font-weight: bold; width: 100%; margin-bottom: 10px; cursor: pointer; text-transform: uppercase; }
+        .card { background: var(--card-bg); border: 1px solid #333; border-radius: 12px; padding: 15px; margin-bottom: 15px; }
+        input { width: 100%; padding: 12px; background: #252525; border: 1px solid #333; border-radius: 8px; color: white; margin: 8px 0; box-sizing: border-box; }
         .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
-        .thumb { border: 1px solid var(--border); border-radius: 6px; overflow: hidden; background: #000; padding: 2px; text-align: center; }
-        .thumb img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 4px; }
-        .section-title { color: var(--primary); font-size: 0.8rem; margin-top: 15px; font-weight: bold; text-transform: uppercase; }
-        .text-clean { background: #000; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 1rem; line-height: 1.5; margin-bottom: 10px; border: 1px solid #444; white-space: pre-wrap; }
-        .hidden { display: none; }
+        .thumb { border: 1px solid #333; border-radius: 6px; overflow: hidden; background: #000; text-align: center; padding: 2px; }
+        .thumb img { width: 100%; aspect-ratio: 1; object-fit: cover; }
+        .btn-wa { background: #25d366; color: white; border: none; width: 100%; padding: 8px 0; font-size: 0.7rem; font-weight: bold; border-radius: 4px; margin-top: 4px; }
+        .text-clean { background: #000; padding: 15px; border-radius: 8px; font-family: monospace; white-space: pre-wrap; border: 1px solid #444; margin-bottom: 15px; }
     </style>
 </head>
 <body>
 
-    <div id="screen-menu" class="screen active">
-        <h1 style="text-align:center; color:var(--primary)">TRATAFLV 1018</h1>
-        <button class="btn" style="height:120px" onclick="startNew()">🍎 NOVA TRATATIVA</button>
-        <button class="btn" style="background:none; border:1px solid #444; color:#aaa" onclick="showScreen('screen-products')">PRODUTOS</button>
-    </div>
-
-    <div id="screen-products" class="screen">
+    <div id="screen-data" class="screen active">
         <div class="card">
-            <input type="number" id="p-code" placeholder="CÓDIGO">
-            <input type="text" id="p-name" placeholder="NOME DO PRODUTO">
-            <input type="text" id="p-unit" placeholder="UNIDADE (KG/UN)">
-            <button class="btn" onclick="saveP()">SALVAR</button>
-        </div>
-        <div id="p-list" style="max-height:200px; overflow-y:auto"></div>
-        <button class="btn" onclick="showScreen('screen-menu')">VOLTAR</button>
-    </div>
-
-    <div id="screen-data" class="screen">
-        <div class="card">
-            <input type="text" id="search" placeholder="Buscar produto..." oninput="searchP(this.value)">
+            <input type="text" id="search" placeholder="CÓDIGO OU PRODUTO..." oninput="searchP(this.value)">
             <div id="results"></div>
-            <div id="info" class="hidden">
-                <p id="detalhe" style="color:var(--primary); font-weight:bold;"></p>
+            <div id="info" style="display:none; margin-top:10px">
+                <p id="detalhe" style="color:var(--primary); font-weight:bold"></p>
                 <input type="text" id="chegou" placeholder="Qtd Chegou" inputmode="decimal">
                 <input type="text" id="quebra" placeholder="Qtd Quebra" inputmode="decimal">
             </div>
         </div>
-        <button class="btn" id="btn-next" disabled onclick="showScreen('screen-media')">PRÓXIMO</button>
+        <button class="btn" id="btn-next" disabled onclick="showScreen('screen-media')">ADICIONAR FOTOS</button>
+        <button class="btn" style="background:none; border:1px solid #444; color:#aaa; font-size:0.7rem" onclick="toggleConfig()">CADASTRAR PRODUTOS</button>
+        
+        <div id="config-area" style="display:none; margin-top:20px" class="card">
+            <input type="number" id="p-code" placeholder="CÓDIGO">
+            <input type="text" id="p-name" placeholder="NOME">
+            <input type="text" id="p-unit" placeholder="KG ou UN">
+            <button class="btn" onclick="saveP()">SALVAR</button>
+        </div>
     </div>
 
     <div id="screen-media" class="screen">
         <div class="card">
-            <div class="section-title">1. PRODUTO</div>
-            <input type="file" id="f-prod" accept="image/*" multiple onchange="handleFiles(event, 'pre-prod', 'prod')" class="hidden">
-            <button class="btn" style="background:#333" onclick="document.getElementById('f-prod').click()">+ FOTO PRODUTO</button>
-            <div class="grid" id="pre-prod"></div>
+            <button class="btn" style="background:#333" onclick="document.getElementById('f-all').click()">📸 TIRAR FOTOS</button>
+            <input type="file" id="f-all" accept="image/*" multiple onchange="handleFiles(event)" style="display:none">
+            <div class="grid" id="pre-all"></div>
         </div>
-        <div class="card">
-            <div class="section-title">2. BALANÇA</div>
-            <input type="file" id="f-bal" accept="image/*" multiple onchange="handleFiles(event, 'pre-bal', 'bal')" class="hidden">
-            <button class="btn" style="background:#333" onclick="document.getElementById('f-bal').click()">+ FOTO BALANÇA</button>
-            <div class="grid" id="pre-bal"></div>
-        </div>
-        <div class="card">
-            <div class="section-title">3. ETIQUETA</div>
-            <input type="file" id="f-eti" accept="image/*" onchange="handleFiles(event, 'pre-eti', 'eti')" class="hidden">
-            <button class="btn" style="background:#333" onclick="document.getElementById('f-eti').click()">📸 CÂMERA / GALERIA</button>
-            <div class="grid" id="pre-eti"></div>
-        </div>
-        <button class="btn" onclick="generate()">GERAR RELATÓRIO</button>
+        <button class="btn" onclick="generate()">GERAR TRATATIVA</button>
     </div>
 
     <div id="screen-final" class="screen">
         <div class="text-clean" id="txt-final"></div>
-        <button class="btn" style="background:var(--success); color:white" onclick="sendTextWA()">ENVIAR TEXTO</button>
-        <div id="final-media-container"></div>
-        <button class="btn" style="margin-top:30px; background:none; border:1px solid var(--primary); color:var(--primary)" onclick="location.reload()">NOVA TRATATIVA</button>
+        <button class="btn" style="background:#25d366; color:white" onclick="sendText()">ENVIAR TEXTO</button>
+        <div id="final-media" class="grid"></div>
+        <button class="btn" style="margin-top:30px; background:none; border:1px solid var(--primary); color:var(--primary)" onclick="location.reload()">LIMPAR / NOVO</button>
     </div>
 
     <script>
-        let db; let current = { prod: null, photos: { prod: [], bal: [], eti: [] } };
+        let db; let current = { prod: null, photos: [] };
 
         const init = () => {
-            const req = indexedDB.open("TrataDB", 2);
-            req.onupgradeneeded = e => { e.target.result.createObjectStore("prods", { keyPath: "codigo" }); };
-            req.onsuccess = e => { db = e.target.result; renderP(); };
+            const req = indexedDB.open("TrataDB", 1);
+            req.onupgradeneeded = e => e.target.result.createObjectStore("prods", { keyPath: "codigo" });
+            req.onsuccess = e => db = e.target.result;
         };
 
         function showScreen(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(id).classList.add('active');
-            window.scrollTo(0,0);
         }
 
-        function handleFiles(e, gridId, type) {
-            Array.from(e.target.files).forEach(f => {
-                const r = new FileReader();
-                r.onload = (ev) => {
-                    current.photos[type].push({ data: ev.target.result, file: f });
-                    const d = document.createElement('div'); d.className='thumb';
-                    d.innerHTML = `<img src="${ev.target.result}">`;
-                    document.getElementById(gridId).appendChild(d);
-                };
-                r.readAsDataURL(f);
-            });
+        function toggleConfig() {
+            const area = document.getElementById('config-area');
+            area.style.display = area.style.display === 'none' ? 'block' : 'none';
         }
 
-        function generate() {
-            const p = current.prod;
-            const data = new Date().toLocaleDateString('pt-BR');
-            const txt = `Cod: ${p.codigo}\n${p.nome}\n${data}\nChegou: ${document.getElementById('chegou').value} ${p.unidade}\nQuebra: ${document.getElementById('quebra').value} ${p.unidade}`;
-            document.getElementById('txt-final').innerText = txt;
-
-            const container = document.getElementById('final-media-container');
-            container.innerHTML = '';
-            const sections = { prod: 'PRODUTO', bal: 'BALANÇA', eti: 'ETIQUETA' };
-
-            for (let key in sections) {
-                if (current.photos[key].length > 0) {
-                    const title = document.createElement('div'); title.className='section-title'; title.innerText = sections[key];
-                    const grid = document.createElement('div'); grid.className='grid';
-                    current.photos[key].forEach(imgObj => {
-                        const d = document.createElement('div'); d.className='thumb';
-                        d.innerHTML = `<img src="${imgObj.data}">`;
-                        const b = document.createElement('button'); b.className='btn-wa'; b.innerText='ENVIAR';
-                        b.onclick = () => shareFile(imgObj.file);
-                        d.appendChild(b); grid.appendChild(d);
-                    });
-                    container.appendChild(title); container.appendChild(grid);
-                }
-            }
-            showScreen('screen-final');
-        }
-
-        async function shareFile(f) {
-            try {
-                if (navigator.share) { await navigator.share({ files: [f] }); }
-                else { alert("Navegador não suporta envio direto."); }
-            } catch (e) { console.log("Compartilhamento cancelado."); }
-        }
-
-        function sendTextWA() {
-            const t = document.getElementById('txt-final').innerText;
-            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(t)}`, '_blank');
+        function saveP() {
+            const p = { codigo: document.getElementById('p-code').value, nome: document.getElementById('p-name').value.toUpperCase(), unidade: document.getElementById('p-unit').value.toUpperCase() };
+            db.transaction("prods", "readwrite").objectStore("prods").put(p);
+            alert("Salvo!"); toggleConfig();
         }
 
         function searchP(q) {
@@ -157,8 +91,7 @@
                     d.innerText = `${p.codigo} - ${p.nome}`;
                     d.onclick = () => {
                         current.prod = p; document.getElementById('detalhe').innerText = p.nome;
-                        document.getElementById('info').classList.remove('hidden');
-                        document.getElementById('btn-next').disabled = false;
+                        document.getElementById('info').style.display='block'; document.getElementById('btn-next').disabled=false;
                         document.getElementById('search').value = p.nome; res.innerHTML = '';
                     };
                     res.appendChild(d);
@@ -166,29 +99,39 @@
             };
         }
 
-        function saveP() {
-            const c = document.getElementById('p-code').value;
-            const n = document.getElementById('p-name').value.toUpperCase();
-            const u = document.getElementById('p-unit').value.toUpperCase();
-            db.transaction("prods", "readwrite").objectStore("prods").put({codigo:c, nome:n, unidade:u});
-            renderP();
+        function handleFiles(e) {
+            Array.from(e.target.files).forEach(f => {
+                const r = new FileReader();
+                r.onload = ev => {
+                    current.photos.push({ data: ev.target.result, file: f });
+                    const d = document.createElement('div'); d.className='thumb';
+                    d.innerHTML = `<img src="${ev.target.result}">`;
+                    document.getElementById('pre-all').appendChild(d);
+                };
+                r.readAsDataURL(f);
+            });
         }
 
-        function renderP() {
-            const l = document.getElementById('p-list'); if(!l) return; l.innerHTML = '';
-            db.transaction("prods").objectStore("prods").getAll().onsuccess = e => {
-                e.target.result.forEach(p => {
-                    const d = document.createElement('div'); d.innerText = `• ${p.nome} (${p.codigo})`; l.appendChild(d);
-                });
-            };
+        function generate() {
+            const p = current.prod;
+            const txt = `Cod: ${p.codigo}\n${p.nome}\n${new Date().toLocaleDateString('pt-BR')}\nChegou: ${document.getElementById('chegou').value} ${p.unidade}\nQuebra: ${document.getElementById('quebra').value} ${p.unidade}`;
+            document.getElementById('txt-final').innerText = txt;
+            
+            const grid = document.getElementById('final-media'); grid.innerHTML = '';
+            current.photos.forEach(img => {
+                const d = document.createElement('div'); d.className='thumb';
+                d.innerHTML = `<img src="${img.data}"><button class="btn-wa" onclick="shareImg(${current.photos.indexOf(img)})">ENVIAR</button>`;
+                grid.appendChild(d);
+            });
+            showScreen('screen-final');
         }
 
-        function startNew() {
-            current = { prod: null, photos: { prod: [], bal: [], eti: [] } };
-            document.querySelectorAll('.grid').forEach(g => g.innerHTML = '');
-            document.getElementById('search').value = '';
-            document.getElementById('info').classList.add('hidden');
-            showScreen('screen-data');
+        function sendText() {
+            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(document.getElementById('txt-final').innerText)}`, '_blank');
+        }
+
+        function shareImg(idx) {
+            if (navigator.share) navigator.share({ files: [current.photos[idx].file] });
         }
 
         init();
