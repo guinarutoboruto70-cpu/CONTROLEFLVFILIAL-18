@@ -30,7 +30,7 @@ h1,h2 { text-align:center; color:#ffcc00; }
 }
 
 .preview img{ width:70px; margin:5px; border-radius:6px; }
-.big img{ width:80px; margin:5px; border-radius:6px; }
+.big img{ width:90px; margin:5px; border-radius:6px; display:block; }
 </style>
 </head>
 
@@ -105,21 +105,19 @@ h1,h2 { text-align:center; color:#ffcc00; }
 
 let fotos = {prod:[],bal:[],eti:[]};
 let banco = [];
+let textoFinal = '';
 
-/* NAV */
 function ir(t){
     document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
     document.getElementById('tela'+t)?.classList.add('active');
 }
 
-/* ADD FOTOS */
 function addFotos(e,tipo){
     const div = document.getElementById('prev_'+tipo);
 
     [...e.target.files].forEach(file=>{
         const url = URL.createObjectURL(file);
-
-        fotos[tipo].push(url);
+        fotos[tipo].push({file,url});
 
         const img = document.createElement('img');
         img.src = url;
@@ -127,14 +125,11 @@ function addFotos(e,tipo){
     });
 }
 
-/* SALVAR */
-let textoFinal = '';
-
 function salvar(){
-    const produto = produtoInput().value;
-    const cod = codInput().value;
-    const chegou = chegouInput().value;
-    const quebra = quebraInput().value;
+    const produto = document.getElementById('produto').value;
+    const cod = document.getElementById('cod').value;
+    const chegou = document.getElementById('chegou').value;
+    const quebra = document.getElementById('quebra').value;
     const data = new Date().toLocaleDateString();
 
     if(!produto || !cod){
@@ -155,13 +150,6 @@ Qtd Quebra: ${quebra}`;
     ir(3);
 }
 
-/* HELPERS */
-function produtoInput(){ return document.getElementById('produto'); }
-function codInput(){ return document.getElementById('cod'); }
-function chegouInput(){ return document.getElementById('chegou'); }
-function quebraInput(){ return document.getElementById('quebra'); }
-
-/* MOSTRAR FOTOS */
 function montarFotos(){
     const div = document.getElementById('fotosEnvio');
     div.innerHTML = '';
@@ -173,28 +161,44 @@ function montarFotos(){
             titulo.innerText = tipo.toUpperCase();
             div.appendChild(titulo);
 
-            fotos[tipo].forEach(url=>{
+            fotos[tipo].forEach(obj=>{
                 const box = document.createElement('div');
                 box.className = 'big';
 
                 const img = document.createElement('img');
-                img.src = url;
+                img.src = obj.url;
+
+                const btn = document.createElement('button');
+                btn.className = 'btn';
+                btn.innerText = 'COMPARTILHAR FOTO';
+                btn.onclick = ()=>compartilhar(obj.file);
 
                 box.appendChild(img);
+                box.appendChild(btn);
+
                 div.appendChild(box);
             });
         }
     });
 }
 
-/* WHATS */
+async function compartilhar(file){
+    try{
+        if(navigator.canShare && navigator.canShare({files:[file]})){
+            await navigator.share({files:[file]});
+        }else{
+            alert("Seu celular não suporta envio direto. Use manualmente.");
+        }
+    }catch{
+        alert("Erro ao compartilhar");
+    }
+}
+
 function enviarTexto(){
     window.open(`https://wa.me/?text=${encodeURIComponent(textoFinal)}`);
 }
 
-/* FINALIZAR */
 function finalizar(){
-
     banco.push({
         texto: textoFinal,
         fotos: JSON.parse(JSON.stringify(fotos))
@@ -208,16 +212,14 @@ function finalizar(){
     ir(7);
 }
 
-/* LIMPAR */
 function limparTela(){
     document.querySelectorAll('.preview').forEach(d=>d.innerHTML='');
-    produtoInput().value = '';
-    codInput().value = '';
-    chegouInput().value = '';
-    quebraInput().value = '';
+    document.getElementById('produto').value = '';
+    document.getElementById('cod').value = '';
+    document.getElementById('chegou').value = '';
+    document.getElementById('quebra').value = '';
 }
 
-/* LISTA */
 function atualizarLista(){
     const div = document.getElementById('lista');
     div.innerHTML = '';
@@ -228,13 +230,12 @@ function atualizarLista(){
 
         const txt = document.createElement('pre');
         txt.innerText = item.texto;
-
         card.appendChild(txt);
 
         ['prod','bal','eti'].forEach(tipo=>{
-            item.fotos[tipo].forEach(url=>{
+            item.fotos[tipo].forEach(obj=>{
                 const img = document.createElement('img');
-                img.src = url;
+                img.src = obj.url;
                 img.style.width = '60px';
                 card.appendChild(img);
             });
