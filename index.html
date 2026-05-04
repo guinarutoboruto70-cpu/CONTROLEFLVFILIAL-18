@@ -5,8 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Controle FLV</title>
 
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
-
 <style>
 body { margin:0; font-family:sans-serif; background:#0a0a0a; color:#fff; }
 .screen { display:none; padding:20px; }
@@ -24,7 +22,7 @@ h1,h2 { text-align:center; color:#ffcc00; }
     font-weight:bold;
 }
 
-input, textarea {
+input, select, textarea {
     width:100%;
     padding:10px;
     margin-top:8px;
@@ -41,9 +39,18 @@ input, textarea {
     border-radius:8px;
 }
 
-.small-btn{ padding:5px; margin-top:5px; border:none; border-radius:5px; }
+.small-btn{
+    padding:5px;
+    margin-top:5px;
+    margin-right:5px;
+    border:none;
+    border-radius:5px;
+}
 .edit{ background:#00c3ff; }
 .del{ background:#ff4444; }
+
+.alerta { color:#ff4444; text-align:center; }
+.ok { color:#00ff88; text-align:center; }
 </style>
 </head>
 
@@ -58,29 +65,59 @@ input, textarea {
 <!-- MENU -->
 <div id="tela1" class="screen">
     <h2>Menu</h2>
-    <button class="btn" onclick="ir(2)">Tratativa</button>
+    <button class="btn" onclick="ir(2)">Nova Tratativa</button>
+    <button class="btn" onclick="ir(4)">Histórico</button>
     <button class="btn" onclick="ir(6)">Produtos</button>
+</div>
+
+<!-- TRATATIVA -->
+<div id="tela2" class="screen">
+    <h2>Tratativa</h2>
+
+    <select id="produtoSelect"></select>
+
+    <input id="produto" placeholder="Produto">
+    <input id="cod" placeholder="Código">
+    <input id="data" type="date">
+
+    <input id="chegou" type="number" placeholder="Chegou">
+    <input id="quebra" type="number" placeholder="Quebra" oninput="calcular()">
+
+    <div id="resultado"></div>
+
+    <button class="btn" onclick="salvar()">Continuar</button>
+    <button class="btn" onclick="ir(1)">Voltar</button>
+</div>
+
+<!-- ENVIO -->
+<div id="tela3" class="screen">
+    <h2>Enviar</h2>
+    <pre id="texto"></pre>
+
+    <button class="btn" onclick="copiar()">COPIAR</button>
+    <button class="btn" onclick="enviar()">WHATSAPP</button>
+    <button class="btn" onclick="finalizar()">FINALIZAR</button>
+</div>
+
+<!-- HISTÓRICO -->
+<div id="tela4" class="screen">
+    <h2>Histórico</h2>
+    <div id="lista"></div>
+    <button class="btn" onclick="ir(1)">Voltar</button>
 </div>
 
 <!-- PRODUTOS -->
 <div id="tela6" class="screen">
-    <h2>Produtos</h2>
+    <h2>Cadastro de Produtos</h2>
 
     <input id="novoCod" placeholder="Código">
-    <input id="novoNome" placeholder="Nome">
-    <button class="btn" onclick="salvarProduto()">Salvar Produto</button>
+    <input id="novoNome" placeholder="Nome do Produto">
 
-    <hr>
+    <button class="btn" onclick="salvarProduto()">SALVAR PRODUTO</button>
 
-    <h3>Importar Lista</h3>
-    <textarea id="importarTexto" rows="6" placeholder="Cole aqui a lista"></textarea>
+    <h3>Importar lista (manual)</h3>
+    <textarea id="importarTexto" rows="5" placeholder="Ex: 1234 TOMATE KG"></textarea>
     <button class="btn" onclick="importarLista()">IMPORTAR</button>
-
-    <hr>
-
-    <h3>Ler Nota (OCR)</h3>
-    <input type="file" accept="image/*" onchange="lerImagem(event)">
-    <p id="status"></p>
 
     <div id="listaProdutos"></div>
 
@@ -89,20 +126,37 @@ input, textarea {
 
 <script>
 
-let produtos = JSON.parse(localStorage.getItem('produtos')) || [];
+let banco = [];
+let produtos = [];
+let atual = {};
 let editando = null;
 
-/* ================= NAV ================= */
-function ir(t){
-    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-    document.getElementById('tela'+t).classList.add('active');
+/* INIT */
+function init(){
+    try {
+        banco = JSON.parse(localStorage.getItem('banco')) || [];
+        produtos = JSON.parse(localStorage.getItem('produtos')) || [];
+    } catch {
+        banco = [];
+        produtos = [];
+    }
+
+    renderProdutos();
+    atualizar();
+    carregarSelect();
 }
 
-/* ================= PRODUTOS ================= */
+/* NAVEGAÇÃO */
+function ir(t){
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    const tela = document.getElementById('tela'+t);
+    if(tela) tela.classList.add('active');
+}
 
+/* PRODUTOS */
 function salvarProduto(){
-    const cod = novoCod.value.trim();
-    const nome = novoNome.value.trim();
+    const cod = document.getElementById('novoCod').value.trim();
+    const nome = document.getElementById('novoNome').value.trim();
 
     if(!cod || !nome){
         alert("Preencha!");
@@ -115,58 +169,22 @@ function salvarProduto(){
             return;
         }
         produtos.push({cod,nome});
-    } else {
+    }else{
         produtos[editando] = {cod,nome};
         editando = null;
     }
 
-    salvar();
+    salvarProdutos();
+    limparCamposProduto();
+    renderProdutos();
+    carregarSelect();
 }
-
-function salvar(){
-    localStorage.setItem('produtos', JSON.stringify(produtos));
-    novoCod.value = '';
-    novoNome.value = '';
-    render();
-}
-
-function render(){
-    listaProdutos.innerHTML = '';
-
-    produtos.sort((a,b)=>a.nome.localeCompare(b.nome));
-
-    produtos.forEach((p,i)=>{
-        listaProdutos.innerHTML += `
-        <div class="card">
-            ${p.cod} - ${p.nome}<br>
-            <button class="small-btn edit" onclick="editar(${i})">Editar</button>
-            <button class="small-btn del" onclick="del(${i})">Excluir</button>
-        </div>`;
-    });
-}
-
-function editar(i){
-    novoCod.value = produtos[i].cod;
-    novoNome.value = produtos[i].nome;
-    editando = i;
-}
-
-function del(i){
-    if(confirm("Excluir?")){
-        produtos.splice(i,1);
-        salvar();
-    }
-}
-
-/* ================= IMPORTAR TEXTO ================= */
 
 function importarLista(){
+    const linhas = document.getElementById('importarTexto').value.split('\n');
 
-    const texto = importarTexto.value.split('\n');
-
-    texto.forEach(linha=>{
+    linhas.forEach(linha=>{
         const match = linha.match(/(\d+)\s+(.*)/);
-
         if(match){
             const cod = match[1];
             const nome = match[2].trim().toUpperCase();
@@ -177,25 +195,164 @@ function importarLista(){
         }
     });
 
-    salvar();
-    importarTexto.value = '';
+    salvarProdutos();
+    renderProdutos();
+    carregarSelect();
+    document.getElementById('importarTexto').value = '';
 }
 
-/* ================= OCR ================= */
+function renderProdutos(){
+    const div = document.getElementById('listaProdutos');
+    if(!div) return;
 
-function lerImagem(e){
+    div.innerHTML = '';
 
-    const file = e.target.files[0];
-    if(!file) return;
+    produtos.sort((a,b)=>a.nome.localeCompare(b.nome));
 
-    status.innerText = "Lendo imagem...";
+    produtos.forEach((p,i)=>{
+        const card = document.createElement('div');
+        card.className = 'card';
 
-    Tesseract.recognize(file, 'por')
-    .then(({ data: { text } }) => {
+        card.innerHTML = `
+        ${p.cod} - ${p.nome}<br>
+        <button class="small-btn edit">Editar</button>
+        <button class="small-btn del">Excluir</button>
+        `;
 
-        status.innerText = "Texto extraído! Confira antes de importar.";
-        importarTexto.value = text;
+        card.querySelector('.edit').onclick = ()=>editar(i);
+        card.querySelector('.del').onclick = ()=>deletar(i);
 
-    })
-    .catch(()=>{
-        status
+        div.appendChild(card);
+    });
+}
+
+function editar(i){
+    document.getElementById('novoCod').value = produtos[i].cod;
+    document.getElementById('novoNome').value = produtos[i].nome;
+    editando = i;
+}
+
+function deletar(i){
+    if(confirm("Excluir produto?")){
+        produtos.splice(i,1);
+        salvarProdutos();
+        renderProdutos();
+        carregarSelect();
+    }
+}
+
+function salvarProdutos(){
+    localStorage.setItem('produtos', JSON.stringify(produtos));
+}
+
+function limparCamposProduto(){
+    document.getElementById('novoCod').value = '';
+    document.getElementById('novoNome').value = '';
+}
+
+/* TRATATIVA */
+function carregarSelect(){
+    const select = document.getElementById('produtoSelect');
+    if(!select) return;
+
+    select.innerHTML = '<option value="">Selecione</option>';
+
+    produtos.forEach(p=>{
+        const op = document.createElement('option');
+        op.value = p.cod;
+        op.textContent = p.nome;
+        select.appendChild(op);
+    });
+
+    select.onchange = ()=>{
+        const cod = select.value;
+        const p = produtos.find(x=>x.cod == cod);
+        if(p){
+            document.getElementById('produto').value = p.nome;
+            document.getElementById('cod').value = p.cod;
+        }
+    };
+}
+
+function calcular(){
+    const c = Number(document.getElementById('chegou').value);
+    const q = Number(document.getElementById('quebra').value);
+
+    if(!c) return;
+
+    const p = ((q/c)*100).toFixed(1);
+
+    const div = document.getElementById('resultado');
+    div.innerHTML = p > 5 ? `<div class="alerta">${p}%</div>` : `<div class="ok">${p}%</div>`;
+}
+
+function salvar(){
+    const produto = document.getElementById('produto').value;
+    const cod = document.getElementById('cod').value;
+
+    if(!produto || !cod){
+        alert("Preencha!");
+        return;
+    }
+
+    const dataInput = document.getElementById('data').value;
+    const data = dataInput ? new Date(dataInput).toLocaleDateString() : new Date().toLocaleDateString();
+
+    const chegou = Number(document.getElementById('chegou').value) || 0;
+    const quebra = Number(document.getElementById('quebra').value) || 0;
+
+    const perc = chegou ? ((quebra/chegou)*100).toFixed(1) : 0;
+
+    atual = {produto,cod,data,chegou,quebra,perc};
+
+    const texto =
+`Cód: ${cod}
+${produto}
+${data}
+Chegou: ${chegou}
+Quebra: ${quebra}
+Perda: ${perc}%`;
+
+    document.getElementById('texto').innerText = texto;
+
+    ir(3);
+}
+
+/* OUTROS */
+function copiar(){
+    navigator.clipboard.writeText(document.getElementById('texto').innerText);
+    alert("Copiado!");
+}
+
+function enviar(){
+    const texto = document.getElementById('texto').innerText;
+    window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`);
+}
+
+function finalizar(){
+    banco.push(atual);
+    localStorage.setItem('banco', JSON.stringify(banco));
+    atualizar();
+    ir(4);
+}
+
+function atualizar(){
+    const lista = document.getElementById('lista');
+    if(!lista) return;
+
+    lista.innerHTML = '';
+
+    banco.forEach(d=>{
+        const div = document.createElement('div');
+        div.className = 'card';
+        div.innerText = `${d.cod} - ${d.produto} (${d.perc}%)`;
+        lista.appendChild(div);
+    });
+}
+
+window.onload = init;
+
+</script>
+
+</body>
+</html>
