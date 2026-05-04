@@ -27,6 +27,7 @@ h1,h2 { text-align:center; color:#ffcc00; }
     padding:10px;
     margin-top:10px;
     border-radius:8px;
+    cursor:pointer;
 }
 
 input {
@@ -35,6 +36,12 @@ input {
     margin-top:8px;
     border-radius:6px;
     border:none;
+}
+
+.lista-box {
+    max-height:300px;
+    overflow:auto;
+    margin-top:10px;
 }
 </style>
 </head>
@@ -96,7 +103,7 @@ input {
 
     <button class="btn" onclick="salvarProduto()">SALVAR</button>
 
-    <div id="listaProdutos"></div>
+    <div class="lista-box" id="listaProdutos"></div>
 
     <button class="btn" onclick="ir(1)">⬅ VOLTAR</button>
 </div>
@@ -115,20 +122,13 @@ function abrirCadastro(){
     ir(8);
 }
 
-/* BASE FLV */
+/* BASE FLV ORDENADA */
 const baseFLV = [
 "Abacate","Abacaxi","Abóbora","Alface","Alho","Banana","Batata",
 "Beterraba","Brócolis","Cebola","Cenoura","Chuchu","Couve",
 "Espinafre","Laranja","Limão","Maçã","Mamão","Melancia",
 "Melão","Pepino","Pimentão","Repolho","Tomate","Uva"
-];
-
-function carregarBase(){
-    if(!localStorage.getItem('produtos')){
-        const lista = baseFLV.map(nome=>({cod:'',nome,custo:''}));
-        localStorage.setItem('produtos', JSON.stringify(lista));
-    }
-}
+].sort();
 
 /* STORAGE */
 function getProdutos(){
@@ -139,24 +139,31 @@ function setProdutos(lista){
     localStorage.setItem('produtos', JSON.stringify(lista));
 }
 
+function carregarBase(){
+    if(!localStorage.getItem('produtos')){
+        const lista = baseFLV.map(nome=>({cod:'',nome,custo:''}));
+        setProdutos(lista);
+    }
+}
+
 /* CADASTRO */
 let editIndex = null;
 
 function salvarProduto(){
     let lista = getProdutos();
 
-    const cod = p_cod.value;
-    const nome = p_nome.value;
-    const custo = p_custo.value;
-
     if(editIndex !== null){
-        lista[editIndex] = {cod,nome,custo};
+        lista[editIndex] = {
+            cod: p_cod.value,
+            nome: p_nome.value,
+            custo: p_custo.value
+        };
         editIndex = null;
     }
 
     setProdutos(lista);
     listarProdutos();
-    limparCampos();
+    limpar();
 }
 
 function editar(i){
@@ -176,31 +183,41 @@ function excluir(i){
     listarProdutos();
 }
 
-function limparCampos(){
+function limpar(){
     p_cod.value='';
     p_nome.value='';
     p_custo.value='';
 }
 
+/* LISTA VISUAL */
 function listarProdutos(){
-    const lista = getProdutos();
+    let lista = getProdutos();
+
     const busca = buscaProduto.value.toLowerCase();
+
+    lista = lista
+        .filter(p=>p.nome.toLowerCase().includes(busca))
+        .sort((a,b)=>a.nome.localeCompare(b.nome));
 
     listaProdutos.innerHTML='';
 
-    lista
-    .filter(p=>p.nome.toLowerCase().includes(busca))
-    .forEach((p,i)=>{
+    lista.forEach((p,i)=>{
         const div = document.createElement('div');
         div.className='card';
 
         div.innerHTML = `
-        ${p.nome} <br>
+        <b>${p.nome}</b><br>
         Cod: ${p.cod || '-'} | Custo: ${p.custo || '-'}
         <br>
-        <button onclick="editar(${i})">Editar</button>
-        <button onclick="excluir(${i})">Excluir</button>
+        <button onclick="event.stopPropagation(); editar(${i})">Editar</button>
+        <button onclick="event.stopPropagation(); excluir(${i})">Excluir</button>
         `;
+
+        div.onclick = ()=>{
+            p_nome.value = p.nome;
+            p_cod.value = p.cod;
+            p_custo.value = p.custo;
+        };
 
         listaProdutos.appendChild(div);
     });
@@ -210,10 +227,10 @@ function listarProdutos(){
 let textoFinal='';
 
 function salvar(){
-    const produto = produtoInput().value;
-    const cod = codInput().value;
-    const chegou = chegouInput().value;
-    const quebra = quebraInput().value;
+    const produto = document.getElementById('produto').value;
+    const cod = document.getElementById('cod').value;
+    const chegou = document.getElementById('chegou').value;
+    const quebra = document.getElementById('quebra').value;
     const data = new Date().toLocaleDateString();
 
     if(!produto || !cod){
@@ -237,11 +254,8 @@ function enviarTexto(){
     window.open(`https://wa.me/?text=${encodeURIComponent(textoFinal)}`);
 }
 
-/* HELPERS */
-function produtoInput(){ return document.getElementById('produto'); }
-function codInput(){ return document.getElementById('cod'); }
-function chegouInput(){ return document.getElementById('chegou'); }
-function quebraInput(){ return document.getElementById('quebra'); }
+/* INIT */
+carregarBase();
 
 </script>
 
