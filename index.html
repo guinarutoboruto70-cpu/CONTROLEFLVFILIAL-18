@@ -22,7 +22,7 @@ h1,h2 { text-align:center; color:#ffcc00; }
     font-weight:bold;
 }
 
-input, select, textarea {
+input {
     width:100%;
     padding:10px;
     margin-top:8px;
@@ -35,61 +35,51 @@ input, select, textarea {
 .card {
     background:#1a1a1a;
     padding:10px;
-    margin-top:10px;
-    border-radius:8px;
+    margin-top:5px;
+    border-radius:6px;
 }
 
-.small-btn{
-    padding:5px;
-    margin-top:5px;
-    margin-right:5px;
-    border:none;
-    border-radius:5px;
-}
+.small-btn{ padding:5px; margin-top:5px; border:none; border-radius:5px; }
 .edit{ background:#00c3ff; }
 .del{ background:#ff4444; }
 
-.alerta { color:#ff4444; text-align:center; }
-.ok { color:#00ff88; text-align:center; }
+.listaBusca{
+    max-height:200px;
+    overflow-y:auto;
+}
 </style>
 </head>
 
 <body>
 
-<!-- HOME -->
 <div id="tela0" class="screen active">
     <h1>Controle FLV</h1>
     <button class="btn" onclick="ir(1)">ENTRAR</button>
 </div>
 
-<!-- MENU -->
 <div id="tela1" class="screen">
     <h2>Menu</h2>
     <button class="btn" onclick="ir(2)">Nova Tratativa</button>
-    <button class="btn" onclick="ir(4)">Histórico</button>
     <button class="btn" onclick="ir(6)">Produtos</button>
 </div>
 
-<!-- TRATATIVA -->
 <div id="tela2" class="screen">
     <h2>Tratativa</h2>
 
-    <select id="produtoSelect"></select>
+    <input id="busca" placeholder="Buscar produto...">
+
+    <div id="resultadoBusca" class="listaBusca"></div>
 
     <input id="produto" placeholder="Produto">
     <input id="cod" placeholder="Código">
-    <input id="data" type="date">
 
     <input id="chegou" type="number" placeholder="Chegou">
-    <input id="quebra" type="number" placeholder="Quebra" oninput="calcular()">
-
-    <div id="resultado"></div>
+    <input id="quebra" type="number" placeholder="Quebra">
 
     <button class="btn" onclick="salvar()">Continuar</button>
     <button class="btn" onclick="ir(1)">Voltar</button>
 </div>
 
-<!-- ENVIO -->
 <div id="tela3" class="screen">
     <h2>Enviar</h2>
     <pre id="texto"></pre>
@@ -99,25 +89,13 @@ input, select, textarea {
     <button class="btn" onclick="finalizar()">FINALIZAR</button>
 </div>
 
-<!-- HISTÓRICO -->
-<div id="tela4" class="screen">
-    <h2>Histórico</h2>
-    <div id="lista"></div>
-    <button class="btn" onclick="ir(1)">Voltar</button>
-</div>
-
-<!-- PRODUTOS -->
 <div id="tela6" class="screen">
-    <h2>Cadastro de Produtos</h2>
+    <h2>Produtos</h2>
 
     <input id="novoCod" placeholder="Código">
     <input id="novoNome" placeholder="Nome do Produto">
 
-    <button class="btn" onclick="salvarProduto()">SALVAR PRODUTO</button>
-
-    <h3>Importar lista (manual)</h3>
-    <textarea id="importarTexto" rows="5" placeholder="Ex: 1234 TOMATE KG"></textarea>
-    <button class="btn" onclick="importarLista()">IMPORTAR</button>
+    <button class="btn" onclick="salvarProduto()">Salvar</button>
 
     <div id="listaProdutos"></div>
 
@@ -126,37 +104,80 @@ input, select, textarea {
 
 <script>
 
-let banco = [];
 let produtos = [];
+let banco = [];
 let atual = {};
 let editando = null;
 
 /* INIT */
 function init(){
-    try {
-        banco = JSON.parse(localStorage.getItem('banco')) || [];
+    try{
         produtos = JSON.parse(localStorage.getItem('produtos')) || [];
-    } catch {
-        banco = [];
+        banco = JSON.parse(localStorage.getItem('banco')) || [];
+    }catch(e){
         produtos = [];
+        banco = [];
     }
 
     renderProdutos();
-    atualizar();
-    carregarSelect();
+    ativarBusca();
 }
 
-/* NAVEGAÇÃO */
+/* NAV */
 function ir(t){
     document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
     const tela = document.getElementById('tela'+t);
     if(tela) tela.classList.add('active');
 }
 
+/* BUSCA */
+function ativarBusca(){
+    const campo = document.getElementById('busca');
+    if(!campo) return;
+
+    campo.addEventListener('input', ()=>{
+        const texto = campo.value.toLowerCase();
+        const div = document.getElementById('resultadoBusca');
+        if(!div) return;
+
+        div.innerHTML = '';
+
+        if(!texto || produtos.length === 0) return;
+
+        const filtrados = produtos.filter(p =>
+            p.nome.toLowerCase().includes(texto)
+        );
+
+        filtrados.slice(0,20).forEach(p=>{
+            const item = document.createElement('div');
+            item.className = 'card';
+            item.innerText = `${p.nome} (${p.cod})`;
+
+            item.onclick = ()=>{
+                const prod = document.getElementById('produto');
+                const cod = document.getElementById('cod');
+
+                if(prod) prod.value = p.nome;
+                if(cod) cod.value = p.cod;
+
+                div.innerHTML = '';
+                campo.value = '';
+            };
+
+            div.appendChild(item);
+        });
+    });
+}
+
 /* PRODUTOS */
 function salvarProduto(){
-    const cod = document.getElementById('novoCod').value.trim();
-    const nome = document.getElementById('novoNome').value.trim();
+    const codInput = document.getElementById('novoCod');
+    const nomeInput = document.getElementById('novoNome');
+
+    if(!codInput || !nomeInput) return;
+
+    const cod = codInput.value.trim();
+    const nome = nomeInput.value.trim().toUpperCase();
 
     if(!cod || !nome){
         alert("Preencha!");
@@ -169,36 +190,15 @@ function salvarProduto(){
             return;
         }
         produtos.push({cod,nome});
-    }else{
+    } else {
         produtos[editando] = {cod,nome};
         editando = null;
     }
 
-    salvarProdutos();
-    limparCamposProduto();
+    localStorage.setItem('produtos', JSON.stringify(produtos));
+    codInput.value = '';
+    nomeInput.value = '';
     renderProdutos();
-    carregarSelect();
-}
-
-function importarLista(){
-    const linhas = document.getElementById('importarTexto').value.split('\n');
-
-    linhas.forEach(linha=>{
-        const match = linha.match(/(\d+)\s+(.*)/);
-        if(match){
-            const cod = match[1];
-            const nome = match[2].trim().toUpperCase();
-
-            if(!produtos.some(p=>p.cod == cod)){
-                produtos.push({cod,nome});
-            }
-        }
-    });
-
-    salvarProdutos();
-    renderProdutos();
-    carregarSelect();
-    document.getElementById('importarTexto').value = '';
 }
 
 function renderProdutos(){
@@ -227,127 +227,74 @@ function renderProdutos(){
 }
 
 function editar(i){
-    document.getElementById('novoCod').value = produtos[i].cod;
-    document.getElementById('novoNome').value = produtos[i].nome;
+    const cod = document.getElementById('novoCod');
+    const nome = document.getElementById('novoNome');
+
+    if(!cod || !nome) return;
+
+    cod.value = produtos[i].cod;
+    nome.value = produtos[i].nome;
     editando = i;
 }
 
 function deletar(i){
     if(confirm("Excluir produto?")){
         produtos.splice(i,1);
-        salvarProdutos();
+        localStorage.setItem('produtos', JSON.stringify(produtos));
         renderProdutos();
-        carregarSelect();
     }
 }
 
-function salvarProdutos(){
-    localStorage.setItem('produtos', JSON.stringify(produtos));
-}
-
-function limparCamposProduto(){
-    document.getElementById('novoCod').value = '';
-    document.getElementById('novoNome').value = '';
-}
-
 /* TRATATIVA */
-function carregarSelect(){
-    const select = document.getElementById('produtoSelect');
-    if(!select) return;
-
-    select.innerHTML = '<option value="">Selecione</option>';
-
-    produtos.forEach(p=>{
-        const op = document.createElement('option');
-        op.value = p.cod;
-        op.textContent = p.nome;
-        select.appendChild(op);
-    });
-
-    select.onchange = ()=>{
-        const cod = select.value;
-        const p = produtos.find(x=>x.cod == cod);
-        if(p){
-            document.getElementById('produto').value = p.nome;
-            document.getElementById('cod').value = p.cod;
-        }
-    };
-}
-
-function calcular(){
-    const c = Number(document.getElementById('chegou').value);
-    const q = Number(document.getElementById('quebra').value);
-
-    if(!c) return;
-
-    const p = ((q/c)*100).toFixed(1);
-
-    const div = document.getElementById('resultado');
-    div.innerHTML = p > 5 ? `<div class="alerta">${p}%</div>` : `<div class="ok">${p}%</div>`;
-}
-
 function salvar(){
-    const produto = document.getElementById('produto').value;
-    const cod = document.getElementById('cod').value;
+    const produto = document.getElementById('produto');
+    const cod = document.getElementById('cod');
 
-    if(!produto || !cod){
+    if(!produto || !cod || !produto.value || !cod.value){
         alert("Preencha!");
         return;
     }
 
-    const dataInput = document.getElementById('data').value;
-    const data = dataInput ? new Date(dataInput).toLocaleDateString() : new Date().toLocaleDateString();
-
-    const chegou = Number(document.getElementById('chegou').value) || 0;
-    const quebra = Number(document.getElementById('quebra').value) || 0;
+    const chegou = Number(document.getElementById('chegou')?.value) || 0;
+    const quebra = Number(document.getElementById('quebra')?.value) || 0;
 
     const perc = chegou ? ((quebra/chegou)*100).toFixed(1) : 0;
 
-    atual = {produto,cod,data,chegou,quebra,perc};
+    atual = {produto:produto.value,cod:cod.value,chegou,quebra,perc};
 
-    const texto =
-`Cód: ${cod}
-${produto}
-${data}
+    const textoEl = document.getElementById('texto');
+    if(textoEl){
+        textoEl.innerText =
+`Cód: ${cod.value}
+${produto.value}
 Chegou: ${chegou}
 Quebra: ${quebra}
 Perda: ${perc}%`;
-
-    document.getElementById('texto').innerText = texto;
+    }
 
     ir(3);
 }
 
 /* OUTROS */
 function copiar(){
-    navigator.clipboard.writeText(document.getElementById('texto').innerText);
-    alert("Copiado!");
+    const texto = document.getElementById('texto')?.innerText;
+    if(texto){
+        navigator.clipboard.writeText(texto);
+        alert("Copiado!");
+    }
 }
 
 function enviar(){
-    const texto = document.getElementById('texto').innerText;
-    window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`);
+    const texto = document.getElementById('texto')?.innerText;
+    if(texto){
+        window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`);
+    }
 }
 
 function finalizar(){
     banco.push(atual);
     localStorage.setItem('banco', JSON.stringify(banco));
-    atualizar();
-    ir(4);
-}
-
-function atualizar(){
-    const lista = document.getElementById('lista');
-    if(!lista) return;
-
-    lista.innerHTML = '';
-
-    banco.forEach(d=>{
-        const div = document.createElement('div');
-        div.className = 'card';
-        div.innerText = `${d.cod} - ${d.produto} (${d.perc}%)`;
-        lista.appendChild(div);
-    });
+    ir(1);
 }
 
 window.onload = init;
