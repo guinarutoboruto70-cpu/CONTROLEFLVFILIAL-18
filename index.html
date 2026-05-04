@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>FLV 1018 - CONTROLE</title>
     <style>
-        :root { --bg: #0a0a0a; --gold: #ffcc00; --card: #1a1a1a; --txt: #ffffff; --green: #25d366; }
+        :root { --bg: #0a0a0a; --gold: #ffcc00; --card: #1a1a1a; --txt: #ffffff; }
         body { margin: 0; font-family: sans-serif; background: var(--bg); color: var(--txt); height: 100vh; overflow: hidden; }
         .app { max-width: 500px; margin: 0 auto; padding: 15px; height: 100%; display: flex; flex-direction: column; box-sizing: border-box; }
         .screen { display: none; flex-direction: column; height: 100%; }
@@ -16,9 +16,9 @@
         .btn { background: var(--gold); color: #000; border: none; padding: 18px; border-radius: 12px; font-weight: bold; width: 100%; cursor: pointer; text-transform: uppercase; margin-top: 10px; }
         input { width: 100%; padding: 15px; background: #222; border: 1px solid #444; border-radius: 10px; color: #fff; font-size: 1.1rem; box-sizing: border-box; margin-bottom: 10px; }
         .list-container { flex-grow: 1; overflow-y: auto; background: #111; border-radius: 10px; border: 1px solid #333; -webkit-overflow-scrolling: touch; }
+        .item-busca { padding: 15px; border-bottom: 1px solid #333; cursor: pointer; background: #1a1a1a; margin-bottom: 5px; border-radius: 8px; }
         .prod-row { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #222; }
         .p-nome { flex: 1; font-weight: bold; text-transform: uppercase; font-size: 0.9rem; }
-        .p-cod { color: var(--gold); font-size: 0.8rem; width: 60px; text-align: right; }
     </style>
 </head>
 <body>
@@ -26,31 +26,27 @@
 <div class="app">
     <div id="step0" class="screen active">
         <h1 style="text-align:center; color:var(--gold); margin: 40px 0;">FLV 1018</h1>
-        <button class="btn" style="height:100px; margin-bottom:20px;" onclick="iniciarTratativa()">🍎 LANÇAR TRATATIVA</button>
+        <button class="btn" style="height:100px; margin-bottom:20px;" onclick="mudarTela(1)">🍎 LANÇAR TRATATIVA</button>
         <button class="btn" style="background:#333; color:white; height:80px;" onclick="abrirCadastro()">➕ PRODUTOS CADASTRADOS</button>
     </div>
 
     <div id="step1" class="screen">
-        <div class="header"><button class="back-btn" onclick="mudarTela(0)">⬅</button><h2>Nova Tratativa</h2></div>
+        <div class="header"><button class="back-btn" onclick="mudarTela(0)">⬅</button><h2>Tratativa</h2></div>
         <div class="card">
-            <input type="text" id="search" placeholder="Buscar produto (Nome ou Cód)..." oninput="filtrar(this.value)">
-            <div id="results" style="max-height: 150px; overflow-y: auto; margin-bottom: 10px;"></div>
-            <div id="dados-prod" style="display:none">
-                <p id="label-nome" style="color:var(--gold); font-weight:bold;"></p>
-                <input type="number" id="qtd-chegou" placeholder="Qtd Chegou" inputmode="decimal">
-                <input type="number" id="qtd-quebra" placeholder="Qtd Quebra" inputmode="decimal">
-                <button class="btn" onclick="alert('Próxima fase: Fotos')">PRÓXIMO: FOTOS</button>
+            <input type="text" id="search" placeholder="Digite nome ou código..." oninput="filtrar(this.value)">
+            <div id="results" style="max-height: 200px; overflow-y: auto;"></div>
+            
+            <div id="dados-prod" style="display:none; margin-top: 20px; border-top: 1px solid #444; padding-top: 15px;">
+                <p style="color:var(--gold); font-size: 1.2rem; margin-bottom: 15px;">Produto: <span id="label-nome"></span></p>
+                <input type="number" id="qtd-chegou" placeholder="Quantidade que Chegou" inputmode="decimal">
+                <input type="number" id="qtd-quebra" placeholder="Quantidade de Quebra" inputmode="decimal">
+                <button class="btn" onclick="alert('Indo para fotos...')">PRÓXIMO: FOTOS</button>
             </div>
         </div>
     </div>
 
     <div id="step4" class="screen">
         <div class="header"><button class="back-btn" onclick="mudarTela(0)">⬅</button><h2>Produtos (A-Z)</h2></div>
-        <div class="card">
-            <input type="number" id="new-cod" placeholder="Código">
-            <input type="text" id="new-nome" placeholder="Nome do Produto">
-            <button class="btn" onclick="salvarProduto()">CADASTRAR NOVO</button>
-        </div>
         <div class="list-container" id="lista-cadastrados"></div>
     </div>
 </div>
@@ -67,27 +63,30 @@
         { cod: "543",  nome: "BANANA TERRA KG", un: "KG" },
         { cod: "681",  nome: "BATATA DOCE KG", un: "KG" },
         { cod: "7714", nome: "BETERRABA KG", un: "KG" },
+        { cod: "8459", nome: "CAQUI BDJ 500G", un: "UN" },
+        { cod: "8461", nome: "CARA KG", un: "KG" },
         { cod: "8572", nome: "CEBOLA KG", un: "KG" },
+        { cod: "8574", nome: "CEBOLA ROXA KG", un: "KG" },
         { cod: "8589", nome: "CENOURA KG", un: "KG" },
+        { cod: "10750", nome: "MAÇA FUJI KG", un: "KG" },
         { cod: "3280", nome: "MAÇA GALA NAC KG", un: "KG" },
+        { cod: "3343", nome: "MAMAO FORMOSA KG", un: "KG" },
         { cod: "3369", nome: "MANGA PALMER KG", un: "KG" },
+        { cod: "1895", nome: "PIMENTAO VERDE KG", un: "KG" },
+        { cod: "1327", nome: "REPOLHO BCO KG", un: "KG" },
+        { cod: "7018", nome: "TOMATE GRAPE 180G", un: "UN" },
         { cod: "7028", nome: "TOMATE KG", un: "KG" }
     ];
 
     const req = indexedDB.open("DB_FLV_1018", 1);
     req.onupgradeneeded = e => e.target.result.createObjectStore("prods", { keyPath: "cod" });
-    req.onsuccess = e => { 
-        db = e.target.result; 
-        verificarCarga();
-    };
+    req.onsuccess = e => { db = e.target.result; verificarCarga(); };
 
     function verificarCarga() {
         const tx = db.transaction("prods", "readwrite");
         const store = tx.objectStore("prods");
         store.count().onsuccess = e => {
-            if (e.target.result === 0) {
-                cargaInicial.forEach(p => store.add(p));
-            }
+            if (e.target.result === 0) cargaInicial.forEach(p => store.add(p));
         };
     }
 
@@ -96,12 +95,7 @@
         document.getElementById('step' + n).classList.add('active');
     }
 
-    function iniciarTratativa() { mudarTela(1); }
-
-    function abrirCadastro() { 
-        mudarTela(4); 
-        listarProdutos();
-    }
+    function abrirCadastro() { mudarTela(4); listarProdutos(); }
 
     function listarProdutos() {
         const area = document.getElementById('lista-cadastrados');
@@ -111,38 +105,33 @@
             lista.forEach(p => {
                 const row = document.createElement('div');
                 row.className = 'prod-row';
-                row.innerHTML = `<span class="p-nome">${p.nome}</span> <span class="p-cod">#${p.cod}</span>`;
+                row.innerHTML = `<span class="p-nome">${p.nome}</span> <span style="color:var(--gold)">#${p.cod}</span>`;
                 area.appendChild(row);
             });
         };
     }
 
-    function salvarProduto() {
-        const c = document.getElementById('new-cod');
-        const n = document.getElementById('new-nome');
-        if(c.value && n.value) {
-            const tx = db.transaction("prods", "readwrite");
-            tx.objectStore("prods").put({cod: c.value, nome: n.value.toUpperCase(), un: "KG"});
-            tx.oncomplete = () => { c.value = ''; n.value = ''; listarProdutos(); };
-        }
-    }
-
     function filtrar(q) {
         const res = document.getElementById('results'); res.innerHTML = '';
-        if(!q) return;
+        if(!q) { document.getElementById('dados-prod').style.display = 'none'; return; }
+        
         db.transaction("prods").objectStore("prods").getAll().onsuccess = e => {
-            e.target.result.filter(p => p.cod.includes(q) || p.nome.includes(q.toUpperCase())).slice(0,5).forEach(p => {
+            const busca = e.target.result.filter(p => p.cod.includes(q) || p.nome.includes(q.toUpperCase()));
+            busca.slice(0, 5).forEach(p => {
                 const d = document.createElement('div');
-                d.style.padding = '15px'; d.style.borderBottom = '1px solid #333';
+                d.className = 'item-busca';
                 d.innerText = `${p.cod} - ${p.nome}`;
-                d.onclick = () => {
-                    document.getElementById('label-nome').innerText = p.nome;
-                    document.getElementById('dados-prod').style.display = 'block';
-                    res.innerHTML = '';
-                };
+                d.onclick = () => selecionarParaTratativa(p);
                 res.appendChild(d);
             });
         };
+    }
+
+    function selecionarParaTratativa(p) {
+        document.getElementById('search').value = p.nome;
+        document.getElementById('results').innerHTML = '';
+        document.getElementById('label-nome').innerText = p.nome;
+        document.getElementById('dados-prod').style.display = 'block';
     }
 </script>
 </body>
