@@ -3,230 +3,187 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FLV 1018 - SISTEMA COMPLETO</title>
+    <title>FLV 1018 - FINAL</title>
     
-    <!-- Configuração para Instalação (PWA) -->
+    <!-- Configuração PWA Integrada -->
     <meta name="theme-color" content="#0a0a0a">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22FLV%201018%22,%22short_name%22:%221018%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22#0a0a0a%22,%22theme_color%22:%22#ffcc00%22,%22icons%22:[{%22src%22:%22https://via.placeholder.com/192/ffcc00/000000?text=1018%22,%22sizes%22:%22192x192%22,%22type%22:%22image/png%22}]}">
+    <link rel="manifest" href="data:application/json;base64,ewogICAgIm5hbWUiOiAiRkxWIDEwMTggLSBPcHBlcmF0aW9uIiwKICAgICJzaG9ydF9uYW1lIjogIkZMVjEwMTgiLAogICAgInN0YXJ0X3VybCI6ICIuIiwKICAgICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLAogICAgImJhY2tncm91bmRfY29sb3IiOiAiIzBhMGEwYSIsCiAgICAidGhlbWVfY29sb3IiOiAiIzBhMGEwYSIKfQ==">
 
     <style>
-        :root { --bg: #0a0a0a; --gold: #ffcc00; --card: #1a1a1a; --txt: #ffffff; --green: #25d366; }
-        body { margin: 0; font-family: sans-serif; background: var(--bg); color: var(--txt); -webkit-tap-highlight-color: transparent; }
-        .app { max-width: 500px; margin: 0 auto; padding: 15px; }
-        .screen { display: none; flex-direction: column; min-height: 90vh; }
+        :root { --bg: #0a0a0a; --gold: #ffcc00; --card: #1a1a1a; --txt: #ffffff; }
+        body { margin: 0; font-family: 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--txt); height: 100vh; overflow: hidden; }
+        
+        .app { max-width: 500px; margin: 0 auto; padding: 15px; height: 100%; display: flex; flex-direction: column; box-sizing: border-box; }
+        .screen { display: none; flex-direction: column; height: 100%; animation: fadeIn 0.3s; }
         .active { display: flex; }
-        .header { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid #333; margin-bottom: 15px; }
-        .back-btn { background: none; border: none; color: var(--gold); font-size: 1.5rem; cursor: pointer; margin-right: 15px; }
-        .card { background: var(--card); border-radius: 15px; padding: 20px; border: 1px solid #333; margin-bottom: 15px; }
-        .btn { background: var(--gold); color: #000; border: none; padding: 18px; border-radius: 12px; font-weight: bold; width: 100%; cursor: pointer; text-transform: uppercase; margin-bottom: 10px; font-size: 0.9rem; transition: 0.2s; }
-        .btn:active { transform: scale(0.98); opacity: 0.8; }
-        input { width: 100%; padding: 15px; background: #222; border: 1px solid #444; border-radius: 10px; color: #fff; font-size: 1.1rem; box-sizing: border-box; margin-bottom: 12px; outline: none; }
-        input:focus { border-color: var(--gold); }
-        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 10px 0; }
-        .thumb { background: #000; aspect-ratio: 1; border-radius: 8px; border: 1px solid #444; overflow: hidden; position: relative; }
-        .thumb img { width: 100%; height: 100%; object-fit: cover; }
-        .list-area { max-height: 350px; overflow-y: auto; background: #111; border-radius: 12px; border: 1px solid #333; margin-top: 10px; }
-        .item-row { display: flex; justify-content: space-between; padding: 15px; border-bottom: 1px solid #222; align-items: center; }
-        #results { background: #111; border-radius: 0 0 10px 10px; border: 1px solid #333; border-top: none; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .header { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid #333; margin-bottom: 15px; flex-shrink: 0; }
+        .back-btn { background: none; border: none; color: var(--gold); font-size: 1.8rem; cursor: pointer; padding-right: 20px; }
+        
+        .btn { background: var(--gold); color: #000; border: none; padding: 18px; border-radius: 12px; font-weight: bold; width: 100%; cursor: pointer; text-transform: uppercase; font-size: 1rem; }
+        .btn-alt { background: #333; color: white; margin-top: 10px; }
+
+        input { width: 100%; padding: 15px; background: #222; border: 1px solid #444; border-radius: 10px; color: #fff; font-size: 1.1rem; box-sizing: border-box; margin-bottom: 10px; }
+        
+        .list-container { flex-grow: 1; overflow-y: auto; background: #111; border-radius: 12px; border: 1px solid #333; -webkit-overflow-scrolling: touch; }
+        .prod-row { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #222; }
+        .p-nome { font-weight: 600; text-transform: uppercase; font-size: 0.85rem; color: #ddd; }
+        .p-cod { color: var(--gold); font-family: monospace; font-weight: bold; }
+
+        .badge { background: #333; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; margin-left: 10px; color: #aaa; }
     </style>
 </head>
 <body>
 
 <div class="app">
-    <!-- MENU INICIAL -->
-    <div id="step-home" class="screen active">
-        <h1 style="text-align:center; color:var(--gold); margin: 40px 0;">FLV 1018</h1>
-        <button class="btn" style="height:120px; font-size: 1.2rem;" onclick="mudarTela('step-tratativa')">🍎 NOVA TRATATIVA</button>
-        <button class="btn" style="background:#333; color:#fff; height:80px;" onclick="abrirCadastro()">📦 GESTÃO DE PRODUTOS</button>
+    <!-- MENU PRINCIPAL -->
+    <div id="step0" class="screen active">
+        <h1 style="text-align:center; color:var(--gold); margin: 50px 0 30px 0; letter-spacing: 2px;">FLV 1018</h1>
+        <button class="btn" style="height:120px; font-size: 1.2rem;" onclick="mudarTela(1)">🍎 INICIAR TRATATIVA</button>
+        <button class="btn btn-alt" style="height:70px;" onclick="abrirCadastro()">📦 BANCO DE PRODUTOS</button>
+        <p id="status-carga" style="text-align:center; font-size:0.7rem; color:#555; margin-top:20px;"></p>
     </div>
 
-    <!-- TELA TRATATIVA -->
-    <div id="step-tratativa" class="screen">
-        <div class="header"><button class="back-btn" onclick="mudarTela('step-home')">⬅</button><h2>Dados</h2></div>
-        <div class="card">
-            <input type="text" id="search" placeholder="Busque por nome ou código..." oninput="filtrar(this.value)">
-            <div id="results"></div>
-            
-            <div id="form-tratativa" style="display:none; margin-top:20px;">
-                <h3 id="label-nome" style="color:var(--gold); text-transform: uppercase; border-left: 4px solid var(--gold); padding-left: 10px;"></h3>
-                <label style="font-size:0.8rem; color:#888;">Qtd que Chegou:</label>
-                <input type="number" id="qtd-chegou" placeholder="0.00" inputmode="decimal">
-                <label style="font-size:0.8rem; color:#888;">Qtd da Quebra:</label>
-                <input type="number" id="qtd-quebra" placeholder="0.00" inputmode="decimal">
-                <button class="btn" onclick="mudarTela('step-fotos')">PRÓXIMO: FOTOS</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- TELA FOTOS -->
-    <div id="step-fotos" class="screen">
-        <div class="header"><button class="back-btn" onclick="mudarTela('step-tratativa')">⬅</button><h2>Fotos</h2></div>
-        <div class="card">
-            <p style="font-size:0.8rem; color:var(--gold); margin-top:0;">PRODUTO (BUSCAR NA GALERIA)</p>
-            <button class="btn" style="background:#444; color:#fff" onclick="fClick('f-prod')">📁 GALERIA PRODUTO</button>
-            <input type="file" id="f-prod" accept="image/*" multiple hidden onchange="preview(this, 'g-prod', 'prod')">
-            <div id="g-prod" class="grid"></div>
-
-            <p style="font-size:0.8rem; color:var(--gold)">BALANÇA (BUSCAR NA GALERIA)</p>
-            <button class="btn" style="background:#444; color:#fff" onclick="fClick('f-bal')">📁 GALERIA BALANÇA</button>
-            <input type="file" id="f-bal" accept="image/*" multiple hidden onchange="preview(this, 'g-bal', 'bal')">
-            <div id="g-bal" class="grid"></div>
-
-            <p style="font-size:0.8rem; color:var(--gold)">ETIQUETA (CÂMERA OU GALERIA)</p>
-            <button class="btn" style="background:#444; color:#fff" onclick="fClick('f-eti')">➕ ESCOLHER FOTO</button>
-            <input type="file" id="f-eti" accept="image/*" hidden onchange="preview(this, 'g-eti', 'eti')">
-            <div id="g-eti" class="grid"></div>
-        </div>
-        <button class="btn" style="background:var(--green); color:#fff;" onclick="gerarRelatorio()">GERAR RELATÓRIO</button>
-    </div>
-
-    <!-- TELA FINAL -->
-    <div id="step-final" class="screen">
-        <div class="header"><button class="back-btn" onclick="mudarTela('step-fotos')">⬅</button><h2>Enviar</h2></div>
-        <div class="card">
-            <div id="txt-final" style="white-space: pre-wrap; background:#000; padding:15px; border-radius:10px; font-family:monospace; border:1px solid #444; margin-bottom:15px; font-size:1.1rem; color:var(--gold);"></div>
-            <button class="btn" style="background:var(--green); color:#fff; height:70px;" onclick="enviarWhatsApp()">🚀 ENVIAR TEXTO NO WHATSAPP</button>
-        </div>
-        <div id="area-fotos"></div>
-        <button class="btn" style="background:none; border:2px solid var(--gold); color:var(--gold); margin-top:20px;" onclick="location.reload()">NOVA TRATATIVA</button>
-    </div>
-
-    <!-- TELA CADASTRO -->
+    <!-- TELA DE CADASTRO / LISTA A-Z -->
     <div id="step-cadastro" class="screen">
-        <div class="header"><button class="back-btn" onclick="mudarTela('step-home')">⬅</button><h2>Cadastro</h2></div>
-        <div class="card">
-            <input type="number" id="new-cod" placeholder="Cód do Produto">
-            <input type="text" id="new-nome" placeholder="Nome Completo">
-            <button class="btn" onclick="salvarProduto()">SALVAR PRODUTO</button>
+        <div class="header">
+            <button class="back-btn" onclick="mudarTela(0)">⬅</button>
+            <h2 style="margin:0;">Produtos</h2>
         </div>
-        <div class="list-area" id="lista-az"></div>
+        
+        <div style="background: var(--card); padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #333;">
+            <input type="number" id="new-cod" placeholder="Código">
+            <input type="text" id="new-nome" placeholder="Nome do Produto">
+            <button class="btn" onclick="salvarNovo()">CADASTRAR NOVO</button>
+        </div>
+
+        <div class="list-container" id="lista-cadastrados"></div>
+    </div>
+
+    <!-- TELA DE TRATATIVA (EM DESENVOLVIMENTO) -->
+    <div id="step1" class="screen">
+        <div class="header"><button class="back-btn" onclick="mudarTela(0)">⬅</button><h2>Nova Tratativa</h2></div>
+        <div style="text-align:center; padding:40px;">
+            <p style="color:var(--gold);">Módulo de lançamento em breve...</p>
+            <button class="btn btn-alt" onclick="mudarTela(0)">VOLTAR</button>
+        </div>
     </div>
 </div>
 
 <script>
-    let db; let selecionado = null; let fotos = { prod: [], bal: [], eti: [] };
-
-    // CARGA INICIAL DAS NOTAS QUE VOCÊ ENVIOU
-    const cargaNotas = [
-        {cod: "538", nome: "BANANA NANICA KG"},
-        {cod: "120", nome: "BATATA DOCE KG"},
-        {cod: "342", nome: "TOMATE LONGA VIDA KG"},
-        {cod: "881", nome: "CEBOLA NACIONAL KG"},
-        {cod: "215", nome: "ALHO ROXO 200G"},
-        {cod: "102", nome: "LARANJA PERA KG"},
-        {cod: "450", nome: "MAMÃO FORMOSA KG"},
-        {cod: "721", nome: "UVA BENITAKA CX"}
+    let db;
+    // LISTA DE 53 PRODUTOS EXTRAÍDOS DAS NOTAS
+    const cargaInicial = [
+        {cod:"1124", nome:"ABACATE KG", un:"KG"}, {cod:"1125", nome:"ABACAXI", un:"UN"},
+        {cod:"1129", nome:"ABOBORA ITALIA KG", un:"KG"}, {cod:"1130", nome:"ABOBORA JAPONESA KG", un:"KG"},
+        {cod:"242", nome:"ALHO KG 5", un:"KG"}, {cod:"744", nome:"AMEIXA BDJ 500G", un:"G"},
+        {cod:"739", nome:"AMEIXA KG", un:"KG"}, {cod:"537", nome:"BANANA MACA KG", un:"KG"},
+        {cod:"538", nome:"BANANA NANICA KG", un:"KG"}, {cod:"541", nome:"BANANA PRATA KG", un:"KG"},
+        {cod:"543", nome:"BANANA TERRA KG", un:"KG"}, {cod:"681", nome:"BATATA DOCE KG", un:"KG"},
+        {cod:"688", nome:"BATATA KG", un:"KG"}, {cod:"7714", nome:"BETERRABA KG", un:"KG"},
+        {cod:"8459", nome:"CAQUI BDJ 500G", un:"G"}, {cod:"8461", nome:"CARA KG", un:"KG"},
+        {cod:"8572", nome:"CEBOLA KG", un:"KG"}, {cod:"8574", nome:"CEBOLA ROXA KG", un:"KG"},
+        {cod:"8589", nome:"CENOURA KG", un:"KG"}, {cod:"7547", nome:"CHUCHU KG", un:"KG"},
+        {cod:"7620", nome:"COCO SECO KG INT", un:"KG"}, {cod:"7622", nome:"COCO VERDE", un:"UN"},
+        {cod:"5022", nome:"GENGIBRE KG", un:"KG"}, {cod:"5213", nome:"INHAME KG", un:"KG"},
+        {cod:"5473", nome:"KIWI BDJ 600G", un:"G"}, {cod:"5558", nome:"LARANJA PERA KG", un:"KG"},
+        {cod:"4362", nome:"LIMAO KG", un:"KG"}, {cod:"10750", nome:"MACA FUJI KG", un:"KG"},
+        {cod:"3280", nome:"MACA GALA NAC KG", un:"KG"}, {cod:"3284", nome:"MACA PCT 1KG", un:"UN"},
+        {cod:"3343", nome:"MAMAO FORMOSA KG", un:"KG"}, {cod:"3346", nome:"MAMAO PAPAYA KG", un:"KG"},
+        {cod:"3369", nome:"MANGA PALMER KG", un:"KG"}, {cod:"3370", nome:"MANGA TOMMY KG", un:"KG"},
+        {cod:"3422", nome:"MARACUJA AZEDO KG", un:"KG"}, {cod:"3560", nome:"MELANCIA KG", un:"KG"},
+        {cod:"3565", nome:"MELAO AMARELO KG", un:"KG"}, {cod:"3582", nome:"MEXERICA PONKAN KG", un:"KG"},
+        {cod:"3585", nome:"MILHO VERDE BDJ 5UN", un:"UN"}, {cod:"1766", nome:"PEPINO COMUM KG", un:"KG"},
+        {cod:"1768", nome:"PEPINO JAPONES KG", un:"KG"}, {cod:"1778", nome:"PERA KG", un:"KG"},
+        {cod:"1895", nome:"PIMENTAO VERDE KG", un:"KG"}, {cod:"1327", nome:"REPOLHO BCO KG", un:"KG"},
+        {cod:"1329", nome:"REPOLHO ROXO KG", un:"KG"}, {cod:"7018", nome:"TOMATE GRAPE 180G", un:"G"},
+        {cod:"7021", nome:"TOMATE GRAPE KG", un:"KG"}, {cod:"7028", nome:"TOMATE KG", un:"KG"},
+        {cod:"7049", nome:"TOMATE MEL TREBESCHI 180G", un:"G"}, {cod:"7090", nome:"UVA PTA 500G S SEMENTE", un:"G"},
+        {cod:"7089", nome:"UVA VERDE 500G S SEMENTE", un:"G"}, {cod:"7088", nome:"UVA VERM 500G S SEMENTE", un:"G"},
+        {cod:"7094", nome:"UVA VITORIA MIMO SELECAO 400G S SEMENTE", un:"G"}
     ];
 
-    const req = indexedDB.open("DB_FLV_1018_MASTER", 1);
-    req.onupgradeneeded = e => e.target.result.createObjectStore("prods", { keyPath: "cod" });
-    req.onsuccess = e => {
+    const request = indexedDB.open("FLV_MASTER_DB", 1);
+    
+    request.onupgradeneeded = e => {
         db = e.target.result;
-        verificarCarga();
+        if (!db.objectStoreNames.contains("produtos")) {
+            db.createObjectStore("produtos", { keyPath: "cod" });
+        }
     };
 
-    function verificarCarga() {
-        const transaction = db.transaction("prods", "readwrite");
-        const store = transaction.objectStore("prods");
-        store.count().onsuccess = e => {
-            if(e.target.result === 0) {
-                cargaNotas.forEach(p => store.put(p));
+    request.onsuccess = e => {
+        db = e.target.result;
+        verificarCargaInicial();
+    };
+
+    function verificarCargaInicial() {
+        const tx = db.transaction("produtos", "readonly");
+        const store = tx.objectStore("produtos");
+        const count = store.count();
+        
+        count.onsuccess = () => {
+            if (count.result === 0) {
+                const txWrite = db.transaction("produtos", "readwrite");
+                const storeWrite = txWrite.objectStore("produtos");
+                cargaInicial.forEach(p => storeWrite.put(p));
+                document.getElementById('status-carga').innerText = "Carga inicial de 53 itens concluída.";
+            } else {
+                document.getElementById('status-carga').innerText = `Base de dados: ${count.result} itens cadastrados.`;
             }
         };
     }
 
-    function mudarTela(id) { 
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); 
-        document.getElementById(id).classList.add('active'); 
-        window.scrollTo(0,0); 
+    function mudarTela(n) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        const target = n === 4 ? 'step-cadastro' : 'step' + n;
+        document.getElementById(target).classList.add('active');
     }
 
-    function abrirCadastro() { mudarTela('step-cadastro'); listarAZ(); }
+    function abrirCadastro() {
+        mudarTela(4);
+        renderizarLista();
+    }
 
-    function listarAZ() {
-        const area = document.getElementById('lista-az'); area.innerHTML = '';
-        db.transaction("prods").objectStore("prods").getAll().onsuccess = e => {
-            e.target.result.sort((a,b) => a.nome.localeCompare(b.nome)).forEach(p => {
-                const row = document.createElement('div'); row.className = 'item-row';
-                row.innerHTML = `<span><b>${p.nome}</b></span><span style="color:#888">#${p.cod}</span>`;
-                area.appendChild(row);
+    function renderizarLista() {
+        const container = document.getElementById('lista-cadastrados');
+        container.innerHTML = '';
+        
+        const tx = db.transaction("produtos", "readonly");
+        tx.objectStore("produtos").getAll().onsuccess = e => {
+            let produtos = e.target.result;
+            // ORDEM ALFABÉTICA
+            produtos.sort((a, b) => a.nome.localeCompare(b.nome));
+            
+            produtos.forEach(p => {
+                const item = document.createElement('div');
+                item.className = 'prod-row';
+                item.innerHTML = `
+                    <div><span class="p-nome">${p.nome}</span><span class="badge">${p.un}</span></div>
+                    <span class="p-cod">#${p.cod}</span>
+                `;
+                container.appendChild(item);
             });
         };
     }
 
-    function salvarProduto() {
-        const c = document.getElementById('new-cod'); const n = document.getElementById('new-nome');
-        if(c.value && n.value) {
-            db.transaction("prods", "readwrite").objectStore("prods").put({cod: c.value, nome: n.value.toUpperCase()});
-            c.value=''; n.value=''; listarAZ();
-            alert("Produto Salvo!");
-        }
-    }
-
-    function filtrar(q) {
-        const res = document.getElementById('results'); res.innerHTML = '';
-        if(!q) return;
-        db.transaction("prods").objectStore("prods").getAll().onsuccess = e => {
-            e.target.result.filter(p => p.cod.includes(q) || p.nome.includes(q.toUpperCase())).slice(0,5).forEach(p => {
-                const d = document.createElement('div'); d.style.padding='15px'; d.style.borderBottom='1px solid #333'; d.innerText = `${p.cod} - ${p.nome}`;
-                d.onclick = () => { 
-                    selecionado = p; 
-                    document.getElementById('label-nome').innerText = p.nome; 
-                    document.getElementById('form-tratativa').style.display='block'; 
-                    res.innerHTML=''; 
-                    document.getElementById('search').value = p.nome;
-                };
-                res.appendChild(d);
-            });
+    function salvarNovo() {
+        const c = document.getElementById('new-cod');
+        const n = document.getElementById('new-nome');
+        if(!c.value || !n.value) return alert("Preencha código e nome!");
+        
+        const tx = db.transaction("produtos", "readwrite");
+        tx.objectStore("produtos").put({
+            cod: c.value,
+            nome: n.value.toUpperCase(),
+            un: "KG" // Padrão
+        });
+        tx.oncomplete = () => {
+            c.value = ''; n.value = '';
+            renderizarLista();
         };
-    }
-
-    function fClick(id) { document.getElementById(id).click(); }
-    
-    function preview(input, gridId, tipo) {
-        Array.from(input.files).forEach(f => {
-            const rd = new FileReader();
-            rd.onload = e => {
-                fotos[tipo].push({ data: e.target.result, file: f });
-                const div = document.createElement('div'); div.className='thumb'; div.innerHTML=`<img src="${e.target.result}">`;
-                document.getElementById(gridId).appendChild(div);
-            };
-            rd.readAsDataURL(f);
-        });
-    }
-
-    function gerarRelatorio() {
-        if(!selecionado) return alert("Selecione um produto!");
-        
-        // FORMATO DE TEXTO QUE VOCÊ PEDIU
-        const txt = `cód:${selecionado.cod}\n${selecionado.nome}\nDATA:${new Date().toLocaleDateString('pt-BR')}\nQtd que Chegou: ${document.getElementById('qtd-chegou').value}\nQtd da Quebra: ${document.getElementById('qtd-quebra').value}`;
-        
-        document.getElementById('txt-final').innerText = txt;
-        const area = document.getElementById('area-fotos'); area.innerHTML = '<h3 style="color:var(--gold); margin:20px 0 10px 0;">ENVIAR FOTOS:</h3>';
-        
-        ['prod', 'bal', 'eti'].forEach(cat => {
-            fotos[cat].forEach((img, i) => {
-                const b = document.createElement('button'); b.className = 'btn'; b.style.background='#444'; b.style.color='#fff';
-                b.innerText = `ENVIAR FOTO ${cat.toUpperCase()} (${i+1})`;
-                b.onclick = () => navigator.share({ files: [img.file] }).catch(() => alert("Use o navegador do celular para enviar fotos"));
-                area.appendChild(b);
-            });
-        });
-        mudarTela('step-final');
-    }
-
-    function enviarWhatsApp() {
-        const t = document.getElementById('txt-final').innerText;
-        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(t)}`);
-    }
-
-    // Registro do Service Worker para permitir Instalação
-    if ('serviceWorker' in navigator) {
-        const sw = `self.addEventListener('install', e => e.waitUntil(caches.open('v1').then(c => c.addAll(['./'])))); self.addEventListener('fetch', e => e.respondWith(caches.match(e.request).then(r => r || fetch(e.request))));`;
-        const b = new Blob([sw], {type: 'text/javascript'});
-        navigator.serviceWorker.register(URL.createObjectURL(b));
     }
 </script>
 </body>
