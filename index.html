@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>FLV 1018 - CONTROLE</title>
+    <title>FLV 1018 - OFICIAL</title>
     <style>
         :root { --bg: #0a0a0a; --gold: #ffcc00; --card: #1a1a1a; --txt: #ffffff; }
         body { margin: 0; font-family: sans-serif; background: var(--bg); color: var(--txt); height: 100vh; overflow: hidden; }
@@ -18,7 +18,7 @@
         input { width: 100%; padding: 15px; background: #222; border: 1px solid #444; border-radius: 10px; color: #fff; font-size: 1.1rem; box-sizing: border-box; margin-bottom: 10px; }
         .list-container { flex-grow: 1; overflow-y: auto; background: #111; border-radius: 10px; border: 1px solid #333; }
         .item-busca { padding: 15px; border-bottom: 1px solid #333; cursor: pointer; background: #1a1a1a; margin-bottom: 5px; border-radius: 8px; font-weight: bold; }
-        .prod-row { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #222; font-size: 0.9rem; }
+        .prod-row { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #222; font-size: 0.85rem; }
     </style>
 </head>
 <body>
@@ -26,57 +26,73 @@
 <div class="app">
     <div id="screen0" class="screen active">
         <h1 style="text-align:center; color:var(--gold); margin: 40px 0;">FLV 1018</h1>
-        <button class="btn" style="height:100px; margin-bottom:20px;" onclick="showScreen(1)">🍎 LANÇAR TRATATIVA</button>
-        <button class="btn" style="background:#333; color:white; height:80px;" onclick="showScreen(4)">➕ PRODUTOS CADASTRADOS</button>
+        <button class="btn" style="height:100px; margin-bottom:20px;" onclick="mudarTela(1)">🍎 LANÇAR TRATATIVA</button>
+        <button class="btn" style="background:#333; color:white; height:80px;" onclick="mudarTela(4)">➕ PRODUTOS CADASTRADOS</button>
     </div>
 
     <div id="screen1" class="screen">
-        <div class="header"><button class="back-btn" onclick="showScreen(0)">⬅</button><h2>Nova Tratativa</h2></div>
-        <div class="card" id="area-pesquisa">
-            <input type="text" id="inputBusca" placeholder="Código ou Nome..." oninput="executarBusca(this.value)">
-            <div id="listaResultados" style="max-height: 250px; overflow-y: auto;"></div>
+        <div class="header"><button class="back-btn" onclick="mudarTela(0)">⬅</button><h2>Tratativa</h2></div>
+        <div class="card" id="area-busca">
+            <input type="text" id="inputBusca" placeholder="Código ou Nome..." oninput="filtrarProdutos(this.value)">
+            <div id="resBusca" style="max-height: 250px; overflow-y: auto;"></div>
         </div>
-        <div class="card" id="area-formulario" style="display:none;">
-            <p style="color:var(--gold); font-weight:bold; margin-bottom:15px;">PRODUTO: <span id="nome-selecionado"></span></p>
-            <input type="number" id="qtd-chegou" placeholder="Qtd Chegou" inputmode="decimal">
-            <input type="number" id="qtd-quebra" placeholder="Qtd Quebra" inputmode="decimal">
-            <button class="btn" onclick="alert('Próxima fase: Sistema de Câmera')">PRÓXIMO: FOTOS</button>
-            <button class="btn" style="background:transparent; color:#888; border:1px solid #444; font-size:0.7rem;" onclick="resetarTratativa()">TROCAR PRODUTO</button>
+        <div class="card" id="area-dados" style="display:none;">
+            <p style="color:var(--gold); font-weight:bold; margin-bottom:15px;">ITEM: <span id="labelNome"></span></p>
+            <input type="number" id="qChegou" placeholder="Qtd Chegou" inputmode="decimal">
+            <input type="number" id="qQuebra" placeholder="Qtd Quebra" inputmode="decimal">
+            <button class="btn" onclick="alert('Próximo: Captura de Fotos')">PRÓXIMO: FOTOS</button>
+            <button class="btn" style="background:transparent; color:#888; border:1px solid #444; font-size:0.7rem;" onclick="cancelarSelecao()">TROCAR PRODUTO</button>
         </div>
     </div>
 
     <div id="screen4" class="screen">
-        <div class="header"><button class="back-btn" onclick="showScreen(0)">⬅</button><h2>Lista (A-Z)</h2></div>
-        <div class="list-container" id="container-lista-geral"></div>
+        <div class="header"><button class="back-btn" onclick="mudarTela(0)">⬅</button><h2>Lista (A-Z)</h2></div>
+        <div class="list-container" id="listaGeral"></div>
     </div>
 </div>
 
 <script>
     let db;
-    const listaProdutos = [
-        { cod: "1124", nome: "ABACATE KG" }, { cod: "1125", nome: "ABACAXI UN" },
-        { cod: "1129", nome: "ABOBORA ITALIA KG" }, { cod: "1133", nome: "ABOBORA MORANGA KG" },
-        { cod: "1135", nome: "ABOBORA CABOTIA KG" }, { cod: "1138", nome: "ABOBRINHA MENINA KG" },
-        { cod: "1141", nome: "ACELGA UN" }, { cod: "1144", nome: "AGRIAO UN" },
-        { cod: "1147", nome: "ALFACE CRESPA UN" }, { cod: "1148", nome: "ALFACE LISA UN" },
-        { cod: "1150", nome: "ALFACE AMERICANA UN" }, { cod: "1155", nome: "ALMEIRAO UN" },
-        { cod: "242",  nome: "ALHO KG" }, { cod: "744",  nome: "AMEIXA BDJ 500G" },
+    // LISTA COMPLETA EXTRAÍDA DAS NOTAS FISCAIS (56 PRODUTOS)
+    const produtosOficiais = [
+        { cod: "1124", nome: "ABACATE KG" }, { cod: "1125", nome: "ABACAXI" },
+        { cod: "1129", nome: "ABOBORA ITALIA KG" }, { cod: "1130", nome: "ABOBORA JAPONESA KG" },
+        { cod: "1133", nome: "ABOBORA MORANGA KG" }, { cod: "1135", nome: "ABOBORA CABOTIA KG" },
+        { cod: "1138", nome: "ABOBRINHA MENINA KG" }, { cod: "1141", nome: "ACELGA UN" },
+        { cod: "1144", nome: "AGRIAO UN" }, { cod: "1147", nome: "ALFACE CRESPA UN" },
+        { cod: "1148", nome: "ALFACE LISA UN" }, { cod: "1150", nome: "ALFACE AMERICANA UN" },
+        { cod: "1155", nome: "ALMEIRAO UN" }, { cod: "242",  nome: "ALHO KG 5" },
+        { cod: "744",  nome: "AMEIXA BDJ 500G" }, { cod: "739",  nome: "AMEIXA KG" },
+        { cod: "537",  nome: "BANANA MACA KG" }, { cod: "538",  nome: "BANANA NANICA KG" },
         { cod: "541",  nome: "BANANA PRATA KG" }, { cod: "543",  nome: "BANANA TERRA KG" },
-        { cod: "538",  nome: "BANANA NANICA KG" }, { cod: "681",  nome: "BATATA DOCE KG" },
-        { cod: "688",  nome: "BATATA INGLESA KG" }, { cod: "7714", nome: "BETERRABA KG" },
-        { cod: "8572", nome: "CEBOLA KG" }, { cod: "8589", nome: "CENOURA KG" },
-        { cod: "2010", nome: "CHUCHU KG" }, { cod: "1111", nome: "COENTRO/SALSA UN" },
-        { cod: "10750", nome: "MAÇA FUJI KG" }, { cod: "3280", nome: "MAÇA GALA KG" },
-        { cod: "3343", nome: "MAMAO FORMOSA KG" }, { cod: "3369", nome: "MANGA PALMER KG" },
-        { cod: "4450", nome: "MILHO VERDE BDJ" }, { cod: "1895", nome: "PIMENTAO VERDE KG" },
-        { cod: "1327", nome: "REPOLHO BRANCO KG" }, { cod: "7028", nome: "TOMATE KG" },
-        { cod: "1025", nome: "VAGEM KG" }
+        { cod: "681",  nome: "BATATA DOCE KG" }, { cod: "688",  nome: "BATATA KG" },
+        { cod: "7714", nome: "BETERRABA KG" }, { cod: "8459", nome: "CAQUI BDJ 500G" },
+        { cod: "8461", nome: "CARA KG" }, { cod: "8572", nome: "CEBOLA KG" },
+        { cod: "8574", nome: "CEBOLA ROXA KG" }, { cod: "8589", nome: "CENOURA KG" },
+        { cod: "7547", nome: "CHUCHU KG" }, { cod: "7620", nome: "COCO SECO KG INT" },
+        { cod: "7622", nome: "COCO VERDE" }, { cod: "1111", nome: "COENTRO/SALSA UN" },
+        { cod: "5213", nome: "INHAME KG" }, { cod: "5222", nome: "GENGIBRE KG" },
+        { cod: "5473", nome: "KIWI BDJ 600G" }, { cod: "5558", nome: "LARANJA PERA KG" },
+        { cod: "4362", nome: "LIMAO KG" }, { cod: "10750", nome: "MACA FUJI KG" },
+        { cod: "3280", nome: "MACA GALA NAC KG" }, { cod: "3284", nome: "MACA PCT 1KG" },
+        { cod: "3343", nome: "MAMAO FORMOSA KG" }, { cod: "3346", nome: "MAMAO PAPAYA KG" },
+        { cod: "3369", nome: "MANGA PALMER KG" }, { cod: "3370", nome: "MANGA TOMMY KG" },
+        { cod: "3422", nome: "MARACUJA AZEDO KG" }, { cod: "3560", nome: "MELANCIA KG" },
+        { cod: "3565", nome: "MELAO AMARELO KG" }, { cod: "3582", nome: "MEXERICA PONKAN KG" },
+        { cod: "3585", nome: "MILHO VERDE BDJ 5UN" }, { cod: "1766", nome: "PEPINO COMUM KG" },
+        { cod: "1768", nome: "PEPINO JAPONES KG" }, { cod: "1327", nome: "REPOLHO BCO KG" },
+        { cod: "1329", nome: "REPOLHO ROXO KG" }, { cod: "1895", nome: "PIMENTAO VERDE KG" },
+        { cod: "7018", nome: "TOMATE GRAPE 180G" }, { cod: "7021", nome: "TOMATE GRAPE KG" },
+        { cod: "7028", nome: "TOMATE KG" }, { cod: "7090", nome: "UVA PTA 500G S SEMENTE" },
+        { cod: "7089", nome: "UVA VERDE 500G S SEMENTE" }, { cod: "7088", nome: "UVA VERM 500G S SEMENTE" },
+        { cod: "7094", nome: "UVA VITORIA MIMO SELECAO 400G S SEMENTE" }
     ];
 
-    const request = indexedDB.open("FLV_CORE_1018", 1);
+    // BANCO NOVO PARA RESETAR TUDO
+    const request = indexedDB.open("FLV_PRO_FINAL_V1", 1);
 
     request.onupgradeneeded = e => {
-        let dbRef = e.target.result;
+        const dbRef = e.target.result;
         if (!dbRef.objectStoreNames.contains("prods")) {
             dbRef.createObjectStore("prods", { keyPath: "cod" });
         }
@@ -84,62 +100,59 @@
 
     request.onsuccess = e => {
         db = e.target.result;
-        let tx = db.transaction("prods", "readwrite");
-        let store = tx.objectStore("prods");
-        listaProdutos.forEach(p => store.put(p));
+        const tx = db.transaction("prods", "readwrite");
+        const store = tx.objectStore("prods");
+        produtosOficiais.forEach(p => store.put(p));
     };
 
-    function showScreen(num) {
+    function mudarTela(id) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        document.getElementById('screen' + num).classList.add('active');
-        if (num === 4) atualizarListaGeral();
-        if (num === 1) resetarTratativa();
+        document.getElementById('screen' + id).classList.add('active');
+        if (id === 4) atualizarListaGeral();
+        if (id === 1) cancelarSelecao();
     }
 
     function atualizarListaGeral() {
-        const box = document.getElementById('container-lista-geral');
-        box.innerHTML = '';
+        const container = document.getElementById('listaGeral');
+        container.innerHTML = '';
         db.transaction("prods").objectStore("prods").getAll().onsuccess = e => {
-            const itens = e.target.result.sort((a, b) => a.nome.localeCompare(b.nome));
-            itens.forEach(p => {
-                const row = document.createElement('div');
-                row.className = 'prod-row';
-                row.innerHTML = `<span>${p.nome}</span><span style="color:var(--gold)">#${p.cod}</span>`;
-                box.appendChild(row);
+            const list = e.target.result.sort((a, b) => a.nome.localeCompare(b.nome));
+            list.forEach(p => {
+                const div = document.createElement('div');
+                div.className = 'prod-row';
+                div.innerHTML = `<span>${p.nome}</span><span style="color:var(--gold)">#${p.cod}</span>`;
+                container.appendChild(div);
             });
         };
     }
 
-    function executarBusca(val) {
-        const res = document.getElementById('listaResultados');
-        res.innerHTML = '';
+    function filtrarProdutos(val) {
+        const resultados = document.getElementById('resBusca');
+        resultados.innerHTML = '';
         if (!val) return;
-
         db.transaction("prods").objectStore("prods").getAll().onsuccess = e => {
-            const filtro = e.target.result.filter(p => 
+            const filtrados = e.target.result.filter(p => 
                 p.cod.includes(val) || p.nome.includes(val.toUpperCase())
             );
-            filtro.slice(0, 10).forEach(p => {
-                const d = document.createElement('div');
-                d.className = 'item-busca';
-                d.innerText = p.cod + " - " + p.nome;
-                d.onclick = () => {
-                    document.getElementById('area-pesquisa').style.display = 'none';
-                    document.getElementById('area-formulario').style.display = 'block';
-                    document.getElementById('nome-selecionado').innerText = p.nome;
+            filtrados.slice(0, 10).forEach(p => {
+                const item = document.createElement('div');
+                item.className = 'item-busca';
+                item.innerText = `${p.cod} - ${p.nome}`;
+                item.onclick = () => {
+                    document.getElementById('area-busca').style.display = 'none';
+                    document.getElementById('area-dados').style.display = 'block';
+                    document.getElementById('labelNome').innerText = p.nome;
                 };
-                res.appendChild(d);
+                resultados.appendChild(item);
             });
         };
     }
 
-    function resetarTratativa() {
-        document.getElementById('area-pesquisa').style.display = 'block';
-        document.getElementById('area-formulario').style.display = 'none';
+    function cancelarSelecao() {
+        document.getElementById('area-busca').style.display = 'block';
+        document.getElementById('area-dados').style.display = 'none';
         document.getElementById('inputBusca').value = '';
-        document.getElementById('listaResultados').innerHTML = '';
-        document.getElementById('qtd-chegou').value = '';
-        document.getElementById('qtd-quebra').value = '';
+        document.getElementById('resBusca').innerHTML = '';
     }
 </script>
 </body>
