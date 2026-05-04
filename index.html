@@ -34,8 +34,8 @@ input, select {
 
 .card { background:#1a1a1a; padding:10px; margin-top:10px; border-radius:10px; }
 
-.alerta { color:#ff4444; font-weight:bold; text-align:center; margin-top:10px; }
-.ok { color:#00ff88; font-weight:bold; text-align:center; margin-top:10px; }
+.alerta { color:#ff4444; font-weight:bold; text-align:center; }
+.ok { color:#00ff88; font-weight:bold; text-align:center; }
 </style>
 </head>
 
@@ -50,11 +50,14 @@ input, select {
     <h2>Menu</h2>
     <button class="btn" onclick="ir(2)">Nova Tratativa</button>
     <button class="btn" onclick="ir(4)">Histórico</button>
-    <button class="btn" onclick="ir(5)">Relatório</button>
 </div>
 
 <div id="tela2" class="screen">
     <h2>Tratativa</h2>
+
+    <select id="produtoSelect" onchange="selecionarProduto()">
+        <option value="">Selecione o produto</option>
+    </select>
 
     <input id="produto" placeholder="Produto">
     <input id="cod" placeholder="Código">
@@ -87,8 +90,8 @@ input, select {
     <h2>Enviar</h2>
     <pre id="texto"></pre>
 
-    <button class="btn" onclick="copiar()">COPIAR TEXTO</button>
-    <button class="btn" onclick="enviar()">ABRIR WHATSAPP</button>
+    <button class="btn" onclick="copiar()">COPIAR</button>
+    <button class="btn" onclick="enviar()">WHATSAPP</button>
     <button class="btn" onclick="finalizar()">FINALIZAR</button>
 </div>
 
@@ -97,15 +100,51 @@ input, select {
     <div id="lista"></div>
 </div>
 
-<div id="tela5" class="screen">
-    <h2>Relatório</h2>
-    <div id="relatorio"></div>
-</div>
-
 <script>
+
+// 📦 BASE DE PRODUTOS (LIMPA E ORDENADA)
+const produtos = [
+{cod:1124,nome:"ABACATE KG"},
+{cod:1125,nome:"ABACAXI"},
+{cod:1129,nome:"ABOBORA ITALIA KG"},
+{cod:441,nome:"BANANA TERRA KG"},
+{cod:651,nome:"BATATA DOCE KG"},
+{cod:658,nome:"BATATA KG"},
+{cod:8572,nome:"CEBOLA KG"},
+{cod:8574,nome:"CENOURA KG"},
+{cod:7622,nome:"COCO VERDE KG"},
+{cod:623,nome:"GENGIBRE KG"},
+{cod:545,nome:"LARANJA PERA KG"},
+{cod:334,nome:"MAMAO FORMOSA KG"},
+{cod:370,nome:"MANGA TOMMY KG"},
+{cod:7166,nome:"PEPINO COMUM KG"},
+{cod:7065,nome:"PIMENTAO VERDE KG"},
+{cod:7018,nome:"TOMATE KG"},
+{cod:7088,nome:"UVA VERM 500G SEMENTE"}
+];
+
+// ordenar
+produtos.sort((a,b)=>a.nome.localeCompare(b.nome));
 
 let banco = JSON.parse(localStorage.getItem('banco')) || [];
 let atual = {};
+
+// montar select
+function carregarProdutos(){
+    const select = document.getElementById('produtoSelect');
+    produtos.forEach(p=>{
+        select.innerHTML += `<option value="${p.cod}">${p.nome}</option>`;
+    });
+}
+
+function selecionarProduto(){
+    const cod = document.getElementById('produtoSelect').value;
+    const p = produtos.find(x=>x.cod == cod);
+    if(p){
+        document.getElementById('produto').value = p.nome;
+        document.getElementById('cod').value = p.cod;
+    }
+}
 
 function ir(t){
     document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
@@ -123,19 +162,18 @@ function calcular(){
     const div = document.getElementById('resultado');
 
     if(perc > 5){
-        div.innerHTML = `<div class="alerta">⚠️ Quebra alta: ${perc}%</div>`;
+        div.innerHTML = `<div class="alerta">⚠️ ${perc}%</div>`;
     } else {
-        div.innerHTML = `<div class="ok">✔ Quebra: ${perc}%</div>`;
+        div.innerHTML = `<div class="ok">✔ ${perc}%</div>`;
     }
 }
 
 function salvar(){
-
     const produto = document.getElementById('produto').value;
     const cod = document.getElementById('cod').value;
 
     if(!produto || !cod){
-        alert("Preencha os campos!");
+        alert("Preencha!");
         return;
     }
 
@@ -147,9 +185,7 @@ function salvar(){
 
     const perc = chegou ? ((quebra/chegou)*100).toFixed(1) : 0;
 
-    atual = {
-        produto, cod, data, chegou, quebra, perc
-    };
+    atual = {produto,cod,data,chegou,quebra,perc};
 
     document.getElementById('texto').innerText =
 `Cód: ${cod}
@@ -186,16 +222,12 @@ function atualizar(){
     banco.forEach(d=>{
         lista.innerHTML += `<div class="card">${d.cod} - ${d.produto} (${d.perc}%)</div>`;
     });
-
-    let total = 0;
-    banco.forEach(d=> total += Number(d.perc));
-
-    document.getElementById('relatorio').innerHTML =
-`Total registros: ${banco.length}<br>
-Média quebra: ${(total/banco.length || 0).toFixed(1)}%`;
 }
 
-window.onload = atualizar;
+window.onload = ()=>{
+    carregarProdutos();
+    atualizar();
+};
 
 </script>
 
