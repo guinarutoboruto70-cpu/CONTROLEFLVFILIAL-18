@@ -65,6 +65,7 @@ input {
     <h2>Menu</h2>
     <button class="btn" onclick="ir(2)">Nova Tratativa</button>
     <button class="btn" onclick="ir(6)">Produtos</button>
+    <button class="btn" onclick="ir(7)">Lista</button>
 </div>
 
 <!-- TRATATIVA -->
@@ -83,20 +84,20 @@ input {
     <!-- FOTOS -->
     <div class="card">
         <p>📸 Produto</p>
-        <input type="file" accept="image/*" multiple onchange="preview(event,'prevProd')">
-        <div id="prevProd" class="preview"></div>
+        <input type="file" accept="image/*" multiple onchange="preview(event,'prod')">
+        <div id="prev_prod" class="preview"></div>
     </div>
 
     <div class="card">
         <p>⚖️ Balança</p>
-        <input type="file" accept="image/*" multiple onchange="preview(event,'prevBal')">
-        <div id="prevBal" class="preview"></div>
+        <input type="file" accept="image/*" multiple onchange="preview(event,'bal')">
+        <div id="prev_bal" class="preview"></div>
     </div>
 
     <div class="card">
         <p>🏷️ Etiqueta</p>
-        <input type="file" accept="image/*" capture="environment" onchange="preview(event,'prevEti')">
-        <div id="prevEti" class="preview"></div>
+        <input type="file" accept="image/*" multiple capture="environment" onchange="preview(event,'eti')">
+        <div id="prev_eti" class="preview"></div>
     </div>
 
     <button class="btn" onclick="salvar()">Continuar</button>
@@ -109,48 +110,28 @@ input {
 
     <pre id="texto"></pre>
 
-    <div id="fotosEnvio"></div>
+    <button class="btn" onclick="enviarTexto()">ENVIAR TEXTO</button>
 
-    <button class="btn" onclick="copiar()">COPIAR TEXTO</button>
-    <button class="btn" onclick="enviar()">WHATSAPP</button>
+    <button class="btn" onclick="alert('Envie as fotos do PRODUTO no WhatsApp')">FOTOS PRODUTO</button>
+    <button class="btn" onclick="alert('Envie as fotos da BALANÇA no WhatsApp')">FOTOS BALANÇA</button>
+    <button class="btn" onclick="alert('Envie a FOTO DA ETIQUETA no WhatsApp')">FOTO ETIQUETA</button>
+
     <button class="btn" onclick="finalizar()">FINALIZAR</button>
 </div>
 
-<!-- PRODUTOS -->
-<div id="tela6" class="screen">
-    <h2>Produtos</h2>
-
-    <input id="novoCod" placeholder="Código">
-    <input id="novoNome" placeholder="Nome do Produto">
-
-    <button class="btn" onclick="salvarProduto()">Salvar</button>
-
-    <div id="listaProdutos"></div>
-
+<!-- LISTA -->
+<div id="tela7" class="screen">
+    <h2>Lista</h2>
+    <div id="lista"></div>
     <button class="btn" onclick="ir(1)">Voltar</button>
 </div>
 
 <script>
 
-let produtos = [];
-let banco = [];
+let produtos = JSON.parse(localStorage.getItem('produtos')) || [];
+let banco = JSON.parse(localStorage.getItem('banco')) || [];
 let atual = {};
-let editando = null;
-let fotos = {prod:[], bal:[], eti:[]};
-
-/* INIT */
-function init(){
-    try{
-        produtos = JSON.parse(localStorage.getItem('produtos')) || [];
-        banco = JSON.parse(localStorage.getItem('banco')) || [];
-    }catch{
-        produtos = [];
-        banco = [];
-    }
-
-    renderProdutos();
-    ativarBusca();
-}
+let fotos = {prod:[],bal:[],eti:[]};
 
 /* NAV */
 function ir(t){
@@ -159,107 +140,48 @@ function ir(t){
 }
 
 /* BUSCA */
-function ativarBusca(){
-    const campo = document.getElementById('busca');
-    if(!campo) return;
-
-    campo.addEventListener('input', ()=>{
-        const texto = campo.value.toLowerCase();
-        const div = document.getElementById('resultadoBusca');
-        if(!div) return;
-
-        div.innerHTML = '';
-
-        if(!texto) return;
-
-        produtos
-        .filter(p=>p.nome.toLowerCase().includes(texto))
-        .slice(0,20)
-        .forEach(p=>{
-            const item = document.createElement('div');
-            item.className = 'card';
-            item.innerText = `${p.nome} (${p.cod})`;
-
-            item.onclick = ()=>{
-                document.getElementById('produto').value = p.nome;
-                document.getElementById('cod').value = p.cod;
-                div.innerHTML = '';
-                campo.value = '';
-            };
-
-            div.appendChild(item);
-        });
-    });
-}
-
-/* FOTOS */
-function preview(e,id){
-    const div = document.getElementById(id);
+document.getElementById('busca')?.addEventListener('input', function(){
+    const texto = this.value.toLowerCase();
+    const div = document.getElementById('resultadoBusca');
     if(!div) return;
 
     div.innerHTML = '';
 
-    const lista = [];
+    produtos.filter(p=>p.nome.toLowerCase().includes(texto))
+    .forEach(p=>{
+        const item = document.createElement('div');
+        item.className = 'card';
+        item.innerText = `${p.nome} (${p.cod})`;
 
-    [...e.target.files].forEach(file=>{
-        const url = URL.createObjectURL(file);
+        item.onclick = ()=>{
+            document.getElementById('produto').value = p.nome;
+            document.getElementById('cod').value = p.cod;
+            div.innerHTML = '';
+        };
+
+        div.appendChild(item);
+    });
+});
+
+/* FOTOS */
+function preview(e,tipo){
+    const div = document.getElementById('prev_'+tipo);
+    if(!div) return;
+
+    div.innerHTML = '';
+    fotos[tipo] = [];
+
+    [...e.target.files].forEach(f=>{
+        const url = URL.createObjectURL(f);
+        fotos[tipo].push(url);
 
         const img = document.createElement('img');
         img.src = url;
-
         div.appendChild(img);
-        lista.push(url);
-    });
-
-    if(id === 'prevProd') fotos.prod = lista;
-    if(id === 'prevBal') fotos.bal = lista;
-    if(id === 'prevEti') fotos.eti = lista;
-}
-
-/* PRODUTOS */
-function salvarProduto(){
-    const cod = document.getElementById('novoCod')?.value.trim();
-    const nome = document.getElementById('novoNome')?.value.trim().toUpperCase();
-
-    if(!cod || !nome){
-        alert("Preencha!");
-        return;
-    }
-
-    if(editando === null){
-        if(produtos.some(p=>p.cod == cod)){
-            alert("Código já existe!");
-            return;
-        }
-        produtos.push({cod,nome});
-    } else {
-        produtos[editando] = {cod,nome};
-        editando = null;
-    }
-
-    localStorage.setItem('produtos', JSON.stringify(produtos));
-    document.getElementById('novoCod').value = '';
-    document.getElementById('novoNome').value = '';
-    renderProdutos();
-}
-
-function renderProdutos(){
-    const div = document.getElementById('listaProdutos');
-    if(!div) return;
-
-    div.innerHTML = '';
-
-    produtos.sort((a,b)=>a.nome.localeCompare(b.nome));
-
-    produtos.forEach((p,i)=>{
-        const card = document.createElement('div');
-        card.className = 'card';
-        card.innerHTML = `${p.cod} - ${p.nome}`;
-        div.appendChild(card);
     });
 }
 
-/* TRATATIVA */
+/* SALVAR */
 function salvar(){
     const produto = document.getElementById('produto')?.value;
     const cod = document.getElementById('cod')?.value;
@@ -269,63 +191,49 @@ function salvar(){
         return;
     }
 
-    const chegou = Number(document.getElementById('chegou')?.value) || 0;
-    const quebra = Number(document.getElementById('quebra')?.value) || 0;
-
+    const chegou = Number(document.getElementById('chegou').value) || 0;
+    const quebra = Number(document.getElementById('quebra').value) || 0;
     const perc = chegou ? ((quebra/chegou)*100).toFixed(1) : 0;
 
-    atual = {produto,cod,chegou,quebra,perc,fotos};
+    atual = {produto,cod,chegou,quebra,perc};
 
-    const texto =
+    document.getElementById('texto').innerText =
 `Cód: ${cod}
 ${produto}
 Chegou: ${chegou}
 Quebra: ${quebra}
 Perda: ${perc}%`;
 
-    document.getElementById('texto').innerText = texto;
-
-    montarFotosEnvio();
-
     ir(3);
 }
 
-/* MOSTRAR FOTOS */
-function montarFotosEnvio(){
-    const div = document.getElementById('fotosEnvio');
-    if(!div) return;
-
-    div.innerHTML = '';
-
-    ['prod','bal','eti'].forEach(tipo=>{
-        if(fotos[tipo].length > 0){
-            div.innerHTML += `<h3>${tipo.toUpperCase()}</h3>`;
-            fotos[tipo].forEach(f=>{
-                div.innerHTML += `<img src="${f}" width="80">`;
-            });
-        }
-    });
-}
-
-/* OUTROS */
-function copiar(){
-    navigator.clipboard.writeText(document.getElementById('texto').innerText);
-    alert("Copiado!");
-}
-
-function enviar(){
+/* ENVIO */
+function enviarTexto(){
     const texto = document.getElementById('texto').innerText;
     window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`);
 }
 
+/* FINALIZAR */
 function finalizar(){
     banco.push(atual);
     localStorage.setItem('banco', JSON.stringify(banco));
-    fotos = {prod:[],bal:[],eti:[]};
-    ir(1);
+    atualizarLista();
+    ir(7);
 }
 
-window.onload = init;
+/* LISTA */
+function atualizarLista(){
+    const div = document.getElementById('lista');
+    if(!div) return;
+
+    div.innerHTML = '';
+
+    banco.forEach(d=>{
+        div.innerHTML += `<div class="card">${d.cod} - ${d.produto} (${d.perc}%)</div>`;
+    });
+}
+
+window.onload = atualizarLista;
 
 </script>
 
