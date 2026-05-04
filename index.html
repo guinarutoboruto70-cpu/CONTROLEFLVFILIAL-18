@@ -22,16 +22,6 @@ h1,h2 { text-align:center; color:#ffcc00; }
     font-weight:bold;
 }
 
-input {
-    width:100%;
-    padding:10px;
-    margin-top:8px;
-    background:#222;
-    border:1px solid #444;
-    color:#fff;
-    border-radius:6px;
-}
-
 .card {
     background:#1a1a1a;
     padding:10px;
@@ -45,35 +35,29 @@ input {
     border-radius:6px;
 }
 
-.listaBusca{
-    max-height:200px;
-    overflow-y:auto;
+.big img{
+    width:100px;
+    margin:5px;
+    border-radius:6px;
 }
 </style>
 </head>
 
 <body>
 
-<!-- HOME -->
 <div id="tela0" class="screen active">
     <h1>Controle FLV</h1>
     <button class="btn" onclick="ir(1)">ENTRAR</button>
 </div>
 
-<!-- MENU -->
 <div id="tela1" class="screen">
     <h2>Menu</h2>
     <button class="btn" onclick="ir(2)">Nova Tratativa</button>
-    <button class="btn" onclick="ir(6)">Produtos</button>
     <button class="btn" onclick="ir(7)">Lista</button>
 </div>
 
-<!-- TRATATIVA -->
 <div id="tela2" class="screen">
     <h2>Tratativa</h2>
-
-    <input id="busca" placeholder="Buscar produto...">
-    <div id="resultadoBusca" class="listaBusca"></div>
 
     <input id="produto" placeholder="Produto">
     <input id="cod" placeholder="Código">
@@ -81,57 +65,49 @@ input {
     <input id="chegou" type="number" placeholder="Chegou">
     <input id="quebra" type="number" placeholder="Quebra">
 
-    <!-- FOTOS -->
     <div class="card">
-        <p>📸 Produto</p>
-        <input type="file" accept="image/*" multiple onchange="preview(event,'prod')">
+        Produto
+        <input type="file" multiple onchange="addFotos(event,'prod')">
         <div id="prev_prod" class="preview"></div>
     </div>
 
     <div class="card">
-        <p>⚖️ Balança</p>
-        <input type="file" accept="image/*" multiple onchange="preview(event,'bal')">
+        Balança
+        <input type="file" multiple onchange="addFotos(event,'bal')">
         <div id="prev_bal" class="preview"></div>
     </div>
 
     <div class="card">
-        <p>🏷️ Etiqueta</p>
-        <input type="file" accept="image/*" multiple capture="environment" onchange="preview(event,'eti')">
+        Etiqueta
+        <input type="file" multiple accept="image/*" capture="environment" onchange="addFotos(event,'eti')">
         <div id="prev_eti" class="preview"></div>
     </div>
 
     <button class="btn" onclick="salvar()">Continuar</button>
-    <button class="btn" onclick="ir(1)">Voltar</button>
 </div>
 
-<!-- ENVIO -->
 <div id="tela3" class="screen">
-    <h2>Enviar</h2>
+    <h2>Envio</h2>
 
     <pre id="texto"></pre>
 
     <button class="btn" onclick="enviarTexto()">ENVIAR TEXTO</button>
 
-    <button class="btn" onclick="alert('Envie as fotos do PRODUTO no WhatsApp')">FOTOS PRODUTO</button>
-    <button class="btn" onclick="alert('Envie as fotos da BALANÇA no WhatsApp')">FOTOS BALANÇA</button>
-    <button class="btn" onclick="alert('Envie a FOTO DA ETIQUETA no WhatsApp')">FOTO ETIQUETA</button>
+    <div id="fotosEnvio"></div>
 
     <button class="btn" onclick="finalizar()">FINALIZAR</button>
 </div>
 
-<!-- LISTA -->
 <div id="tela7" class="screen">
     <h2>Lista</h2>
     <div id="lista"></div>
-    <button class="btn" onclick="ir(1)">Voltar</button>
 </div>
 
 <script>
 
-let produtos = JSON.parse(localStorage.getItem('produtos')) || [];
-let banco = JSON.parse(localStorage.getItem('banco')) || [];
-let atual = {};
 let fotos = {prod:[],bal:[],eti:[]};
+let banco = [];
+let atual = {};
 
 /* NAV */
 function ir(t){
@@ -139,41 +115,15 @@ function ir(t){
     document.getElementById('tela'+t)?.classList.add('active');
 }
 
-/* BUSCA */
-document.getElementById('busca')?.addEventListener('input', function(){
-    const texto = this.value.toLowerCase();
-    const div = document.getElementById('resultadoBusca');
-    if(!div) return;
-
-    div.innerHTML = '';
-
-    produtos.filter(p=>p.nome.toLowerCase().includes(texto))
-    .forEach(p=>{
-        const item = document.createElement('div');
-        item.className = 'card';
-        item.innerText = `${p.nome} (${p.cod})`;
-
-        item.onclick = ()=>{
-            document.getElementById('produto').value = p.nome;
-            document.getElementById('cod').value = p.cod;
-            div.innerHTML = '';
-        };
-
-        div.appendChild(item);
-    });
-});
-
-/* FOTOS */
-function preview(e,tipo){
+/* ADD FOTOS (AGORA SALVA FILE REAL) */
+function addFotos(e,tipo){
     const div = document.getElementById('prev_'+tipo);
     if(!div) return;
 
-    div.innerHTML = '';
-    fotos[tipo] = [];
+    [...e.target.files].forEach(file=>{
+        const url = URL.createObjectURL(file);
 
-    [...e.target.files].forEach(f=>{
-        const url = URL.createObjectURL(f);
-        fotos[tipo].push(url);
+        fotos[tipo].push({file,url});
 
         const img = document.createElement('img');
         img.src = url;
@@ -183,31 +133,73 @@ function preview(e,tipo){
 
 /* SALVAR */
 function salvar(){
-    const produto = document.getElementById('produto')?.value;
-    const cod = document.getElementById('cod')?.value;
+    const produto = document.getElementById('produto').value;
+    const cod = document.getElementById('cod').value;
 
-    if(!produto || !cod){
-        alert("Preencha!");
-        return;
-    }
+    const chegou = Number(document.getElementById('chegou').value)||0;
+    const quebra = Number(document.getElementById('quebra').value)||0;
 
-    const chegou = Number(document.getElementById('chegou').value) || 0;
-    const quebra = Number(document.getElementById('quebra').value) || 0;
     const perc = chegou ? ((quebra/chegou)*100).toFixed(1) : 0;
 
-    atual = {produto,cod,chegou,quebra,perc};
+    atual = {produto,cod,perc};
 
     document.getElementById('texto').innerText =
 `Cód: ${cod}
 ${produto}
-Chegou: ${chegou}
-Quebra: ${quebra}
 Perda: ${perc}%`;
+
+    montarFotos();
 
     ir(3);
 }
 
-/* ENVIO */
+/* MOSTRAR FOTOS */
+function montarFotos(){
+    const div = document.getElementById('fotosEnvio');
+    div.innerHTML = '';
+
+    ['prod','bal','eti'].forEach(tipo=>{
+        if(fotos[tipo].length > 0){
+            div.innerHTML += `<h3>${tipo.toUpperCase()}</h3>`;
+
+            fotos[tipo].forEach(obj=>{
+                const box = document.createElement('div');
+                box.className = 'big';
+
+                const img = document.createElement('img');
+                img.src = obj.url;
+
+                const btn = document.createElement('button');
+                btn.className = 'btn';
+                btn.innerText = 'COMPARTILHAR FOTO';
+                btn.onclick = ()=>compartilhar(obj.file);
+
+                box.appendChild(img);
+                box.appendChild(btn);
+
+                div.appendChild(box);
+            });
+        }
+    });
+}
+
+/* COMPARTILHAR REAL */
+async function compartilhar(file){
+    if(navigator.share){
+        try{
+            await navigator.share({
+                files: [file],
+                title: "Tratativa FLV"
+            });
+        }catch(e){
+            alert("Erro ao compartilhar");
+        }
+    }else{
+        alert("Seu celular não suporta essa função");
+    }
+}
+
+/* TEXTO */
 function enviarTexto(){
     const texto = document.getElementById('texto').innerText;
     window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`);
@@ -216,24 +208,20 @@ function enviarTexto(){
 /* FINALIZAR */
 function finalizar(){
     banco.push(atual);
-    localStorage.setItem('banco', JSON.stringify(banco));
     atualizarLista();
+    fotos = {prod:[],bal:[],eti:[]};
     ir(7);
 }
 
 /* LISTA */
 function atualizarLista(){
     const div = document.getElementById('lista');
-    if(!div) return;
-
     div.innerHTML = '';
 
     banco.forEach(d=>{
         div.innerHTML += `<div class="card">${d.cod} - ${d.produto} (${d.perc}%)</div>`;
     });
 }
-
-window.onload = atualizarLista;
 
 </script>
 
