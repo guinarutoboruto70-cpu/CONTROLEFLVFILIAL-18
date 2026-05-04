@@ -42,13 +42,11 @@ input, select {
 
 <body>
 
-<!-- HOME -->
 <div id="tela0" class="screen active">
     <h1>Controle FLV</h1>
     <button class="btn" onclick="ir(1)">ENTRAR</button>
 </div>
 
-<!-- MENU -->
 <div id="tela1" class="screen">
     <h2>Menu</h2>
     <button class="btn" onclick="ir(2)">Nova Tratativa</button>
@@ -56,21 +54,18 @@ input, select {
     <button class="btn" onclick="abrirListaProdutos()">Cadastro de Produtos</button>
 </div>
 
-<!-- TRATATIVA -->
 <div id="tela2" class="screen">
     <h2>Tratativa</h2>
     <button class="btn" onclick="ir(1)">⬅ VOLTAR</button>
 
     <input id="produto" placeholder="Produto">
     <input id="cod" placeholder="Código">
-
     <input id="chegou" type="number" placeholder="Qtd Chegou">
     <input id="quebra" type="number" placeholder="Qtd Quebra">
 
     <button class="btn" onclick="salvar()">Continuar</button>
 </div>
 
-<!-- ENVIO -->
 <div id="tela3" class="screen">
     <h2>Envio</h2>
     <pre id="texto"></pre>
@@ -78,21 +73,18 @@ input, select {
     <button class="btn" onclick="ir(2)">⬅ VOLTAR</button>
 </div>
 
-<!-- LISTA -->
 <div id="tela7" class="screen">
     <h2>Lista</h2>
     <div id="lista"></div>
     <button class="btn" onclick="ir(1)">⬅ VOLTAR</button>
 </div>
 
-<!-- LISTA PRODUTOS -->
 <div id="tela8" class="screen">
     <h2>Produtos</h2>
     <div id="listaProdutos"></div>
     <button class="btn" onclick="ir(1)">⬅ VOLTAR</button>
 </div>
 
-<!-- EDITAR PRODUTO -->
 <div id="tela9" class="screen">
     <h2>Editar Produto</h2>
 
@@ -111,13 +103,12 @@ input, select {
 
 <script>
 
-/* NAV */
 function ir(t){
     document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
     document.getElementById('tela'+t).classList.add('active');
 }
 
-/* LISTA FLV PROFISSIONAL */
+/* BASE */
 const baseFLV = [
 "Abacate","Abacaxi","Abóbora","Abobrinha","Acerola","Ameixa",
 "Banana Nanica","Banana Prata","Batata Doce","Batata Inglesa",
@@ -138,16 +129,22 @@ function setProdutos(lista){
     localStorage.setItem('produtos', JSON.stringify(lista));
 }
 
+/* CORREÇÃO AQUI */
 function carregarBase(){
-    if(!localStorage.getItem('produtos')){
-        const lista = baseFLV.map(nome=>({
-            nome,
-            cod:'',
-            custo:'',
-            tipo:'KG'
-        }));
-        setProdutos(lista);
-    }
+    let lista = getProdutos();
+
+    baseFLV.forEach(nome=>{
+        if(!lista.find(p=>p.nome === nome)){
+            lista.push({
+                nome,
+                cod:'',
+                custo:'',
+                tipo:'KG'
+            });
+        }
+    });
+
+    setProdutos(lista);
 }
 
 /* LISTA */
@@ -162,9 +159,12 @@ let indexSelecionado = null;
 function renderLista(){
     const lista = getProdutos();
 
-    listaProdutos.innerHTML='';
+    const container = document.getElementById('listaProdutos');
+    container.innerHTML='';
 
-    lista.forEach((p,i)=>{
+    lista
+    .sort((a,b)=>a.nome.localeCompare(b.nome))
+    .forEach((p,i)=>{
         const div = document.createElement('div');
         div.className='card';
         div.innerText = p.nome;
@@ -172,15 +172,15 @@ function renderLista(){
         div.onclick = ()=>{
             indexSelecionado = i;
 
-            p_nome.value = p.nome;
-            p_cod.value = p.cod;
-            p_custo.value = p.custo;
-            p_tipo.value = p.tipo || 'KG';
+            document.getElementById('p_nome').value = p.nome;
+            document.getElementById('p_cod').value = p.cod;
+            document.getElementById('p_custo').value = p.custo;
+            document.getElementById('p_tipo').value = p.tipo || 'KG';
 
             ir(9);
         };
 
-        listaProdutos.appendChild(div);
+        container.appendChild(div);
     });
 }
 
@@ -188,11 +188,13 @@ function renderLista(){
 function salvarProduto(){
     let lista = getProdutos();
 
+    if(indexSelecionado === null) return;
+
     lista[indexSelecionado] = {
-        nome: p_nome.value,
-        cod: p_cod.value,
-        custo: p_custo.value,
-        tipo: p_tipo.value
+        nome: document.getElementById('p_nome').value,
+        cod: document.getElementById('p_cod').value,
+        custo: document.getElementById('p_custo').value,
+        tipo: document.getElementById('p_tipo').value
     };
 
     setProdutos(lista);
@@ -222,7 +224,7 @@ Data: ${data}
 Qtd Chegou: ${chegou}
 Qtd Quebra: ${quebra}`;
 
-    texto.innerText = textoFinal;
+    document.getElementById('texto').innerText = textoFinal;
 
     ir(3);
 }
