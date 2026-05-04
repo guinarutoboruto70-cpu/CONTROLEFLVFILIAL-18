@@ -14,222 +14,75 @@ h1,h2 { text-align:center; color:#ffcc00; }
 
 .btn {
     width:100%;
-    padding:15px;
-    margin-top:10px;
+    padding:12px;
+    margin-top:8px;
     border:none;
-    border-radius:10px;
+    border-radius:8px;
     background:#ffcc00;
     font-weight:bold;
 }
 
 input, select {
     width:100%;
-    padding:12px;
-    margin-top:10px;
+    padding:10px;
+    margin-top:8px;
     background:#222;
     border:1px solid #444;
     color:#fff;
+    border-radius:6px;
+}
+
+.card {
+    background:#1a1a1a;
+    padding:10px;
+    margin-top:10px;
     border-radius:8px;
 }
 
-.card { background:#1a1a1a; padding:10px; margin-top:10px; border-radius:10px; }
+.small-btn{
+    padding:5px;
+    margin-top:5px;
+    margin-right:5px;
+    border:none;
+    border-radius:5px;
+}
+.edit{ background:#00c3ff; }
+.del{ background:#ff4444; }
 
-.alerta { color:#ff4444; font-weight:bold; text-align:center; }
-.ok { color:#00ff88; font-weight:bold; text-align:center; }
+.alerta { color:#ff4444; text-align:center; }
+.ok { color:#00ff88; text-align:center; }
 </style>
 </head>
 
 <body>
 
+<!-- HOME -->
 <div id="tela0" class="screen active">
     <h1>Controle FLV</h1>
     <button class="btn" onclick="ir(1)">ENTRAR</button>
 </div>
 
+<!-- MENU -->
 <div id="tela1" class="screen">
     <h2>Menu</h2>
     <button class="btn" onclick="ir(2)">Nova Tratativa</button>
     <button class="btn" onclick="ir(4)">Histórico</button>
+    <button class="btn" onclick="ir(6)">Produtos</button>
 </div>
 
+<!-- TRATATIVA -->
 <div id="tela2" class="screen">
     <h2>Tratativa</h2>
 
     <select id="produtoSelect" onchange="selecionarProduto()">
-        <option value="">Selecione o produto</option>
+        <option value="">Selecione</option>
     </select>
 
-    <input id="produto" placeholder="Produto">
-    <input id="cod" placeholder="Código">
+    <input id="produto">
+    <input id="cod">
     <input id="data" type="date">
 
-    <div class="card">
-        <p>Chegou</p>
-        <input id="chegou" type="number">
-        <select id="tipoChegou">
-            <option>KG</option>
-            <option>UN</option>
-        </select>
-    </div>
+    <input id="chegou" type="number" placeholder="Chegou">
+    <input id="quebra" type="number" placeholder="Quebra" oninput="calcular()">
 
-    <div class="card">
-        <p>Quebra</p>
-        <input id="quebra" type="number" oninput="calcular()">
-        <select id="tipoQuebra">
-            <option>KG</option>
-            <option>UN</option>
-        </select>
-    </div>
-
-    <div id="resultado"></div>
-
-    <button class="btn" onclick="salvar()">Continuar</button>
-</div>
-
-<div id="tela3" class="screen">
-    <h2>Enviar</h2>
-    <pre id="texto"></pre>
-
-    <button class="btn" onclick="copiar()">COPIAR</button>
-    <button class="btn" onclick="enviar()">WHATSAPP</button>
-    <button class="btn" onclick="finalizar()">FINALIZAR</button>
-</div>
-
-<div id="tela4" class="screen">
-    <h2>Histórico</h2>
-    <div id="lista"></div>
-</div>
-
-<script>
-
-// 📦 BASE DE PRODUTOS (LIMPA E ORDENADA)
-const produtos = [
-{cod:1124,nome:"ABACATE KG"},
-{cod:1125,nome:"ABACAXI"},
-{cod:1129,nome:"ABOBORA ITALIA KG"},
-{cod:441,nome:"BANANA TERRA KG"},
-{cod:651,nome:"BATATA DOCE KG"},
-{cod:658,nome:"BATATA KG"},
-{cod:8572,nome:"CEBOLA KG"},
-{cod:8574,nome:"CENOURA KG"},
-{cod:7622,nome:"COCO VERDE KG"},
-{cod:623,nome:"GENGIBRE KG"},
-{cod:545,nome:"LARANJA PERA KG"},
-{cod:334,nome:"MAMAO FORMOSA KG"},
-{cod:370,nome:"MANGA TOMMY KG"},
-{cod:7166,nome:"PEPINO COMUM KG"},
-{cod:7065,nome:"PIMENTAO VERDE KG"},
-{cod:7018,nome:"TOMATE KG"},
-{cod:7088,nome:"UVA VERM 500G SEMENTE"}
-];
-
-// ordenar
-produtos.sort((a,b)=>a.nome.localeCompare(b.nome));
-
-let banco = JSON.parse(localStorage.getItem('banco')) || [];
-let atual = {};
-
-// montar select
-function carregarProdutos(){
-    const select = document.getElementById('produtoSelect');
-    produtos.forEach(p=>{
-        select.innerHTML += `<option value="${p.cod}">${p.nome}</option>`;
-    });
-}
-
-function selecionarProduto(){
-    const cod = document.getElementById('produtoSelect').value;
-    const p = produtos.find(x=>x.cod == cod);
-    if(p){
-        document.getElementById('produto').value = p.nome;
-        document.getElementById('cod').value = p.cod;
-    }
-}
-
-function ir(t){
-    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-    document.getElementById('tela'+t).classList.add('active');
-}
-
-function calcular(){
-    const chegou = Number(document.getElementById('chegou').value);
-    const quebra = Number(document.getElementById('quebra').value);
-
-    if(!chegou) return;
-
-    const perc = ((quebra / chegou) * 100).toFixed(1);
-
-    const div = document.getElementById('resultado');
-
-    if(perc > 5){
-        div.innerHTML = `<div class="alerta">⚠️ ${perc}%</div>`;
-    } else {
-        div.innerHTML = `<div class="ok">✔ ${perc}%</div>`;
-    }
-}
-
-function salvar(){
-    const produto = document.getElementById('produto').value;
-    const cod = document.getElementById('cod').value;
-
-    if(!produto || !cod){
-        alert("Preencha!");
-        return;
-    }
-
-    const dataInput = document.getElementById('data').value;
-    const data = dataInput ? new Date(dataInput).toLocaleDateString() : new Date().toLocaleDateString();
-
-    const chegou = Number(document.getElementById('chegou').value);
-    const quebra = Number(document.getElementById('quebra').value);
-
-    const perc = chegou ? ((quebra/chegou)*100).toFixed(1) : 0;
-
-    atual = {produto,cod,data,chegou,quebra,perc};
-
-    document.getElementById('texto').innerText =
-`Cód: ${cod}
-${produto}
-${data}
-Chegou: ${chegou}
-Quebra: ${quebra}
-Perda: ${perc}%`;
-
-    ir(3);
-}
-
-function copiar(){
-    navigator.clipboard.writeText(document.getElementById('texto').innerText);
-    alert("Copiado!");
-}
-
-function enviar(){
-    const texto = document.getElementById('texto').innerText;
-    window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`);
-}
-
-function finalizar(){
-    banco.push(atual);
-    localStorage.setItem('banco', JSON.stringify(banco));
-    atualizar();
-    ir(4);
-}
-
-function atualizar(){
-    const lista = document.getElementById('lista');
-    lista.innerHTML = '';
-
-    banco.forEach(d=>{
-        lista.innerHTML += `<div class="card">${d.cod} - ${d.produto} (${d.perc}%)</div>`;
-    });
-}
-
-window.onload = ()=>{
-    carregarProdutos();
-    atualizar();
-};
-
-</script>
-
-</body>
-</html>
+    <div id="resultado
