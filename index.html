@@ -1,67 +1,149 @@
-let db;
-const cargaInicial = [
-    { cod: "1124", nome: "ABACATE KG", un: "KG" },
-    { cod: "1125", nome: "ABACAXI", un: "UN" },
-    { cod: "1129", nome: "ABOBORA ITALIA KG", un: "KG" },
-    { cod: "242",  nome: "ALHO KG 5", un: "KG" },
-    { cod: "744",  nome: "AMEIXA BDJ 500G", un: "UN" },
-    { cod: "541",  nome: "BANANA PRATA KG", un: "KG" },
-    { cod: "543",  nome: "BANANA TERRA KG", un: "KG" },
-    { cod: "681",  nome: "BATATA DOCE KG", un: "KG" },
-    { cod: "7714", nome: "BETERRABA KG", un: "KG" },
-    { cod: "8459", nome: "CAQUI BDJ 500G", un: "UN" },
-    { cod: "8572", nome: "CEBOLA KG", un: "KG" },
-    { cod: "8589", nome: "CENOURA KG", un: "KG" },
-    { cod: "3280", nome: "MAÇA GALA NAC KG", un: "KG" },
-    { cod: "3369", nome: "MANGA PALMER KG", un: "KG" },
-    { cod: "7028", nome: "TOMATE KG", un: "KG" }
-];
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FLV 1018 - CONTROLE</title>
+    <style>
+        :root { --bg: #0a0a0a; --gold: #ffcc00; --card: #1a1a1a; --txt: #ffffff; --green: #25d366; }
+        body { margin: 0; font-family: sans-serif; background: var(--bg); color: var(--txt); height: 100vh; overflow: hidden; }
+        .app { max-width: 500px; margin: 0 auto; padding: 15px; height: 100%; display: flex; flex-direction: column; box-sizing: border-box; }
+        .screen { display: none; flex-direction: column; height: 100%; }
+        .active { display: flex; }
+        .header { display: flex; align-items: center; padding-bottom: 10px; border-bottom: 1px solid #333; margin-bottom: 10px; flex-shrink: 0; }
+        .back-btn { background: none; border: none; color: var(--gold); font-size: 1.8rem; cursor: pointer; padding-right: 20px; }
+        .card { background: var(--card); border-radius: 15px; padding: 15px; border: 1px solid #333; margin-bottom: 10px; flex-shrink: 0; }
+        .btn { background: var(--gold); color: #000; border: none; padding: 18px; border-radius: 12px; font-weight: bold; width: 100%; cursor: pointer; text-transform: uppercase; margin-top: 10px; }
+        input { width: 100%; padding: 15px; background: #222; border: 1px solid #444; border-radius: 10px; color: #fff; font-size: 1.1rem; box-sizing: border-box; margin-bottom: 10px; }
+        .list-container { flex-grow: 1; overflow-y: auto; background: #111; border-radius: 10px; border: 1px solid #333; -webkit-overflow-scrolling: touch; }
+        .prod-row { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #222; }
+        .p-nome { flex: 1; font-weight: bold; text-transform: uppercase; font-size: 0.9rem; }
+        .p-cod { color: var(--gold); font-size: 0.8rem; width: 60px; text-align: right; }
+    </style>
+</head>
+<body>
 
-// Inicia o Banco de Dados
-const request = indexedDB.open("DB_FLV_1018", 1);
+<div class="app">
+    <div id="step0" class="screen active">
+        <h1 style="text-align:center; color:var(--gold); margin: 40px 0;">FLV 1018</h1>
+        <button class="btn" style="height:100px; margin-bottom:20px;" onclick="iniciarTratativa()">🍎 LANÇAR TRATATIVA</button>
+        <button class="btn" style="background:#333; color:white; height:80px;" onclick="abrirCadastro()">➕ PRODUTOS CADASTRADOS</button>
+    </div>
 
-request.onupgradeneeded = (e) => {
-    db = e.target.result;
-    if (!db.objectStoreNames.contains("prods")) {
-        db.createObjectStore("prods", { keyPath: "cod" });
-    }
-};
+    <div id="step1" class="screen">
+        <div class="header"><button class="back-btn" onclick="mudarTela(0)">⬅</button><h2>Nova Tratativa</h2></div>
+        <div class="card">
+            <input type="text" id="search" placeholder="Buscar produto (Nome ou Cód)..." oninput="filtrar(this.value)">
+            <div id="results" style="max-height: 150px; overflow-y: auto; margin-bottom: 10px;"></div>
+            <div id="dados-prod" style="display:none">
+                <p id="label-nome" style="color:var(--gold); font-weight:bold;"></p>
+                <input type="number" id="qtd-chegou" placeholder="Qtd Chegou" inputmode="decimal">
+                <input type="number" id="qtd-quebra" placeholder="Qtd Quebra" inputmode="decimal">
+                <button class="btn" onclick="alert('Próxima fase: Fotos')">PRÓXIMO: FOTOS</button>
+            </div>
+        </div>
+    </div>
 
-request.onsuccess = (e) => {
-    db = e.target.result;
-    console.log("Banco de dados pronto");
-    verificarCargaInicial(); // Verifica se precisa inserir os produtos das notas
-};
+    <div id="step4" class="screen">
+        <div class="header"><button class="back-btn" onclick="mudarTela(0)">⬅</button><h2>Produtos (A-Z)</h2></div>
+        <div class="card">
+            <input type="number" id="new-cod" placeholder="Código">
+            <input type="text" id="new-nome" placeholder="Nome do Produto">
+            <button class="btn" onclick="salvarProduto()">CADASTRAR NOVO</button>
+        </div>
+        <div class="list-container" id="lista-cadastrados"></div>
+    </div>
+</div>
 
-function verificarCargaInicial() {
-    const tx = db.transaction("prods", "readwrite");
-    const store = tx.objectStore("prods");
-    
-    store.count().onsuccess = (e) => {
-        if (e.target.result === 0) {
-            cargaInicial.forEach(p => store.add(p));
-            console.log("Carga inicial das notas fiscais concluída!");
-        }
+<script>
+    let db;
+    const cargaInicial = [
+        { cod: "1124", nome: "ABACATE KG", un: "KG" },
+        { cod: "1125", nome: "ABACAXI", un: "UN" },
+        { cod: "1129", nome: "ABOBORA ITALIA KG", un: "KG" },
+        { cod: "242",  nome: "ALHO KG 5", un: "KG" },
+        { cod: "744",  nome: "AMEIXA BDJ 500G", un: "UN" },
+        { cod: "541",  nome: "BANANA PRATA KG", un: "KG" },
+        { cod: "543",  nome: "BANANA TERRA KG", un: "KG" },
+        { cod: "681",  nome: "BATATA DOCE KG", un: "KG" },
+        { cod: "7714", nome: "BETERRABA KG", un: "KG" },
+        { cod: "8572", nome: "CEBOLA KG", un: "KG" },
+        { cod: "8589", nome: "CENOURA KG", un: "KG" },
+        { cod: "3280", nome: "MAÇA GALA NAC KG", un: "KG" },
+        { cod: "3369", nome: "MANGA PALMER KG", un: "KG" },
+        { cod: "7028", nome: "TOMATE KG", un: "KG" }
+    ];
+
+    const req = indexedDB.open("DB_FLV_1018", 1);
+    req.onupgradeneeded = e => e.target.result.createObjectStore("prods", { keyPath: "cod" });
+    req.onsuccess = e => { 
+        db = e.target.result; 
+        verificarCarga();
     };
-}
 
-// Função para mudar de tela (Resolve o erro do "Carregando...")
-function mudarTela(id) {
-    // Esconde todas as telas
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    
-    // Mostra a tela desejada
-    const telaDestino = document.getElementById('step' + id) || document.getElementById('step-' + id);
-    if (telaDestino) {
-        telaDestino.classList.add('active');
-    } else {
-        // Fallback caso o ID seja texto (ex: 'cadastro')
-        document.getElementById('step-cadastro').classList.add('active');
+    function verificarCarga() {
+        const tx = db.transaction("prods", "readwrite");
+        const store = tx.objectStore("prods");
+        store.count().onsuccess = e => {
+            if (e.target.result === 0) {
+                cargaInicial.forEach(p => store.add(p));
+            }
+        };
     }
-}
 
-// Função específica para abrir a Tratativa
-function iniciarTratativa() {
-    mudarTela(1); // Assume que a tela de tratativa é o step1
-    // Aqui você pode adicionar a lógica para limpar os campos da tratativa anterior
-}
+    function mudarTela(n) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById('step' + n).classList.add('active');
+    }
+
+    function iniciarTratativa() { mudarTela(1); }
+
+    function abrirCadastro() { 
+        mudarTela(4); 
+        listarProdutos();
+    }
+
+    function listarProdutos() {
+        const area = document.getElementById('lista-cadastrados');
+        area.innerHTML = '';
+        db.transaction("prods").objectStore("prods").getAll().onsuccess = e => {
+            const lista = e.target.result.sort((a, b) => a.nome.localeCompare(b.nome));
+            lista.forEach(p => {
+                const row = document.createElement('div');
+                row.className = 'prod-row';
+                row.innerHTML = `<span class="p-nome">${p.nome}</span> <span class="p-cod">#${p.cod}</span>`;
+                area.appendChild(row);
+            });
+        };
+    }
+
+    function salvarProduto() {
+        const c = document.getElementById('new-cod');
+        const n = document.getElementById('new-nome');
+        if(c.value && n.value) {
+            const tx = db.transaction("prods", "readwrite");
+            tx.objectStore("prods").put({cod: c.value, nome: n.value.toUpperCase(), un: "KG"});
+            tx.oncomplete = () => { c.value = ''; n.value = ''; listarProdutos(); };
+        }
+    }
+
+    function filtrar(q) {
+        const res = document.getElementById('results'); res.innerHTML = '';
+        if(!q) return;
+        db.transaction("prods").objectStore("prods").getAll().onsuccess = e => {
+            e.target.result.filter(p => p.cod.includes(q) || p.nome.includes(q.toUpperCase())).slice(0,5).forEach(p => {
+                const d = document.createElement('div');
+                d.style.padding = '15px'; d.style.borderBottom = '1px solid #333';
+                d.innerText = `${p.cod} - ${p.nome}`;
+                d.onclick = () => {
+                    document.getElementById('label-nome').innerText = p.nome;
+                    document.getElementById('dados-prod').style.display = 'block';
+                    res.innerHTML = '';
+                };
+                res.appendChild(d);
+            });
+        };
+    }
+</script>
+</body>
+</html>
