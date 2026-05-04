@@ -3,78 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FLV 1018 - FINAL</title>
+    <title>FLV 1018</title>
     
-    <!-- Configuração PWA Integrada -->
+    <!-- Referência aos arquivos que já estão no seu Git -->
+    <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0a0a0a">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <link rel="manifest" href="data:application/json;base64,ewogICAgIm5hbWUiOiAiRkxWIDEwMTggLSBPcHBlcmF0aW9uIiwKICAgICJzaG9ydF9uYW1lIjogIkZMVjEwMTgiLAogICAgInN0YXJ0X3VybCI6ICIuIiwKICAgICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLAogICAgImJhY2tncm91bmRfY29sb3IiOiAiIzBhMGEwYSIsCiAgICAidGhlbWVfY29sb3IiOiAiIzBhMGEwYSIKfQ==">
 
     <style>
         :root { --bg: #0a0a0a; --gold: #ffcc00; --card: #1a1a1a; --txt: #ffffff; }
-        body { margin: 0; font-family: 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--txt); height: 100vh; overflow: hidden; }
-        
-        .app { max-width: 500px; margin: 0 auto; padding: 15px; height: 100%; display: flex; flex-direction: column; box-sizing: border-box; }
-        .screen { display: none; flex-direction: column; height: 100%; animation: fadeIn 0.3s; }
+        body { margin: 0; font-family: sans-serif; background: var(--bg); color: var(--txt); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        .app { flex: 1; display: flex; flex-direction: column; padding: 15px; max-width: 500px; margin: 0 auto; width: 100%; box-sizing: border-box; }
+        .screen { display: none; flex-direction: column; height: 100%; }
         .active { display: flex; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-        .header { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid #333; margin-bottom: 15px; flex-shrink: 0; }
-        .back-btn { background: none; border: none; color: var(--gold); font-size: 1.8rem; cursor: pointer; padding-right: 20px; }
-        
-        .btn { background: var(--gold); color: #000; border: none; padding: 18px; border-radius: 12px; font-weight: bold; width: 100%; cursor: pointer; text-transform: uppercase; font-size: 1rem; }
-        .btn-alt { background: #333; color: white; margin-top: 10px; }
-
-        input { width: 100%; padding: 15px; background: #222; border: 1px solid #444; border-radius: 10px; color: #fff; font-size: 1.1rem; box-sizing: border-box; margin-bottom: 10px; }
-        
-        .list-container { flex-grow: 1; overflow-y: auto; background: #111; border-radius: 12px; border: 1px solid #333; -webkit-overflow-scrolling: touch; }
-        .prod-row { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #222; }
-        .p-nome { font-weight: 600; text-transform: uppercase; font-size: 0.85rem; color: #ddd; }
-        .p-cod { color: var(--gold); font-family: monospace; font-weight: bold; }
-
-        .badge { background: #333; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; margin-left: 10px; color: #aaa; }
+        .header { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid #333; margin-bottom: 15px; }
+        .back-btn { background: none; border: none; color: var(--gold); font-size: 1.5rem; cursor: pointer; padding-right: 15px; }
+        .btn { background: var(--gold); color: #000; border: none; padding: 15px; border-radius: 8px; font-weight: bold; width: 100%; cursor: pointer; text-transform: uppercase; margin-bottom: 10px; }
+        .btn-alt { background: #333; color: white; }
+        input { width: 100%; padding: 12px; background: #222; border: 1px solid #444; border-radius: 8px; color: #fff; margin-bottom: 10px; box-sizing: border-box; }
+        .list-container { flex: 1; overflow-y: auto; background: #111; border-radius: 8px; border: 1px solid #333; }
+        .prod-row { display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid #222; font-size: 0.9rem; }
+        .p-nome { font-weight: bold; color: #ddd; }
+        .p-cod { color: var(--gold); font-family: monospace; }
     </style>
 </head>
 <body>
 
 <div class="app">
-    <!-- MENU PRINCIPAL -->
+    <!-- MENU -->
     <div id="step0" class="screen active">
-        <h1 style="text-align:center; color:var(--gold); margin: 50px 0 30px 0; letter-spacing: 2px;">FLV 1018</h1>
-        <button class="btn" style="height:120px; font-size: 1.2rem;" onclick="mudarTela(1)">🍎 INICIAR TRATATIVA</button>
-        <button class="btn btn-alt" style="height:70px;" onclick="abrirCadastro()">📦 BANCO DE PRODUTOS</button>
-        <p id="status-carga" style="text-align:center; font-size:0.7rem; color:#555; margin-top:20px;"></p>
+        <h1 style="text-align:center; color:var(--gold);">FLV 1018</h1>
+        <button class="btn" style="height:100px;" onclick="mudarTela(1)">🍎 LANÇAR TRATATIVA</button>
+        <button class="btn btn-alt" onclick="mudarTela('cadastro')">📦 PRODUTOS (A-Z)</button>
     </div>
 
-    <!-- TELA DE CADASTRO / LISTA A-Z -->
+    <!-- LISTA/CADASTRO -->
     <div id="step-cadastro" class="screen">
-        <div class="header">
-            <button class="back-btn" onclick="mudarTela(0)">⬅</button>
-            <h2 style="margin:0;">Produtos</h2>
-        </div>
-        
-        <div style="background: var(--card); padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #333;">
-            <input type="number" id="new-cod" placeholder="Código">
+        <div class="header"><button class="back-btn" onclick="mudarTela(0)">⬅</button><h2>Produtos</h2></div>
+        <div style="margin-bottom:15px;">
+            <input type="number" id="new-cod" placeholder="Cód">
             <input type="text" id="new-nome" placeholder="Nome do Produto">
-            <button class="btn" onclick="salvarNovo()">CADASTRAR NOVO</button>
+            <button class="btn" onclick="salvarNovo()">CADASTRAR</button>
         </div>
-
         <div class="list-container" id="lista-cadastrados"></div>
     </div>
 
-    <!-- TELA DE TRATATIVA (EM DESENVOLVIMENTO) -->
+    <!-- TRATATIVA -->
     <div id="step1" class="screen">
         <div class="header"><button class="back-btn" onclick="mudarTela(0)">⬅</button><h2>Nova Tratativa</h2></div>
-        <div style="text-align:center; padding:40px;">
-            <p style="color:var(--gold);">Módulo de lançamento em breve...</p>
-            <button class="btn btn-alt" onclick="mudarTela(0)">VOLTAR</button>
-        </div>
+        <p style="text-align:center; color:#666;">Módulo de lançamento em breve...</p>
     </div>
 </div>
 
 <script>
     let db;
-    // LISTA DE 53 PRODUTOS EXTRAÍDOS DAS NOTAS
     const cargaInicial = [
         {cod:"1124", nome:"ABACATE KG", un:"KG"}, {cod:"1125", nome:"ABACAXI", un:"UN"},
         {cod:"1129", nome:"ABOBORA ITALIA KG", un:"KG"}, {cod:"1130", nome:"ABOBORA JAPONESA KG", un:"KG"},
@@ -105,85 +87,57 @@
         {cod:"7094", nome:"UVA VITORIA MIMO SELECAO 400G S SEMENTE", un:"G"}
     ];
 
-    const request = indexedDB.open("FLV_MASTER_DB", 1);
-    
+    const request = indexedDB.open("FLV_DB", 1);
     request.onupgradeneeded = e => {
         db = e.target.result;
-        if (!db.objectStoreNames.contains("produtos")) {
-            db.createObjectStore("produtos", { keyPath: "cod" });
-        }
+        db.createObjectStore("produtos", { keyPath: "cod" });
     };
-
     request.onsuccess = e => {
         db = e.target.result;
-        verificarCargaInicial();
+        verificarCarga();
     };
 
-    function verificarCargaInicial() {
-        const tx = db.transaction("produtos", "readonly");
+    function verificarCarga() {
+        const tx = db.transaction("produtos", "readwrite");
         const store = tx.objectStore("produtos");
-        const count = store.count();
-        
-        count.onsuccess = () => {
-            if (count.result === 0) {
-                const txWrite = db.transaction("produtos", "readwrite");
-                const storeWrite = txWrite.objectStore("produtos");
-                cargaInicial.forEach(p => storeWrite.put(p));
-                document.getElementById('status-carga').innerText = "Carga inicial de 53 itens concluída.";
-            } else {
-                document.getElementById('status-carga').innerText = `Base de dados: ${count.result} itens cadastrados.`;
+        store.count().onsuccess = e => {
+            if (e.target.result === 0) {
+                cargaInicial.forEach(p => store.put(p));
             }
         };
     }
 
-    function mudarTela(n) {
+    function mudarTela(id) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        const target = n === 4 ? 'step-cadastro' : 'step' + n;
+        const target = id === 'cadastro' ? 'step-cadastro' : 'step' + id;
         document.getElementById(target).classList.add('active');
+        if(id === 'cadastro') renderLista();
     }
 
-    function abrirCadastro() {
-        mudarTela(4);
-        renderizarLista();
-    }
-
-    function renderizarLista() {
+    function renderLista() {
         const container = document.getElementById('lista-cadastrados');
         container.innerHTML = '';
-        
-        const tx = db.transaction("produtos", "readonly");
-        tx.objectStore("produtos").getAll().onsuccess = e => {
-            let produtos = e.target.result;
-            // ORDEM ALFABÉTICA
-            produtos.sort((a, b) => a.nome.localeCompare(b.nome));
-            
-            produtos.forEach(p => {
-                const item = document.createElement('div');
-                item.className = 'prod-row';
-                item.innerHTML = `
-                    <div><span class="p-nome">${p.nome}</span><span class="badge">${p.un}</span></div>
-                    <span class="p-cod">#${p.cod}</span>
-                `;
-                container.appendChild(item);
+        db.transaction("produtos").objectStore("produtos").getAll().onsuccess = e => {
+            let prods = e.target.result;
+            prods.sort((a,b) => a.nome.localeCompare(b.nome));
+            prods.forEach(p => {
+                container.innerHTML += `<div class="prod-row"><span class="p-nome">${p.nome}</span><span class="p-cod">#${p.cod}</span></div>`;
             });
         };
     }
 
     function salvarNovo() {
-        const c = document.getElementById('new-cod');
-        const n = document.getElementById('new-nome');
-        if(!c.value || !n.value) return alert("Preencha código e nome!");
-        
-        const tx = db.transaction("produtos", "readwrite");
-        tx.objectStore("produtos").put({
-            cod: c.value,
-            nome: n.value.toUpperCase(),
-            un: "KG" // Padrão
-        });
-        tx.oncomplete = () => {
-            c.value = ''; n.value = '';
-            renderizarLista();
-        };
+        const cod = document.getElementById('new-cod').value;
+        const nome = document.getElementById('new-nome').value.toUpperCase();
+        if(!cod || !nome) return;
+        db.transaction("produtos", "readwrite").objectStore("produtos").put({cod, nome, un:"KG"});
+        renderLista();
+    }
+
+    // REGISTRO DO SERVICE WORKER (Para instalação no celular)
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js')
+        .then(() => console.log("SW ok")).catch(e => console.log("SW erro", e));
     }
 </script>
 </body>
