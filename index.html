@@ -42,18 +42,21 @@ input, select {
 
 <body>
 
+<!-- HOME -->
 <div id="tela0" class="screen active">
     <h1>Controle FLV</h1>
     <button class="btn" onclick="ir(1)">ENTRAR</button>
 </div>
 
+<!-- MENU -->
 <div id="tela1" class="screen">
     <h2>Menu</h2>
     <button class="btn" onclick="ir(2)">Nova Tratativa</button>
     <button class="btn" onclick="ir(7)">Lista</button>
-    <button class="btn" onclick="abrirListaProdutos()">Cadastro de Produtos</button>
+    <button class="btn" onclick="abrirCadastro()">Cadastro de Produtos</button>
 </div>
 
+<!-- TRATATIVA -->
 <div id="tela2" class="screen">
     <h2>Tratativa</h2>
     <button class="btn" onclick="ir(1)">⬅ VOLTAR</button>
@@ -66,6 +69,7 @@ input, select {
     <button class="btn" onclick="salvar()">Continuar</button>
 </div>
 
+<!-- ENVIO -->
 <div id="tela3" class="screen">
     <h2>Envio</h2>
     <pre id="texto"></pre>
@@ -73,22 +77,19 @@ input, select {
     <button class="btn" onclick="ir(2)">⬅ VOLTAR</button>
 </div>
 
+<!-- LISTA -->
 <div id="tela7" class="screen">
     <h2>Lista</h2>
     <div id="lista"></div>
     <button class="btn" onclick="ir(1)">⬅ VOLTAR</button>
 </div>
 
+<!-- CADASTRO -->
 <div id="tela8" class="screen">
-    <h2>Produtos</h2>
-    <div id="listaProdutos"></div>
     <button class="btn" onclick="ir(1)">⬅ VOLTAR</button>
-</div>
+    <h2>Cadastro de Produtos</h2>
 
-<div id="tela9" class="screen">
-    <h2>Editar Produto</h2>
-
-    <input id="p_nome" readonly>
+    <input id="p_nome" placeholder="Produto" readonly>
     <input id="p_cod" placeholder="Código">
     <input id="p_custo" placeholder="Preço de custo">
 
@@ -98,11 +99,14 @@ input, select {
     </select>
 
     <button class="btn" onclick="salvarProduto()">SALVAR</button>
-    <button class="btn" onclick="ir(8)">⬅ VOLTAR</button>
+    <button class="btn" onclick="excluirProduto()">EXCLUIR</button>
+
+    <div id="listaProdutos"></div>
 </div>
 
 <script>
 
+/* NAV */
 function ir(t){
     document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
     document.getElementById('tela'+t).classList.add('active');
@@ -129,41 +133,34 @@ function setProdutos(lista){
     localStorage.setItem('produtos', JSON.stringify(lista));
 }
 
-/* CORREÇÃO AQUI */
 function carregarBase(){
     let lista = getProdutos();
 
     baseFLV.forEach(nome=>{
         if(!lista.find(p=>p.nome === nome)){
-            lista.push({
-                nome,
-                cod:'',
-                custo:'',
-                tipo:'KG'
-            });
+            lista.push({ nome, cod:'', custo:'', tipo:'KG' });
         }
     });
 
     setProdutos(lista);
 }
 
-/* LISTA */
-function abrirListaProdutos(){
+/* CADASTRO */
+let indexSelecionado = null;
+
+function abrirCadastro(){
     carregarBase();
     renderLista();
     ir(8);
 }
 
-let indexSelecionado = null;
-
 function renderLista(){
     const lista = getProdutos();
-
     const container = document.getElementById('listaProdutos');
+
     container.innerHTML='';
 
-    lista
-    .sort((a,b)=>a.nome.localeCompare(b.nome))
+    lista.sort((a,b)=>a.nome.localeCompare(b.nome))
     .forEach((p,i)=>{
         const div = document.createElement('div');
         div.className='card';
@@ -171,35 +168,45 @@ function renderLista(){
 
         div.onclick = ()=>{
             indexSelecionado = i;
-
-            document.getElementById('p_nome').value = p.nome;
-            document.getElementById('p_cod').value = p.cod;
-            document.getElementById('p_custo').value = p.custo;
-            document.getElementById('p_tipo').value = p.tipo || 'KG';
-
-            ir(9);
+            p_nome.value = p.nome;
+            p_cod.value = p.cod;
+            p_custo.value = p.custo;
+            p_tipo.value = p.tipo || 'KG';
         };
 
         container.appendChild(div);
     });
 }
 
-/* SALVAR */
 function salvarProduto(){
-    let lista = getProdutos();
-
     if(indexSelecionado === null) return;
 
+    let lista = getProdutos();
+
     lista[indexSelecionado] = {
-        nome: document.getElementById('p_nome').value,
-        cod: document.getElementById('p_cod').value,
-        custo: document.getElementById('p_custo').value,
-        tipo: document.getElementById('p_tipo').value
+        nome: p_nome.value,
+        cod: p_cod.value,
+        custo: p_custo.value,
+        tipo: p_tipo.value
     };
 
     setProdutos(lista);
     renderLista();
-    ir(8);
+}
+
+function excluirProduto(){
+    if(indexSelecionado === null) return;
+
+    let lista = getProdutos();
+    lista.splice(indexSelecionado,1);
+    setProdutos(lista);
+
+    indexSelecionado = null;
+    p_nome.value='';
+    p_cod.value='';
+    p_custo.value='';
+
+    renderLista();
 }
 
 /* TRATATIVA */
