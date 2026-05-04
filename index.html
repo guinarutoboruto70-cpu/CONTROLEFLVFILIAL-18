@@ -22,16 +22,19 @@ h1,h2 { text-align:center; color:#ffcc00; }
     font-weight:bold;
 }
 
-.btn.enviado {
-    background:#00c853;
-    color:#000;
-}
-
 .card {
     background:#1a1a1a;
     padding:10px;
     margin-top:10px;
     border-radius:8px;
+}
+
+input {
+    width:100%;
+    padding:10px;
+    margin-top:8px;
+    border-radius:6px;
+    border:none;
 }
 
 .preview img{ width:70px; margin:5px; border-radius:6px; }
@@ -49,237 +52,213 @@ h1,h2 { text-align:center; color:#ffcc00; }
 
 <body>
 
+<!-- HOME -->
 <div id="tela0" class="screen active">
     <h1>Controle FLV</h1>
     <button class="btn" onclick="ir(1)">ENTRAR</button>
 </div>
 
+<!-- MENU -->
 <div id="tela1" class="screen">
     <h2>Menu</h2>
     <button class="btn" onclick="ir(2)">Nova Tratativa</button>
     <button class="btn" onclick="ir(7)">Lista</button>
+    <button class="btn" onclick="ir(8); carregarProdutos()">Cadastro de Produtos</button>
 </div>
 
+<!-- TRATATIVA -->
 <div id="tela2" class="screen">
     <h2>Tratativa</h2>
-
     <button class="btn" onclick="ir(1)">⬅ VOLTAR</button>
+
+    <input id="buscaProduto" placeholder="Buscar produto..." oninput="buscarProduto()">
+    <div id="sugestoes"></div>
 
     <input id="produto" placeholder="Produto">
     <input id="cod" placeholder="Código">
+
     <input id="chegou" type="number" placeholder="Qtd Chegou">
     <input id="quebra" type="number" placeholder="Qtd Quebra">
-
-    <div class="card">
-        Produto
-        <input type="file" multiple accept="image/*" onchange="addFotos(event,'prod')">
-        <div id="prev_prod" class="preview"></div>
-    </div>
-
-    <div class="card">
-        Balança
-        <input type="file" multiple accept="image/*" onchange="addFotos(event,'bal')">
-        <div id="prev_bal" class="preview"></div>
-    </div>
-
-    <div class="card">
-        Etiqueta<br><br>
-
-        <input type="file" id="camEtiqueta" accept="image/*" capture="environment" style="display:none" onchange="addFotos(event,'eti')">
-        <input type="file" id="galEtiqueta" accept="image/*" style="display:none" onchange="addFotos(event,'eti')">
-
-        <button class="btn" onclick="document.getElementById('camEtiqueta').click()">📷 Câmera</button>
-        <button class="btn" onclick="document.getElementById('galEtiqueta').click()">🖼️ Galeria</button>
-
-        <div id="prev_eti" class="preview"></div>
-    </div>
 
     <button class="btn" onclick="salvar()">Continuar</button>
 </div>
 
+<!-- ENVIO -->
 <div id="tela3" class="screen">
     <h2>Envio</h2>
-
     <pre id="texto"></pre>
-
     <button class="btn" onclick="enviarTexto()">ENVIAR TEXTO</button>
-
-    <div id="fotosEnvio"></div>
-
     <button class="btn" onclick="ir(2)">⬅ VOLTAR</button>
-    <button class="btn" onclick="finalizar()">FINALIZAR</button>
 </div>
 
+<!-- LISTA -->
 <div id="tela7" class="screen">
     <h2>Lista</h2>
     <div id="lista"></div>
     <button class="btn" onclick="ir(1)">⬅ VOLTAR</button>
 </div>
 
+<!-- PRODUTOS -->
+<div id="tela8" class="screen">
+    <h2>Cadastro de Produtos</h2>
+
+    <input id="p_cod" placeholder="Código">
+    <input id="p_nome" placeholder="Produto">
+    <input id="p_custo" placeholder="Preço de custo">
+
+    <button class="btn" onclick="salvarProduto()">SALVAR</button>
+
+    <input id="buscaLista" placeholder="Buscar..." oninput="listarProdutos()">
+
+    <div id="listaProdutos"></div>
+
+    <button class="btn" onclick="ir(1)">⬅ VOLTAR</button>
+</div>
+
 <script>
 
-let fotos = {prod:[],bal:[],eti:[]};
-let banco = [];
-let textoFinal = '';
-
+/* NAV */
 function ir(t){
     document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-    document.getElementById('tela'+t)?.classList.add('active');
+    document.getElementById('tela'+t).classList.add('active');
 }
 
-function addFotos(e,tipo){
-    const div = document.getElementById('prev_'+tipo);
+/* STORAGE */
+function getProdutos(){
+    return JSON.parse(localStorage.getItem('produtos') || '[]');
+}
 
-    [...e.target.files].forEach(file=>{
-        const url = URL.createObjectURL(file);
-        fotos[tipo].push({file,url,enviado:false});
+function setProdutos(lista){
+    localStorage.setItem('produtos', JSON.stringify(lista));
+}
 
-        const img = document.createElement('img');
-        img.src = url;
-        div.appendChild(img);
+/* CADASTRO */
+let editIndex = null;
+
+function salvarProduto(){
+    let lista = getProdutos();
+
+    const cod = p_cod.value.trim();
+    const nome = p_nome.value.trim();
+    const custo = p_custo.value.trim();
+
+    if(!cod || !nome){
+        alert("Preencha código e produto");
+        return;
+    }
+
+    if(editIndex !== null){
+        lista[editIndex] = {cod,nome,custo};
+        editIndex = null;
+    }else{
+        if(lista.some(p=>p.cod === cod)){
+            alert("Código já cadastrado");
+            return;
+        }
+        lista.push({cod,nome,custo});
+    }
+
+    setProdutos(lista);
+    limparProduto();
+    listarProdutos();
+}
+
+function limparProduto(){
+    p_cod.value='';
+    p_nome.value='';
+    p_custo.value='';
+}
+
+function listarProdutos(){
+    const lista = getProdutos();
+    const busca = buscaLista.value.toLowerCase();
+
+    listaProdutos.innerHTML='';
+
+    lista
+    .filter(p=>p.nome.toLowerCase().includes(busca))
+    .forEach((p,i)=>{
+
+        const div = document.createElement('div');
+        div.className='card';
+
+        div.innerHTML = `
+        ${p.cod} - ${p.nome} <br> Custo: ${p.custo}
+        <br>
+        <button onclick="editar(${i})">Editar</button>
+        <button onclick="excluir(${i})">Excluir</button>
+        `;
+
+        listaProdutos.appendChild(div);
     });
 }
+
+function editar(i){
+    const p = getProdutos()[i];
+
+    p_cod.value = p.cod;
+    p_nome.value = p.nome;
+    p_custo.value = p.custo;
+
+    editIndex = i;
+}
+
+function excluir(i){
+    let lista = getProdutos();
+    lista.splice(i,1);
+    setProdutos(lista);
+    listarProdutos();
+}
+
+/* BUSCA NA TRATATIVA */
+function buscarProduto(){
+    const texto = buscaProdutoInput().value.toLowerCase();
+    const lista = getProdutos();
+
+    sugestoes.innerHTML='';
+
+    lista
+    .filter(p=>p.nome.toLowerCase().includes(texto))
+    .forEach(p=>{
+        const div = document.createElement('div');
+        div.className='card';
+        div.innerText = `${p.cod} - ${p.nome}`;
+
+        div.onclick = ()=>{
+            produto.value = p.nome;
+            cod.value = p.cod;
+            sugestoes.innerHTML='';
+        };
+
+        sugestoes.appendChild(div);
+    });
+}
+
+function buscaProdutoInput(){
+    return document.getElementById('buscaProduto');
+}
+
+/* TRATATIVA */
+let textoFinal='';
 
 function salvar(){
     const produto = document.getElementById('produto').value;
     const cod = document.getElementById('cod').value;
-    const chegou = document.getElementById('chegou').value;
-    const quebra = document.getElementById('quebra').value;
-    const data = new Date().toLocaleDateString();
 
     if(!produto || !cod){
-        alert("Preencha produto e código");
+        alert("Preencha produto");
         return;
     }
 
-    textoFinal =
-`Cód: ${cod}
-${produto}
-Data: ${data}
-Qtd Chegou: ${chegou}
-Qtd Quebra: ${quebra}`;
+    textoFinal = `Cód: ${cod}\n${produto}`;
 
-    document.getElementById('texto').innerText = textoFinal;
+    texto.innerText = textoFinal;
 
-    montarFotos();
     ir(3);
-}
-
-function montarFotos(){
-    const div = document.getElementById('fotosEnvio');
-    div.innerHTML = '';
-
-    ['prod','bal','eti'].forEach(tipo=>{
-        if(fotos[tipo].length > 0){
-
-            const titulo = document.createElement('h3');
-            titulo.innerText = tipo.toUpperCase();
-            div.appendChild(titulo);
-
-            fotos[tipo].forEach((obj,index)=>{
-                const box = document.createElement('div');
-
-                const img = document.createElement('img');
-                img.src = obj.url;
-                img.className = 'mini';
-
-                const btn = document.createElement('button');
-                btn.className = 'btn';
-
-                if(obj.enviado){
-                    btn.innerText = 'ENVIADO ✔';
-                    btn.classList.add('enviado');
-                    btn.disabled = true;
-                }else{
-                    btn.innerText = 'COMPARTILHAR FOTO';
-                    btn.onclick = ()=>compartilhar(tipo,index,btn);
-                }
-
-                box.appendChild(img);
-                box.appendChild(btn);
-                div.appendChild(box);
-            });
-        }
-    });
-}
-
-async function compartilhar(tipo,index,btn){
-    const obj = fotos[tipo][index];
-
-    try{
-        if(navigator.canShare && navigator.canShare({files:[obj.file]})){
-            await navigator.share({files:[obj.file]});
-
-            obj.enviado = true;
-
-            btn.innerText = 'ENVIADO ✔';
-            btn.classList.add('enviado');
-            btn.disabled = true;
-
-        }else{
-            alert("Seu celular não suporta envio direto");
-        }
-    }catch{
-        alert("Erro ao compartilhar");
-    }
 }
 
 function enviarTexto(){
     window.open(`https://wa.me/?text=${encodeURIComponent(textoFinal)}`);
-}
-
-function finalizar(){
-    banco.push({
-        texto: textoFinal,
-        fotos: JSON.parse(JSON.stringify(fotos))
-    });
-
-    atualizarLista();
-
-    fotos = {prod:[],bal:[],eti:[]};
-    limparTela();
-
-    ir(7);
-}
-
-function limparTela(){
-    document.querySelectorAll('.preview').forEach(d=>d.innerHTML='');
-    document.getElementById('produto').value = '';
-    document.getElementById('cod').value = '';
-    document.getElementById('chegou').value = '';
-    document.getElementById('quebra').value = '';
-}
-
-function atualizarLista(){
-    const div = document.getElementById('lista');
-    div.innerHTML = '';
-
-    banco.forEach(item=>{
-        const card = document.createElement('div');
-        card.className = 'card';
-
-        const txt = document.createElement('pre');
-        txt.innerText = item.texto;
-        card.appendChild(txt);
-
-        ['prod','bal','eti'].forEach(tipo=>{
-            if(item.fotos[tipo].length > 0){
-
-                const titulo = document.createElement('b');
-                titulo.innerText = tipo.toUpperCase();
-                card.appendChild(titulo);
-
-                item.fotos[tipo].forEach(obj=>{
-                    const img = document.createElement('img');
-                    img.src = obj.url;
-                    img.className = 'mini';
-                    card.appendChild(img);
-                });
-            }
-        });
-
-        div.appendChild(card);
-    });
 }
 
 </script>
