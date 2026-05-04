@@ -5,98 +5,123 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>CONTROLE FLV 1018</title>
     <style>
-        :root { --bg: #0a0a0a; --gold: #ffcc00; --card: #1a1a1a; --txt: #ffffff; }
+        :root { --bg: #0a0a0a; --gold: #ffcc00; --card: #1a1a1a; --txt: #ffffff; --green: #25d366; }
         body { margin: 0; font-family: sans-serif; background: var(--bg); color: var(--txt); }
-        .app { max-width: 500px; margin: 0 auto; padding: 20px; }
-        .screen { display: none; flex-direction: column; }
+        .app { max-width: 500px; margin: 0 auto; padding: 15px; }
+        .screen { display: none; flex-direction: column; min-height: 90vh; }
         .active { display: flex; }
         
-        /* UI de Operação */
-        .card { background: var(--card); border-radius: 12px; padding: 15px; border: 1px solid #333; margin-bottom: 15px; }
-        h2 { color: var(--gold); font-size: 0.9rem; margin-top: 0; text-transform: uppercase; }
-        input { width: 100%; padding: 15px; background: #222; border: 1px solid #444; border-radius: 10px; color: #fff; font-size: 1rem; box-sizing: border-box; margin-bottom: 10px; }
+        /* Cabeçalho com Seta */
+        .header { display: flex; align-items: center; margin-bottom: 20px; }
+        .back-btn { background: none; border: none; color: var(--gold); font-size: 1.5rem; cursor: pointer; padding: 10px 10px 10px 0; }
+        .header h2 { margin: 0; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; }
+
+        .card { background: var(--card); border-radius: 15px; padding: 20px; border: 1px solid #333; margin-bottom: 15px; }
+        
+        /* Menu Inicial */
+        .menu-grid { display: grid; gap: 15px; margin-top: 50px; }
+        .menu-btn { height: 100px; font-size: 1.1rem; }
+
+        input { width: 100%; padding: 15px; background: #222; border: 1px solid #444; border-radius: 10px; color: #fff; font-size: 1.1rem; box-sizing: border-box; margin-bottom: 10px; }
         .btn { background: var(--gold); color: #000; border: none; padding: 18px; border-radius: 12px; font-weight: bold; width: 100%; cursor: pointer; text-transform: uppercase; }
         
-        /* Resultados de Busca */
-        #results { max-height: 200px; overflow-y: auto; background: #111; border-radius: 8px; margin-bottom: 10px; }
-        .item { padding: 15px; border-bottom: 1px solid #222; font-size: 0.9rem; }
-        
-        /* Galeria e Relatório */
-        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 10px 0; }
+        #results { max-height: 150px; overflow-y: auto; background: #111; border-radius: 8px; border: 1px solid #333; margin-bottom: 10px; }
+        .item { padding: 15px; border-bottom: 1px solid #222; }
+
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 15px 0; }
         .thumb { background: #000; aspect-ratio: 1; border-radius: 8px; border: 1px solid #444; overflow: hidden; }
         .thumb img { width: 100%; height: 100%; object-fit: cover; }
-        .report { background: #000; padding: 15px; border-radius: 10px; border: 1px solid #555; font-family: monospace; white-space: pre-wrap; margin-bottom: 20px; }
-        .btn-wa { background: #25d366; color: #fff; margin-bottom: 10px; }
+        
+        .report { background: #000; padding: 15px; border-radius: 10px; border: 1px solid #555; font-family: monospace; white-space: pre-wrap; font-size: 1.1rem; line-height: 1.5; }
+        .btn-wa { background: var(--green); color: #fff; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
 <div class="app">
-    <div id="step1" class="screen active">
+    <div id="step0" class="screen active">
+        <h1 style="text-align:center; color:var(--gold); margin-top:40px;">FLV 1018</h1>
+        <div class="menu-grid">
+            <button class="btn menu-btn" onclick="mudarTela(1)">🍎 Nova Tratativa</button>
+            <button class="btn menu-btn" style="background:#333; color:white;" onclick="mudarTela(4)">➕ Cadastrar Produto</button>
+        </div>
+    </div>
+
+    <div id="step1" class="screen">
+        <div class="header">
+            <button class="back-btn" onclick="mudarTela(0)">⬅</button>
+            <h2>Dados da Tratativa</h2>
+        </div>
         <div class="card">
-            <h2>📦 Iniciar Tratativa</h2>
-            <input type="text" id="search" placeholder="Digite o código ou nome..." oninput="filtrar(this.value)">
+            <input type="text" id="search" placeholder="Buscar produto..." oninput="filtrar(this.value)">
             <div id="results"></div>
-            
             <div id="dados-prod" style="display:none">
-                <p id="label-nome" style="color:var(--gold); font-weight:bold; font-size:1.2rem;"></p>
-                <input type="text" id="qtd-chegou" placeholder="Qtd Chegou (KG/UN)" inputmode="decimal">
-                <input type="text" id="qtd-quebra" placeholder="Qtd Quebra (KG/UN)" inputmode="decimal">
-                <button class="btn" onclick="mudarTela(2)">Próximo: Fotos</button>
+                <p id="label-nome" style="color:var(--gold); font-weight:bold; font-size:1.3rem; margin-bottom:15px;"></p>
+                <input type="number" id="qtd-chegou" placeholder="Qtd Chegou" inputmode="decimal">
+                <input type="number" id="qtd-quebra" placeholder="Qtd Quebra" inputmode="decimal">
+                <button class="btn" onclick="mudarTela(2)">Ir para Fotos</button>
             </div>
         </div>
     </div>
 
     <div id="step2" class="screen">
+        <div class="header">
+            <button class="back-btn" onclick="mudarTela(1)">⬅</button>
+            <h2>Fotos</h2>
+        </div>
         <div class="card">
-            <h2>📸 Evidências do FLV</h2>
-            <button class="btn" style="background:#333; margin-bottom:10px" onclick="fClick('f-prod')">1. FOTO DO PRODUTO</button>
+            <button class="btn" style="background:#333; margin-bottom:10px" onclick="fClick('f-prod')">FOTO DO PRODUTO</button>
             <input type="file" id="f-prod" accept="image/*" multiple hidden onchange="preview(this, 'g-prod', 'prod')">
             <div class="grid" id="g-prod"></div>
 
-            <button class="btn" style="background:#333; margin-bottom:10px" onclick="fClick('f-bal')">2. FOTO DA BALANÇA</button>
+            <button class="btn" style="background:#333; margin-bottom:10px" onclick="fClick('f-bal')">FOTO DA BALANÇA</button>
             <input type="file" id="f-bal" accept="image/*" multiple hidden onchange="preview(this, 'g-bal', 'bal')">
             <div class="grid" id="g-bal"></div>
 
-            <button class="btn" style="background:#333" onclick="fClick('f-eti')">3. FOTO DA ETIQUETA</button>
+            <button class="btn" style="background:#333" onclick="fClick('f-eti')">FOTO DA ETIQUETA</button>
             <input type="file" id="f-eti" accept="image/*" hidden onchange="preview(this, 'g-eti', 'eti')">
             <div class="grid" id="g-eti"></div>
         </div>
         <button class="btn" onclick="gerarRelatorio()">Gerar Relatório</button>
-        <button class="btn" style="background:none; color:#aaa; margin-top:10px" onclick="mudarTela(1)">Voltar</button>
     </div>
 
     <div id="step3" class="screen">
-        <div class="card">
-            <h2>Texto para o Grupo</h2>
-            <div class="report" id="txt-final"></div>
-            <button class="btn btn-wa" onclick="enviarTexto()">ENVIAR TEXTO NO GRUPO</button>
+        <div class="header">
+            <button class="back-btn" onclick="mudarTela(2)">⬅</button>
+            <h2>Enviar Relatório</h2>
         </div>
-        <div id="area-fotos-final"></div>
-        <button class="btn" style="background:none; border:1px solid var(--gold); color:var(--gold); margin-top:20px" onclick="location.reload()">NOVA TRATATIVA</button>
+        <div class="card">
+            <div class="report" id="txt-final"></div>
+            <button class="btn btn-wa" onclick="enviarTexto()">ENVIAR TEXTO</button>
+        </div>
+        <div id="area-fotos-final" class="card"></div>
+        <button class="btn" style="background:none; border:2px solid var(--gold); color:var(--gold); margin-bottom:20px" onclick="location.reload()">NOVA TRATATIVA</button>
+    </div>
+
+    <div id="step4" class="screen">
+        <div class="header">
+            <button class="back-btn" onclick="mudarTela(0)">⬅</button>
+            <h2>Cadastrar Produto</h2>
+        </div>
+        <div class="card">
+            <input type="number" id="new-cod" placeholder="Código (Ex: 688)">
+            <input type="text" id="new-nome" placeholder="Nome (Ex: BATATA KG)">
+            <input type="text" id="new-un" placeholder="Unidade (KG ou UN)">
+            <button class="btn" onclick="salvarProduto()">Salvar Produto</button>
+        </div>
     </div>
 </div>
 
 <script>
-    let db;
-    let selecionado = null;
-    let fotos = { prod: [], bal: [], eti: [] };
+    let db; let selecionado = null; let fotos = { prod: [], bal: [], eti: [] };
+    const prodsBase = [{ cod: "688", nome: "BATATA KG", un: "KG" }, { cod: "538", nome: "BANANA NANICA KG", un: "KG" }];
 
-    // PRODUTOS JÁ CADASTRADOS (Conforme seus prints)
-    const produtosIniciais = [
-        { cod: "688", nome: "BATATA KG", un: "KG" },
-        { cod: "538", nome: "BANANA NANICA KG", un: "KG" },
-        { cod: "102", nome: "CEBOLA KG", un: "KG" },
-        { cod: "305", nome: "TOMATE KG", un: "KG" }
-    ];
-
-    // BANCO DE DADOS PERSISTENTE
-    const req = indexedDB.open("TrataFLV_1018", 1);
+    const req = indexedDB.open("TrataFLV_Final", 1);
     req.onupgradeneeded = e => {
         let store = e.target.result.createObjectStore("prods", { keyPath: "cod" });
-        produtosIniciais.forEach(p => store.add(p));
+        prodsBase.forEach(p => store.add(p));
     };
-    req.onsuccess = e => { db = e.target.result; };
+    req.onsuccess = e => db = e.target.result;
 
     function mudarTela(n) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -105,22 +130,15 @@
     }
 
     function filtrar(q) {
-        const res = document.getElementById('results');
-        res.innerHTML = '';
+        const res = document.getElementById('results'); res.innerHTML = '';
         if(!q) return;
-
         db.transaction("prods").objectStore("prods").getAll().onsuccess = e => {
-            const matches = e.target.result.filter(p => p.cod.includes(q) || p.nome.includes(q.toUpperCase()));
-            matches.slice(0,5).forEach(p => {
-                const d = document.createElement('div');
-                d.className = 'item';
-                d.innerText = `${p.cod} - ${p.nome}`;
+            e.target.result.filter(p => p.cod.includes(q) || p.nome.includes(q.toUpperCase())).slice(0,5).forEach(p => {
+                const d = document.createElement('div'); d.className = 'item'; d.innerText = `${p.cod} - ${p.nome}`;
                 d.onclick = () => {
-                    selecionado = p;
-                    document.getElementById('label-nome').innerText = p.nome;
+                    selecionado = p; document.getElementById('label-nome').innerText = p.nome;
                     document.getElementById('dados-prod').style.display = 'block';
-                    document.getElementById('search').value = p.nome;
-                    res.innerHTML = '';
+                    document.getElementById('search').value = p.nome; res.innerHTML = '';
                 };
                 res.appendChild(d);
             });
@@ -144,18 +162,18 @@
 
     function gerarRelatorio() {
         const data = new Date().toLocaleDateString('pt-BR');
-        const t = `Cod: ${selecionado.cod}\n${selecionado.nome}\nData: ${data}\nChegou: ${document.getElementById('qtd-chegou').value} ${selecionado.un}\nQuebra: ${document.getElementById('qtd-quebra').value} ${selecionado.un}`;
+        const c = document.getElementById('qtd-chegou').value;
+        const q = document.getElementById('qtd-quebra').value;
+        const t = `Cod: ${selecionado.cod}\n${selecionado.nome}\nData: ${data}\nChegou: ${c} ${selecionado.un}\nQuebra: ${q} ${selecionado.un}`;
         document.getElementById('txt-final').innerText = t;
 
         const area = document.getElementById('area-fotos-final');
-        area.innerHTML = '<h2>Fotos para Enviar</h2>';
-
+        area.innerHTML = '<h2 style="color:var(--gold); font-size:0.8rem;">ENVIAR FOTOS</h2>';
         ['prod', 'bal', 'eti'].forEach(cat => {
-            fotos[cat].forEach(img => {
-                const b = document.createElement('button');
-                b.className = 'btn btn-wa';
-                b.innerText = `ENVIAR FOTO (${cat.toUpperCase()})`;
-                b.onclick = () => { if(navigator.share) navigator.share({ files: [img.file] }); };
+            fotos[cat].forEach((img, i) => {
+                const b = document.createElement('button'); b.className = 'btn btn-wa';
+                b.innerText = `FOTO ${cat.toUpperCase()} (${i+1})`;
+                b.onclick = () => navigator.share({ files: [img.file] });
                 area.appendChild(b);
             });
         });
@@ -163,8 +181,17 @@
     }
 
     function enviarTexto() {
-        const t = document.getElementById('txt-final').innerText;
-        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(t)}`);
+        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(document.getElementById('txt-final').innerText)}`);
+    }
+
+    function salvarProduto() {
+        const cod = document.getElementById('new-cod').value;
+        const nome = document.getElementById('new-nome').value.toUpperCase();
+        const un = document.getElementById('new-un').value.toUpperCase() || "KG";
+        if(cod && nome) {
+            db.transaction("prods", "readwrite").objectStore("prods").add({cod, nome, un});
+            alert("Produto Salvo!"); mudarTela(0);
+        }
     }
 </script>
 </body>
