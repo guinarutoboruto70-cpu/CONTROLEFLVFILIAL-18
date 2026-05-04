@@ -29,63 +29,66 @@ h1,h2 { text-align:center; color:#ffcc00; }
     border-radius:8px;
 }
 
-.preview img{
-    width:70px;
-    margin:5px;
-    border-radius:6px;
-}
-
-.big img{
-    width:100px;
-    margin:5px;
-    border-radius:6px;
-}
+.preview img{ width:70px; margin:5px; border-radius:6px; }
+.big img{ width:100px; margin:5px; border-radius:6px; }
 </style>
 </head>
 
 <body>
 
+<!-- HOME -->
 <div id="tela0" class="screen active">
     <h1>Controle FLV</h1>
     <button class="btn" onclick="ir(1)">ENTRAR</button>
 </div>
 
+<!-- MENU -->
 <div id="tela1" class="screen">
     <h2>Menu</h2>
     <button class="btn" onclick="ir(2)">Nova Tratativa</button>
     <button class="btn" onclick="ir(7)">Lista</button>
 </div>
 
+<!-- TRATATIVA -->
 <div id="tela2" class="screen">
     <h2>Tratativa</h2>
 
     <input id="produto" placeholder="Produto">
     <input id="cod" placeholder="Código">
+    <input id="chegou" type="number" placeholder="Qtd Chegou">
+    <input id="quebra" type="number" placeholder="Qtd Quebra">
 
-    <input id="chegou" type="number" placeholder="Chegou">
-    <input id="quebra" type="number" placeholder="Quebra">
-
+    <!-- PRODUTO -->
     <div class="card">
         Produto
-        <input type="file" multiple onchange="addFotos(event,'prod')">
+        <input type="file" multiple accept="image/*" onchange="addFotos(event,'prod')">
         <div id="prev_prod" class="preview"></div>
     </div>
 
+    <!-- BALANÇA -->
     <div class="card">
         Balança
-        <input type="file" multiple onchange="addFotos(event,'bal')">
+        <input type="file" multiple accept="image/*" onchange="addFotos(event,'bal')">
         <div id="prev_bal" class="preview"></div>
     </div>
 
+    <!-- ETIQUETA -->
     <div class="card">
-        Etiqueta
-        <input type="file" multiple accept="image/*" capture="environment" onchange="addFotos(event,'eti')">
+        Etiqueta<br><br>
+
+        <input type="file" id="camEtiqueta" accept="image/*" capture="environment" style="display:none" onchange="addFotos(event,'eti')">
+        <input type="file" id="galEtiqueta" accept="image/*" style="display:none" onchange="addFotos(event,'eti')">
+
+        <button class="btn" onclick="document.getElementById('camEtiqueta').click()">📷 Câmera</button>
+        <button class="btn" onclick="document.getElementById('galEtiqueta').click()">🖼️ Galeria</button>
+
         <div id="prev_eti" class="preview"></div>
     </div>
 
     <button class="btn" onclick="salvar()">Continuar</button>
 </div>
 
+<!-- ENVIO -->
 <div id="tela3" class="screen">
     <h2>Envio</h2>
 
@@ -95,12 +98,15 @@ h1,h2 { text-align:center; color:#ffcc00; }
 
     <div id="fotosEnvio"></div>
 
+    <button class="btn" onclick="ir(2)">⬅ VOLTAR</button>
     <button class="btn" onclick="finalizar()">FINALIZAR</button>
 </div>
 
+<!-- LISTA -->
 <div id="tela7" class="screen">
     <h2>Lista</h2>
     <div id="lista"></div>
+    <button class="btn" onclick="ir(1)">⬅ VOLTAR</button>
 </div>
 
 <script>
@@ -115,14 +121,13 @@ function ir(t){
     document.getElementById('tela'+t)?.classList.add('active');
 }
 
-/* ADD FOTOS (AGORA SALVA FILE REAL) */
+/* ADD FOTOS */
 function addFotos(e,tipo){
     const div = document.getElementById('prev_'+tipo);
     if(!div) return;
 
     [...e.target.files].forEach(file=>{
         const url = URL.createObjectURL(file);
-
         fotos[tipo].push({file,url});
 
         const img = document.createElement('img');
@@ -135,21 +140,25 @@ function addFotos(e,tipo){
 function salvar(){
     const produto = document.getElementById('produto').value;
     const cod = document.getElementById('cod').value;
+    const chegou = document.getElementById('chegou').value;
+    const quebra = document.getElementById('quebra').value;
+    const data = new Date().toLocaleDateString();
 
-    const chegou = Number(document.getElementById('chegou').value)||0;
-    const quebra = Number(document.getElementById('quebra').value)||0;
+    if(!produto || !cod){
+        alert("Preencha produto e código");
+        return;
+    }
 
-    const perc = chegou ? ((quebra/chegou)*100).toFixed(1) : 0;
-
-    atual = {produto,cod,perc};
+    atual = {produto,cod,chegou,quebra,data};
 
     document.getElementById('texto').innerText =
 `Cód: ${cod}
 ${produto}
-Perda: ${perc}%`;
+Data: ${data}
+Qtd Chegou: ${chegou}
+Qtd Quebra: ${quebra}`;
 
     montarFotos();
-
     ir(3);
 }
 
@@ -160,7 +169,10 @@ function montarFotos(){
 
     ['prod','bal','eti'].forEach(tipo=>{
         if(fotos[tipo].length > 0){
-            div.innerHTML += `<h3>${tipo.toUpperCase()}</h3>`;
+
+            const titulo = document.createElement('h3');
+            titulo.innerText = tipo.toUpperCase();
+            div.appendChild(titulo);
 
             fotos[tipo].forEach(obj=>{
                 const box = document.createElement('div');
@@ -176,26 +188,22 @@ function montarFotos(){
 
                 box.appendChild(img);
                 box.appendChild(btn);
-
                 div.appendChild(box);
             });
         }
     });
 }
 
-/* COMPARTILHAR REAL */
+/* COMPARTILHAR */
 async function compartilhar(file){
-    if(navigator.share){
-        try{
-            await navigator.share({
-                files: [file],
-                title: "Tratativa FLV"
-            });
-        }catch(e){
-            alert("Erro ao compartilhar");
+    try{
+        if(navigator.canShare && navigator.canShare({files:[file]})){
+            await navigator.share({files:[file]});
+        }else{
+            alert("Compartilhamento não suportado neste aparelho");
         }
-    }else{
-        alert("Seu celular não suporta essa função");
+    }catch{
+        alert("Erro ao compartilhar");
     }
 }
 
@@ -219,7 +227,12 @@ function atualizarLista(){
     div.innerHTML = '';
 
     banco.forEach(d=>{
-        div.innerHTML += `<div class="card">${d.cod} - ${d.produto} (${d.perc}%)</div>`;
+        div.innerHTML += `
+        <div class="card">
+            ${d.cod} - ${d.produto}<br>
+            Data: ${d.data}<br>
+            Chegou: ${d.chegou} | Quebra: ${d.quebra}
+        </div>`;
     });
 }
 
