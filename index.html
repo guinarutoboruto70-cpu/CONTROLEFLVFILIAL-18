@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TRATATIVA FLV</title>
+<title>Controle FLV</title>
 
 <style>
 body { margin:0; font-family:sans-serif; background:#0a0a0a; color:#fff; }
@@ -32,10 +32,172 @@ input, select {
     border-radius:8px;
 }
 
-.preview img {
-    width:80px;
-    margin:5px;
-    border-radius:8px;
+.card { background:#1a1a1a; padding:10px; margin-top:10px; border-radius:10px; }
+
+.alerta { color:#ff4444; font-weight:bold; text-align:center; margin-top:10px; }
+.ok { color:#00ff88; font-weight:bold; text-align:center; margin-top:10px; }
+</style>
+</head>
+
+<body>
+
+<div id="tela0" class="screen active">
+    <h1>Controle FLV</h1>
+    <button class="btn" onclick="ir(1)">ENTRAR</button>
+</div>
+
+<div id="tela1" class="screen">
+    <h2>Menu</h2>
+    <button class="btn" onclick="ir(2)">Nova Tratativa</button>
+    <button class="btn" onclick="ir(4)">Histórico</button>
+    <button class="btn" onclick="ir(5)">Relatório</button>
+</div>
+
+<div id="tela2" class="screen">
+    <h2>Tratativa</h2>
+
+    <input id="produto" placeholder="Produto">
+    <input id="cod" placeholder="Código">
+    <input id="data" type="date">
+
+    <div class="card">
+        <p>Chegou</p>
+        <input id="chegou" type="number">
+        <select id="tipoChegou">
+            <option>KG</option>
+            <option>UN</option>
+        </select>
+    </div>
+
+    <div class="card">
+        <p>Quebra</p>
+        <input id="quebra" type="number" oninput="calcular()">
+        <select id="tipoQuebra">
+            <option>KG</option>
+            <option>UN</option>
+        </select>
+    </div>
+
+    <div id="resultado"></div>
+
+    <button class="btn" onclick="salvar()">Continuar</button>
+</div>
+
+<div id="tela3" class="screen">
+    <h2>Enviar</h2>
+    <pre id="texto"></pre>
+
+    <button class="btn" onclick="copiar()">COPIAR TEXTO</button>
+    <button class="btn" onclick="enviar()">ABRIR WHATSAPP</button>
+    <button class="btn" onclick="finalizar()">FINALIZAR</button>
+</div>
+
+<div id="tela4" class="screen">
+    <h2>Histórico</h2>
+    <div id="lista"></div>
+</div>
+
+<div id="tela5" class="screen">
+    <h2>Relatório</h2>
+    <div id="relatorio"></div>
+</div>
+
+<script>
+
+let banco = JSON.parse(localStorage.getItem('banco')) || [];
+let atual = {};
+
+function ir(t){
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    document.getElementById('tela'+t).classList.add('active');
 }
 
-.card { background:#1a1a1a; padding:10
+function calcular(){
+    const chegou = Number(document.getElementById('chegou').value);
+    const quebra = Number(document.getElementById('quebra').value);
+
+    if(!chegou) return;
+
+    const perc = ((quebra / chegou) * 100).toFixed(1);
+
+    const div = document.getElementById('resultado');
+
+    if(perc > 5){
+        div.innerHTML = `<div class="alerta">⚠️ Quebra alta: ${perc}%</div>`;
+    } else {
+        div.innerHTML = `<div class="ok">✔ Quebra: ${perc}%</div>`;
+    }
+}
+
+function salvar(){
+
+    const produto = document.getElementById('produto').value;
+    const cod = document.getElementById('cod').value;
+
+    if(!produto || !cod){
+        alert("Preencha os campos!");
+        return;
+    }
+
+    const dataInput = document.getElementById('data').value;
+    const data = dataInput ? new Date(dataInput).toLocaleDateString() : new Date().toLocaleDateString();
+
+    const chegou = Number(document.getElementById('chegou').value);
+    const quebra = Number(document.getElementById('quebra').value);
+
+    const perc = chegou ? ((quebra/chegou)*100).toFixed(1) : 0;
+
+    atual = {
+        produto, cod, data, chegou, quebra, perc
+    };
+
+    document.getElementById('texto').innerText =
+`Cód: ${cod}
+${produto}
+${data}
+Chegou: ${chegou}
+Quebra: ${quebra}
+Perda: ${perc}%`;
+
+    ir(3);
+}
+
+function copiar(){
+    navigator.clipboard.writeText(document.getElementById('texto').innerText);
+    alert("Copiado!");
+}
+
+function enviar(){
+    const texto = document.getElementById('texto').innerText;
+    window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`);
+}
+
+function finalizar(){
+    banco.push(atual);
+    localStorage.setItem('banco', JSON.stringify(banco));
+    atualizar();
+    ir(4);
+}
+
+function atualizar(){
+    const lista = document.getElementById('lista');
+    lista.innerHTML = '';
+
+    banco.forEach(d=>{
+        lista.innerHTML += `<div class="card">${d.cod} - ${d.produto} (${d.perc}%)</div>`;
+    });
+
+    let total = 0;
+    banco.forEach(d=> total += Number(d.perc));
+
+    document.getElementById('relatorio').innerHTML =
+`Total registros: ${banco.length}<br>
+Média quebra: ${(total/banco.length || 0).toFixed(1)}%`;
+}
+
+window.onload = atualizar;
+
+</script>
+
+</body>
+</html>
