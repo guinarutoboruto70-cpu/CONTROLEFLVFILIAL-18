@@ -1,16 +1,168 @@
-{
-  "name": "TRATAFLV 1018",
-  "short_name": "TRATAFLV",
-  "description": "Controle de Perdas FLV - Filial 1018",
-  "start_url": "./index.html",
-  "display": "standalone",
-  "background_color": "#0a0a0a",
-  "theme_color": "#ffcc00",
-  "icons": [
-    {
-      "src": "https://cdn-icons-png.flaticon.com/512/1041/1041310.png",
-      "sizes": "512x512",
-      "type": "image/png"
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FLV 1018 - ESTÁVEL</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0a0a0a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+
+    <style>
+        :root { --bg: #0a0a0a; --gold: #ffcc00; --card: #1a1a1a; --txt: #ffffff; }
+        body { margin: 0; font-family: sans-serif; background: var(--bg); color: var(--txt); height: 100vh; overflow: hidden; }
+        
+        .app { max-width: 500px; margin: 0 auto; padding: 15px; height: 100%; display: flex; flex-direction: column; box-sizing: border-box; }
+        
+        /* Sistema de Telas - Garantindo que não trave */
+        .screen { display: none; flex-direction: column; height: 100%; width: 100%; }
+        .screen.active { display: flex !important; }
+
+        .header { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid #333; margin-bottom: 15px; flex-shrink: 0; }
+        .back-btn { background: none; border: none; color: var(--gold); font-size: 1.8rem; cursor: pointer; padding-right: 20px; }
+        
+        .btn { background: var(--gold); color: #000; border: none; padding: 20px; border-radius: 12px; font-weight: bold; width: 100%; cursor: pointer; text-transform: uppercase; font-size: 1.1rem; margin-bottom: 15px; }
+        .btn-alt { background: #333; color: white; }
+
+        input { width: 100%; padding: 15px; background: #222; border: 1px solid #444; border-radius: 10px; color: #fff; font-size: 1rem; margin-bottom: 10px; box-sizing: border-box; }
+        
+        .list-container { flex-grow: 1; overflow-y: auto; background: #111; border-radius: 12px; border: 1px solid #333; -webkit-overflow-scrolling: touch; }
+        .prod-row { display: flex; justify-content: space-between; padding: 15px; border-bottom: 1px solid #222; }
+        .p-nome { font-weight: bold; text-transform: uppercase; font-size: 0.9rem; }
+        .p-cod { color: var(--gold); font-family: monospace; }
+    </style>
+</head>
+<body>
+
+<div class="app">
+    <!-- MENU PRINCIPAL (ID: step0) -->
+    <div id="step0" class="screen active">
+        <h1 style="text-align:center; color:var(--gold); margin-top: 50px;">FLV 1018</h1>
+        <button class="btn" style="height:120px;" onclick="mudarTela(1)">🍎 LANÇAR TRATATIVA</button>
+        <button class="btn btn-alt" onclick="mudarTela('cadastro')">📦 PRODUTOS (A-Z)</button>
+    </div>
+
+    <!-- CADASTRO / LISTA (ID: step-cadastro) -->
+    <div id="step-cadastro" class="screen">
+        <div class="header">
+            <button class="back-btn" onclick="mudarTela(0)">⬅</button>
+            <h2 style="margin:0;">Banco de Itens</h2>
+        </div>
+        <div style="flex-shrink:0;">
+            <input type="number" id="new-cod" placeholder="Código">
+            <input type="text" id="new-nome" placeholder="Nome do Produto">
+            <button class="btn" onclick="salvarNovo()">CADASTRAR NOVO</button>
+        </div>
+        <div class="list-container" id="lista-cadastrados"></div>
+    </div>
+
+    <!-- TRATATIVA (ID: step1) -->
+    <div id="step1" class="screen">
+        <div class="header">
+            <button class="back-btn" onclick="mudarTela(0)">⬅</button>
+            <h2 style="margin:0;">Lançamento</h2>
+        </div>
+        <p style="text-align:center; color:#555; padding-top:50px;">Carregando módulo de perdas...</p>
+    </div>
+</div>
+
+<script>
+    let db;
+    // Base de dados vinda das suas notas fiscais
+    const cargaInicial = [
+        {cod:"1124", nome:"ABACATE KG"}, {cod:"1125", nome:"ABACAXI"}, {cod:"1129", nome:"ABOBORA ITALIA KG"},
+        {cod:"1130", nome:"ABOBORA JAPONESA KG"}, {cod:"242", nome:"ALHO KG 5"}, {cod:"744", nome:"AMEIXA BDJ 500G"},
+        {cod:"739", nome:"AMEIXA KG"}, {cod:"537", nome:"BANANA MACA KG"}, {cod:"538", nome:"BANANA NANICA KG"},
+        {cod:"541", nome:"BANANA PRATA KG"}, {cod:"543", nome:"BANANA TERRA KG"}, {cod:"681", nome:"BATATA DOCE KG"},
+        {cod:"688", nome:"BATATA KG"}, {cod:"7714", nome:"BETERRABA KG"}, {cod:"8459", nome:"CAQUI BDJ 500G"},
+        {cod:"8461", nome:"CARA KG"}, {cod:"8572", nome:"CEBOLA KG"}, {cod:"8574", nome:"CEBOLA ROXA KG"},
+        {cod:"8589", nome:"CENOURA KG"}, {cod:"7547", nome:"CHUCHU KG"}, {cod:"7620", nome:"COCO SECO KG INT"},
+        {cod:"7622", nome:"COCO VERDE"}, {cod:"5022", nome:"GENGIBRE KG"}, {cod:"5213", nome:"INHAME KG"},
+        {cod:"5473", nome:"KIWI BDJ 600G"}, {cod:"5558", nome:"LARANJA PERA KG"}, {cod:"4362", nome:"LIMAO KG"},
+        {cod:"10750", nome:"MACA FUJI KG"}, {cod:"3280", nome:"MACA GALA NAC KG"}, {cod:"3284", nome:"MACA PCT 1KG"},
+        {cod:"3343", nome:"MAMAO FORMOSA KG"}, {cod:"3346", nome:"MAMAO PAPAYA KG"}, {cod:"3369", nome:"MANGA PALMER KG"},
+        {cod:"3370", nome:"MANGA TOMMY KG"}, {cod:"3422", nome:"MARACUJA AZEDO KG"}, {cod:"3560", nome:"MELANCIA KG"},
+        {cod:"3565", nome:"MELAO AMARELO KG"}, {cod:"3582", nome:"MEXERICA PONKAN KG"}, {cod:"3585", nome:"MILHO VERDE BDJ 5UN"},
+        {cod:"1766", nome:"PEPINO COMUM KG"}, {cod:"1768", nome:"PEPINO JAPONES KG"}, {cod:"1778", nome:"PERA KG"},
+        {cod:"1895", nome:"PIMENTAO VERDE KG"}, {cod:"1327", nome:"REPOLHO BCO KG"}, {cod:"1329", nome:"REPOLHO ROXO KG"},
+        {cod:"7018", nome:"TOMATE GRAPE 180G"}, {cod:"7021", nome:"TOMATE GRAPE KG"}, {cod:"7028", nome:"TOMATE KG"},
+        {cod:"7049", nome:"TOMATE MEL TREBESCHI 180G"}, {cod:"7090", nome:"UVA PTA 500G S SEMENTE"},
+        {cod:"7089", nome:"UVA VERDE 500G S SEMENTE"}, {cod:"7088", nome:"UVA VERM 500G S SEMENTE"},
+        {cod:"7094", nome:"UVA VITORIA MIMO SELECAO 400G S SEMENTE"}
+    ];
+
+    const req = indexedDB.open("FLV_DB_MASTER", 1);
+    req.onupgradeneeded = e => {
+        e.target.result.createObjectStore("prods", { keyPath: "cod" });
+    };
+    req.onsuccess = e => {
+        db = e.target.result;
+        verificarCarga();
+    };
+
+    function verificarCarga() {
+        const tx = db.transaction("prods", "readwrite");
+        const store = tx.objectStore("prods");
+        store.count().onsuccess = e => {
+            if(e.target.result === 0) {
+                cargaInicial.forEach(p => store.put(p));
+            }
+        };
     }
-  ]
-}
+
+    // FUNÇÃO DE NAVEGAÇÃO CORRIGIDA - ANTITRAVAMENTO
+    function mudarTela(destino) {
+        // Esconde tudo primeiro
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        
+        // Define o ID correto
+        const idFinal = (destino === 'cadastro') ? 'step-cadastro' : 'step' + destino;
+        const tela = document.getElementById(idFinal);
+        
+        if(tela) {
+            tela.classList.add('active');
+            if(destino === 'cadastro') renderizarLista();
+        }
+    }
+
+    function renderizarLista() {
+        const listaDiv = document.getElementById('lista-cadastrados');
+        listaDiv.innerHTML = '<p style="text-align:center;">Carregando itens A-Z...</p>';
+        
+        const tx = db.transaction("prods", "readonly");
+        tx.objectStore("prods").getAll().onsuccess = e => {
+            let itens = e.target.result;
+            itens.sort((a, b) => a.nome.localeCompare(b.nome));
+            
+            listaDiv.innerHTML = '';
+            itens.forEach(p => {
+                listaDiv.innerHTML += `
+                    <div class="prod-row">
+                        <span class="p-nome">${p.nome}</span>
+                        <span class="p-cod">#${p.cod}</span>
+                    </div>`;
+            });
+        };
+    }
+
+    function salvarNovo() {
+        const c = document.getElementById('new-cod');
+        const n = document.getElementById('new-nome');
+        if(!c.value || !n.value) return alert("Preencha Cód e Nome!");
+        
+        const tx = db.transaction("prods", "readwrite");
+        tx.objectStore("prods").put({ cod: c.value, nome: n.value.toUpperCase() });
+        tx.oncomplete = () => {
+            c.value = ''; n.value = '';
+            renderizarLista();
+        };
+    }
+
+    // Registro do SW para PWA funcionar no seu GitHub
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js').then(() => console.log("Sistema Pronto"));
+    }
+</script>
+</body>
+</html>
