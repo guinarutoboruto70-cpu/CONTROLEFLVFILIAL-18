@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FLV 1018 - ESTÁVEL</title>
+    <title>FLV 1018 - OFICIAL</title>
     <style>
         :root { --bg: #0a0a0a; --gold: #ffcc00; --card: #1a1a1a; --txt: #ffffff; }
         body { margin: 0; font-family: sans-serif; background: var(--bg); color: var(--txt); height: 100vh; overflow: hidden; }
@@ -24,7 +24,7 @@
 
 <div class="app">
     <div id="step0" class="screen active">
-        <h1 style="text-align:center; color:var(--gold); margin: 40px 0;">FLV 1018</h1>
+        <h1 style="text-align:center; color:var(--gold); margin: 30px 0;">FLV 1018</h1>
         <button class="btn" style="height:100px; margin-bottom:20px;" onclick="mudarTela(1)">🍎 LANÇAR TRATATIVA</button>
         <button class="btn" style="background:#333; color:white; height:80px;" onclick="abrirCadastro()">➕ PRODUTOS CADASTRADOS</button>
     </div>
@@ -55,7 +55,6 @@
 
 <script>
     let db;
-    // Lista expandida com base nas suas notas fiscais
     const cargaInicial = [
         { cod: "1124", nome: "ABACATE KG", un: "KG" }, { cod: "1125", nome: "ABACAXI UN", un: "UN" },
         { cod: "1129", nome: "ABOBORA ITALIA KG", un: "KG" }, { cod: "1133", nome: "ABOBORA MORANGA KG", un: "KG" },
@@ -63,15 +62,18 @@
         { cod: "1141", nome: "ACELGA UN", un: "UN" }, { cod: "1144", nome: "AGRIAO UN", un: "UN" },
         { cod: "1147", nome: "ALFACE CRESPA UN", un: "UN" }, { cod: "1148", nome: "ALFACE LISA UN", un: "UN" },
         { cod: "1150", nome: "ALFACE AMERICANA UN", un: "UN" }, { cod: "1155", nome: "ALMEIRAO UN", un: "UN" },
-        { cod: "242",  nome: "ALHO KG", un: "KG" }, { cod: "541",  nome: "BANANA PRATA KG", un: "KG" },
-        { cod: "543",  nome: "BANANA TERRA KG", un: "KG" }, { cod: "538",  nome: "BANANA NANICA KG", un: "KG" },
-        { cod: "681",  nome: "BATATA DOCE KG", un: "KG" }, { cod: "688",  nome: "BATATA INGLESA KG", un: "KG" },
-        { cod: "7714", nome: "BETERRABA KG", un: "KG" }, { cod: "8572", nome: "CEBOLA KG", un: "KG" },
+        { cod: "242",  nome: "ALHO KG", un: "KG" }, { cod: "744",  nome: "AMEIXA BDJ 500G", un: "UN" },
+        { cod: "541",  nome: "BANANA PRATA KG", un: "KG" }, { cod: "543",  nome: "BANANA TERRA KG", un: "KG" },
+        { cod: "538",  nome: "BANANA NANICA KG", un: "KG" }, { cod: "681",  nome: "BATATA DOCE KG", un: "KG" },
+        { cod: "688",  nome: "BATATA INGLESA KG", un: "KG" }, { cod: "7714", nome: "BETERRABA KG", un: "KG" },
+        { cod: "8459", nome: "CAQUI BDJ 500G", un: "UN" }, { cod: "8461", nome: "CARA KG", un: "KG" },
+        { cod: "8572", nome: "CEBOLA KG", un: "KG" }, { cod: "8574", nome: "CEBOLA ROXA KG", un: "KG" },
         { cod: "8589", nome: "CENOURA KG", un: "KG" }, { cod: "10750", nome: "MAÇA FUJI KG", un: "KG" },
         { cod: "3280", nome: "MAÇA GALA KG", un: "KG" }, { cod: "3343", nome: "MAMAO FORMOSA KG", un: "KG" },
-        { cod: "3369", nome: "MANGA PALMER KG", un: "KG" }, { cod: "7028", nome: "TOMATE KG", un: "KG" },
-        { cod: "1895", nome: "PIMENTAO VERDE KG", un: "KG" }, { cod: "1327", nome: "REPOLHO BRANCO KG", un: "KG" }
-        // Adicione os demais códigos conforme necessário
+        { cod: "3369", nome: "MANGA PALMER KG", un: "KG" }, { cod: "1895", nome: "PIMENTAO VERDE KG", un: "KG" },
+        { cod: "1327", nome: "REPOLHO BRANCO KG", un: "KG" }, { cod: "7018", nome: "TOMATE GRAPE 180G", un: "UN" },
+        { cod: "7028", nome: "TOMATE KG", un: "KG" }, { cod: "1025", nome: "VAGEM KG", un: "KG" },
+        { cod: "2010", nome: "CHUCHU KG", un: "KG" }, { cod: "4450", nome: "MILHO VERDE BDJ", un: "UN" }
     ];
 
     const req = indexedDB.open("DB_FLV_1018", 1);
