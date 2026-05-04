@@ -1,144 +1,101 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FLV 1018 - ATUALIZADO</title>
-    <style>
-        :root { --bg: #0a0a0a; --gold: #ffcc00; --card: #1a1a1a; --txt: #ffffff; }
-        body { margin: 0; font-family: sans-serif; background: var(--bg); color: var(--txt); height: 100vh; overflow: hidden; }
-        .app { max-width: 500px; margin: 0 auto; padding: 15px; height: 100%; display: flex; flex-direction: column; box-sizing: border-box; }
-        .screen { display: none; flex-direction: column; height: 100%; }
-        .active { display: flex; }
-        .header { display: flex; align-items: center; padding-bottom: 10px; border-bottom: 1px solid #333; margin-bottom: 10px; flex-shrink: 0; }
-        .back-btn { background: none; border: none; color: var(--gold); font-size: 1.8rem; cursor: pointer; padding-right: 20px; }
-        .card { background: var(--card); border-radius: 15px; padding: 15px; border: 1px solid #333; margin-bottom: 10px; flex-shrink: 0; }
-        .btn { background: var(--gold); color: #000; border: none; padding: 18px; border-radius: 12px; font-weight: bold; width: 100%; cursor: pointer; text-transform: uppercase; margin-top: 10px; }
-        input { width: 100%; padding: 15px; background: #222; border: 1px solid #444; border-radius: 10px; color: #fff; font-size: 1.1rem; box-sizing: border-box; margin-bottom: 10px; }
-        .list-container { flex-grow: 1; overflow-y: auto; background: #111; border-radius: 10px; border: 1px solid #333; }
-        .item-busca { padding: 15px; border-bottom: 1px solid #333; cursor: pointer; background: #1a1a1a; margin-bottom: 5px; border-radius: 8px; font-weight: bold; }
-    </style>
-</head>
-<body>
+let db;
+// Lista completa atualizada com base nas notas enviadas
+const cargaInicial = [
+    { cod: "1124", nome: "ABACATE KG" }, { cod: "1125", nome: "ABACAXI UN" },
+    { cod: "1129", nome: "ABOBORA ITALIA KG" }, { cod: "1133", nome: "ABOBORA MORANGA KG" },
+    { cod: "1135", nome: "ABOBORA CABOTIA KG" }, { cod: "1138", nome: "ABOBRINHA MENINA KG" },
+    { cod: "1141", nome: "ACELGA UN" }, { cod: "1144", nome: "AGRIAO UN" },
+    { cod: "1147", nome: "ALFACE CRESPA UN" }, { cod: "1148", nome: "ALFACE LISA UN" },
+    { cod: "1150", nome: "ALFACE AMERICANA UN" }, { cod: "1155", nome: "ALMEIRAO UN" },
+    { cod: "242",  nome: "ALHO KG" }, { cod: "744",  nome: "AMEIXA BDJ 500G" },
+    { cod: "541",  nome: "BANANA PRATA KG" }, { cod: "543",  nome: "BANANA TERRA KG" },
+    { cod: "538",  nome: "BANANA NANICA KG" }, { cod: "681",  nome: "BATATA DOCE KG" },
+    { cod: "688",  nome: "BATATA INGLESA KG" }, { cod: "7714", nome: "BETERRABA KG" },
+    { cod: "8459", nome: "CAQUI BDJ 500G" }, { cod: "8461", nome: "CARA KG" },
+    { cod: "8572", nome: "CEBOLA KG" }, { cod: "8574", nome: "CEBOLA ROXA KG" },
+    { cod: "8589", nome: "CENOURA KG" }, { cod: "10750", nome: "MAÇA FUJI KG" },
+    { cod: "3280", nome: "MAÇA GALA KG" }, { cod: "3343", nome: "MAMAO FORMOSA KG" },
+    { cod: "3369", nome: "MANGA PALMER KG" }, { cod: "1895", nome: "PIMENTAO VERDE KG" },
+    { cod: "1327", nome: "REPOLHO BRANCO KG" }, { cod: "7018", nome: "TOMATE GRAPE 180G" },
+    { cod: "7028", nome: "TOMATE KG" }, { cod: "1025", nome: "VAGEM KG" },
+    { cod: "2010", nome: "CHUCHU KG" }, { cod: "4450", nome: "MILHO VERDE BDJ" }
+];
 
-<div class="app">
-    <div id="step0" class="screen active">
-        <h1 style="text-align:center; color:var(--gold); margin: 30px 0;">FLV 1018</h1>
-        <button class="btn" style="height:100px; margin-bottom:20px;" onclick="mudarTela(1)">🍎 LANÇAR TRATATIVA</button>
-        <button class="btn" style="background:#333; color:white; height:80px;" onclick="abrirCadastro()">➕ PRODUTOS CADASTRADOS</button>
-    </div>
+// Subi para a versão 3 para garantir que o celular limpe o lixo da versão anterior
+const req = indexedDB.open("DB_FLV_1018", 3);
 
-    <div id="step1" class="screen">
-        <div class="header"><button class="back-btn" onclick="mudarTela(0)">⬅</button><h2>Tratativa</h2></div>
-        <div class="card">
-            <div id="area-busca">
-                <input type="text" id="search" placeholder="Buscar produto..." oninput="filtrar(this.value)">
-                <div id="results" style="max-height: 250px; overflow-y: auto;"></div>
-            </div>
-            <div id="dados-prod" style="display:none;">
-                <button class="btn" style="background:#444; color:#fff; font-size:0.7rem; padding:5px; margin-bottom:10px" onclick="voltarBusca()">🔄 TROCAR PRODUTO</button>
-                <p style="color:var(--gold); font-size: 1.1rem; font-weight:bold;">ITEM: <span id="label-nome"></span></p>
-                <input type="number" id="qtd-chegou" placeholder="Qtd Chegou" inputmode="decimal">
-                <input type="number" id="qtd-quebra" placeholder="Qtd Quebra" inputmode="decimal">
-                <button class="btn" onclick="alert('Próximo: Fotos')">PRÓXIMO: FOTOS</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="step4" class="screen">
-        <div class="header"><button class="back-btn" onclick="mudarTela(0)">⬅</button><h2>Produtos (A-Z)</h2></div>
-        <div class="list-container" id="lista-cadastrados"></div>
-    </div>
-</div>
-
-<script>
-    let db;
-    const cargaInicial = [
-        { cod: "1124", nome: "ABACATE KG" }, { cod: "1125", nome: "ABACAXI UN" },
-        { cod: "1129", nome: "ABOBORA ITALIA KG" }, { cod: "1133", nome: "ABOBORA MORANGA KG" },
-        { cod: "1135", nome: "ABOBORA CABOTIA KG" }, { cod: "1138", nome: "ABOBRINHA MENINA KG" },
-        { cod: "1141", nome: "ACELGA UN" }, { cod: "1144", nome: "AGRIAO UN" },
-        { cod: "1147", nome: "ALFACE CRESPA UN" }, { cod: "1148", nome: "ALFACE LISA UN" },
-        { cod: "1150", nome: "ALFACE AMERICANA UN" }, { cod: "1155", nome: "ALMEIRAO UN" },
-        { cod: "242",  nome: "ALHO KG" }, { cod: "541",  nome: "BANANA PRATA KG" },
-        { cod: "543",  nome: "BANANA TERRA KG" }, { cod: "538",  nome: "BANANA NANICA KG" },
-        { cod: "681",  nome: "BATATA DOCE KG" }, { cod: "688",  nome: "BATATA INGLESA KG" },
-        { cod: "7714", nome: "BETERRABA KG" }, { cod: "8572", nome: "CEBOLA KG" },
-        { cod: "8589", nome: "CENOURA KG" }, { cod: "10750", nome: "MAÇA FUJI KG" },
-        { cod: "3280", nome: "MAÇA GALA KG" }, { cod: "3343", nome: "MAMAO FORMOSA KG" },
-        { cod: "3369", nome: "MANGA PALMER KG" }, { cod: "7028", nome: "TOMATE KG" },
-        { cod: "1895", nome: "PIMENTAO VERDE KG" }, { cod: "1327", nome: "REPOLHO BRANCO KG" },
-        { cod: "2010", nome: "CHUCHU KG" }, { cod: "4450", nome: "MILHO VERDE BDJ" },
-        { cod: "1025", nome: "VAGEM KG" }, { cod: "1111", nome: "PIMENTA DE CHEIRO KG" }
-    ];
-
-    // ATENÇÃO: Versão 2 para forçar a atualização dos dados
-    const req = indexedDB.open("DB_FLV_1018", 2);
-
-    req.onupgradeneeded = e => {
-        const dbRef = e.target.result;
-        if (!dbRef.objectStoreNames.contains("prods")) {
-            dbRef.createObjectStore("prods", { keyPath: "cod" });
-        }
-    };
-
-    req.onsuccess = e => { 
-        db = e.target.result; 
-        forçarCargaTotal(); 
-    };
-
-    function forçarCargaTotal() {
-        const tx = db.transaction("prods", "readwrite");
-        const store = tx.objectStore("prods");
-        cargaInicial.forEach(p => store.put(p)); // .put atualiza ou insere
+req.onupgradeneeded = e => {
+    const dbRef = e.target.result;
+    if (!dbRef.objectStoreNames.contains("prods")) {
+        dbRef.createObjectStore("prods", { keyPath: "cod" });
     }
+};
 
-    function mudarTela(n) {
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        document.getElementById('step' + n).classList.add('active');
-    }
+req.onsuccess = e => { 
+    db = e.target.result; 
+    const tx = db.transaction("prods", "readwrite");
+    const store = tx.objectStore("prods");
+    cargaInicial.forEach(p => store.put(p)); 
+    console.log("Banco de dados atualizado com sucesso!");
+};
 
-    function abrirCadastro() { mudarTela(4); listarProdutos(); }
+function mudarTela(n) {
+    // Reset fundamental: se voltar para o menu ou entrar na tratativa, limpa os campos
+    if(n === 1) voltarBusca(); 
+    
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('step' + n).classList.add('active');
+}
 
-    function listarProdutos() {
-        const area = document.getElementById('lista-cadastrados');
+function abrirCadastro() { 
+    mudarTela(4); 
+    listarProdutos(); 
+}
+
+function listarProdutos() {
+    const area = document.getElementById('lista-cadastrados');
+    area.innerHTML = '<p style="padding:10px">Carregando lista...</p>';
+    db.transaction("prods").objectStore("prods").getAll().onsuccess = e => {
         area.innerHTML = '';
-        db.transaction("prods").objectStore("prods").getAll().onsuccess = e => {
-            const lista = e.target.result.sort((a, b) => a.nome.localeCompare(b.nome));
-            lista.forEach(p => {
-                const row = document.createElement('div');
-                row.style = "padding:15px; border-bottom:1px solid #222; display:flex; justify-content:space-between;";
-                row.innerHTML = `<b>${p.nome}</b> <span style="color:var(--gold)">#${p.cod}</span>`;
-                area.appendChild(row);
-            });
-        };
-    }
+        const lista = e.target.result.sort((a, b) => a.nome.localeCompare(b.nome));
+        lista.forEach(p => {
+            const row = document.createElement('div');
+            row.style = "padding:15px; border-bottom:1px solid #222; display:flex; justify-content:space-between; align-items:center;";
+            row.innerHTML = `<span style="text-transform:uppercase; font-size:0.9rem"><b>${p.nome}</b></span> <span style="color:var(--gold); font-family:monospace;">#${p.cod}</span>`;
+            area.appendChild(row);
+        });
+    };
+}
 
-    function filtrar(q) {
-        const res = document.getElementById('results'); res.innerHTML = '';
-        if(!q) return;
-        db.transaction("prods").objectStore("prods").getAll().onsuccess = e => {
-            const busca = e.target.result.filter(p => p.cod.includes(q) || p.nome.includes(q.toUpperCase()));
-            busca.slice(0, 10).forEach(p => {
-                const d = document.createElement('div');
-                d.className = 'item-busca';
-                d.innerText = `${p.cod} - ${p.nome}`;
-                d.onclick = () => {
-                    document.getElementById('area-busca').style.display = 'none';
-                    document.getElementById('label-nome').innerText = p.nome;
-                    document.getElementById('dados-prod').style.display = 'block';
-                };
-                res.appendChild(d);
-            });
-        };
-    }
+function filtrar(q) {
+    const res = document.getElementById('results'); 
+    res.innerHTML = '';
+    if(!q || q.length < 2) return;
+    
+    db.transaction("prods").objectStore("prods").getAll().onsuccess = e => {
+        const busca = e.target.result.filter(p => 
+            p.cod.includes(q) || p.nome.includes(q.toUpperCase())
+        );
+        busca.slice(0, 10).forEach(p => {
+            const d = document.createElement('div');
+            d.className = 'item-busca';
+            d.innerText = `${p.cod} - ${p.nome}`;
+            d.onclick = () => {
+                document.getElementById('area-busca').style.display = 'none';
+                document.getElementById('label-nome').innerText = p.nome;
+                document.getElementById('dados-prod').style.display = 'block';
+            };
+            res.appendChild(d);
+        });
+    };
+}
 
-    function voltarBusca() {
-        document.getElementById('area-busca').style.display = 'block';
-        document.getElementById('dados-prod').style.display = 'none';
-        document.getElementById('search').value = '';
-        document.getElementById('results').innerHTML = '';
-    }
-</script>
-</body>
-</html>
+function voltarBusca() {
+    document.getElementById('area-busca').style.display = 'block';
+    document.getElementById('dados-prod').style.display = 'none';
+    document.getElementById('search').value = '';
+    document.getElementById('results').innerHTML = '';
+    document.getElementById('qtd-chegou').value = '';
+    document.getElementById('qtd-quebra').value = '';
+}
+        
