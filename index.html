@@ -6,39 +6,32 @@
     <title>CONTROLE FLV 1018</title>
     <style>
         :root { --bg: #0a0a0a; --gold: #ffcc00; --card: #1a1a1a; --txt: #ffffff; --green: #25d366; }
-        body { margin: 0; font-family: sans-serif; background: var(--bg); color: var(--txt); overflow-x: hidden; }
+        body { margin: 0; font-family: sans-serif; background: var(--bg); color: var(--txt); }
         .app { max-width: 500px; margin: 0 auto; padding: 15px; box-sizing: border-box; }
-        .screen { display: none; flex-direction: column; min-height: 95vh; }
+        .screen { display: none; flex-direction: column; min-height: 90vh; }
         .active { display: flex; }
-        
         .header { display: flex; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 10px; }
         .back-btn { background: none; border: none; color: var(--gold); font-size: 1.8rem; cursor: pointer; padding-right: 20px; }
-        
         .card { background: var(--card); border-radius: 15px; padding: 20px; border: 1px solid #333; margin-bottom: 15px; }
         .btn { background: var(--gold); color: #000; border: none; padding: 18px; border-radius: 12px; font-weight: bold; width: 100%; cursor: pointer; text-transform: uppercase; font-size: 1rem; margin-top: 10px; }
         input { width: 100%; padding: 15px; background: #222; border: 1px solid #444; border-radius: 10px; color: #fff; font-size: 1.1rem; box-sizing: border-box; margin-bottom: 10px; }
         
-        /* LISTA DE PRODUTOS NO CADASTRO */
-        .prod-list-area { 
-            margin-top: 10px; 
+        /* ÁREA DA LISTA COM BARRA DE ROLAGEM */
+        .scroll-area { 
+            max-height: 350px; 
+            overflow-y: scroll; /* Barra sempre ativa para controle */
             background: #111; 
-            border-radius: 12px; 
+            border-radius: 10px; 
+            padding: 5px;
             border: 1px solid #333;
-            max-height: 400px; /* Altura generosa para ver vários itens */
-            overflow-y: auto;  /* Habilita a rolagem */
         }
-        .prod-row { 
-            display: flex; 
-            justify-content: space-between; 
-            padding: 15px; 
-            border-bottom: 1px solid #222; 
-            font-size: 1rem;
-        }
-        .c-gold { color: var(--gold); font-weight: bold; width: 60px; }
-        .c-nome { flex: 1; padding-left: 10px; text-transform: uppercase; }
-        .c-un { width: 40px; text-align: right; opacity: 0.5; font-size: 0.8rem; }
+        /* Estilização da barra para ficar visível no celular */
+        .scroll-area::-webkit-scrollbar { width: 8px; }
+        .scroll-area::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 10px; }
 
-        /* OUTROS ESTILOS MANTIDOS */
+        .prod-row { display: flex; justify-content: space-between; padding: 15px 10px; border-bottom: 1px solid #222; font-size: 0.9rem; }
+        .c-gold { color: var(--gold); font-weight: bold; margin-right: 10px; }
+        
         #results { max-height: 200px; overflow-y: auto; background: #111; border-radius: 8px; border: 1px solid #333; margin-bottom: 10px; }
         .item { padding: 15px; border-bottom: 1px solid #222; }
         .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 15px 0; }
@@ -51,12 +44,33 @@
 <body>
 
 <div class="app">
+    <!-- MENU -->
     <div id="step0" class="screen active">
         <h1 style="text-align:center; color:var(--gold); margin: 40px 0;">FLV 1018</h1>
         <button class="btn" style="height:100px; margin-bottom:20px;" onclick="mudarTela(1)">🍎 NOVA TRATATIVA</button>
         <button class="btn" style="background:#333; color:white; height:80px;" onclick="abrirCadastro()">➕ CADASTRAR PRODUTO</button>
     </div>
 
+    <!-- TELA CADASTRO -->
+    <div id="step4" class="screen">
+        <div class="header">
+            <button class="back-btn" onclick="mudarTela(0)">⬅</button>
+            <h2 style="margin:0">Novo Produto</h2>
+        </div>
+        <div class="card">
+            <input type="number" id="new-cod" placeholder="Código">
+            <input type="text" id="new-nome" placeholder="Nome do Produto">
+            <input type="text" id="new-un" placeholder="Unidade (KG ou UN)">
+            <button class="btn" onclick="salvarProduto()">SALVAR PRODUTO</button>
+            
+            <p style="color:var(--gold); font-size:0.8rem; margin: 20px 0 5px 5px;">PRODUTOS NO SISTEMA:</p>
+            <div class="scroll-area">
+                <div id="lista-cadastrados"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TELA DADOS (ENVIO) -->
     <div id="step1" class="screen">
         <div class="header">
             <button class="back-btn" onclick="mudarTela(0)">⬅</button>
@@ -74,6 +88,7 @@
         </div>
     </div>
 
+    <!-- TELA FOTOS -->
     <div id="step2" class="screen">
         <div class="header">
             <button class="back-btn" onclick="mudarTela(1)">⬅</button>
@@ -83,11 +98,9 @@
             <button class="btn" style="background:#333; margin-bottom:10px" onclick="fClick('f-prod')">📸 FOTO PRODUTO</button>
             <input type="file" id="f-prod" accept="image/*" multiple hidden onchange="preview(this, 'g-prod', 'prod')">
             <div class="grid" id="g-prod"></div>
-
             <button class="btn" style="background:#333; margin-bottom:10px" onclick="fClick('f-bal')">📸 FOTO BALANÇA</button>
             <input type="file" id="f-bal" accept="image/*" multiple hidden onchange="preview(this, 'g-bal', 'bal')">
             <div class="grid" id="g-bal"></div>
-
             <button class="btn" style="background:#333" onclick="fClick('f-eti')">📸 FOTO ETIQUETA</button>
             <input type="file" id="f-eti" accept="image/*" hidden onchange="preview(this, 'g-eti', 'eti')">
             <div class="grid" id="g-eti"></div>
@@ -95,6 +108,7 @@
         <button class="btn" onclick="gerarRelatorio()">GERAR RELATÓRIO</button>
     </div>
 
+    <!-- TELA FINAL -->
     <div id="step3" class="screen">
         <div class="header">
             <button class="back-btn" onclick="mudarTela(2)">⬅</button>
@@ -107,24 +121,6 @@
         <div id="area-fotos-final" class="card"></div>
         <button class="btn" style="background:none; border:2px solid var(--gold); color:var(--gold);" onclick="location.reload()">NOVA TRATATIVA</button>
     </div>
-
-    <div id="step4" class="screen">
-        <div class="header">
-            <button class="back-btn" onclick="mudarTela(0)">⬅</button>
-            <h2 style="margin:0">Novo Produto</h2>
-        </div>
-        <div class="card">
-            <input type="number" id="new-cod" placeholder="Código">
-            <input type="text" id="new-nome" placeholder="Nome do Produto">
-            <input type="text" id="new-un" placeholder="Unidade (KG ou UN)">
-            <button class="btn" onclick="salvarProduto()">SALVAR PRODUTO</button>
-            
-            <h3 style="font-size:0.8rem; color:var(--gold); margin: 20px 0 5px 0; text-transform: uppercase;">Produtos Cadastrados:</h3>
-            <div class="prod-list-area">
-                <div id="lista-cadastrados"></div>
-            </div>
-        </div>
-    </div>
 </div>
 
 <script>
@@ -133,7 +129,15 @@
     let fotos = { prod: [], bal: [], eti: [] };
 
     const req = indexedDB.open("DB_FLV_1018_FINAL", 1);
-    req.onsuccess = e => db = e.target.result;
+    req.onupgradeneeded = e => {
+        let store = e.target.result.createObjectStore("prods", { keyPath: "cod" });
+        store.add({ cod: "688", nome: "BATATA KG", un: "KG" });
+        store.add({ cod: "538", nome: "BANANA NANICA KG", un: "KG" });
+    };
+    req.onsuccess = e => {
+        db = e.target.result;
+        listarProdutos(); 
+    };
 
     function mudarTela(n) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -143,13 +147,14 @@
 
     function listarProdutos() {
         const area = document.getElementById('lista-cadastrados');
+        if(!db) return;
         area.innerHTML = '';
         db.transaction("prods").objectStore("prods").getAll().onsuccess = e => {
-            const lista = e.target.result.sort((a, b) => a.cod - b.cod);
-            lista.forEach(p => {
+            const itens = e.target.result.sort((a,b) => a.cod - b.cod);
+            itens.forEach(p => {
                 const row = document.createElement('div');
                 row.className = 'prod-row';
-                row.innerHTML = `<span class="c-gold">${p.cod}</span> <span class="c-nome">${p.nome}</span> <span class="c-un">${p.un}</span>`;
+                row.innerHTML = `<div><span class="c-gold">${p.cod}</span><span>${p.nome}</span></div><span>${p.un}</span>`;
                 area.appendChild(row);
             });
         };
@@ -158,6 +163,20 @@
     function abrirCadastro() {
         mudarTela(4);
         listarProdutos();
+    }
+
+    function salvarProduto() {
+        const c = document.getElementById('new-cod');
+        const n = document.getElementById('new-nome');
+        const u = document.getElementById('new-un');
+        if(c.value && n.value) {
+            const tx = db.transaction("prods", "readwrite");
+            tx.objectStore("prods").put({cod: c.value, nome: n.value.toUpperCase(), un: u.value.toUpperCase() || "KG"});
+            tx.oncomplete = () => {
+                c.value = ''; n.value = ''; u.value = '';
+                listarProdutos();
+            };
+        }
     }
 
     function filtrar(q) {
@@ -201,7 +220,6 @@
         const q = document.getElementById('qtd-quebra').value;
         const t = `Cod: ${selecionado.cod}\n${selecionado.nome}\nData: ${data}\nChegou: ${c} ${selecionado.un}\nQuebra: ${q} ${selecionado.un}`;
         document.getElementById('txt-final').innerText = t;
-
         const area = document.getElementById('area-fotos-final');
         area.innerHTML = '<p style="color:var(--gold); font-size:0.8rem; text-align:center;">ENVIAR FOTOS:</p>';
         ['prod', 'bal', 'eti'].forEach(cat => {
@@ -219,27 +237,6 @@
     function enviarTexto() {
         const t = document.getElementById('txt-final').innerText;
         window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(t)}`);
-    }
-
-    function salvarProduto() {
-        const codInput = document.getElementById('new-cod');
-        const nomeInput = document.getElementById('new-nome');
-        const unInput = document.getElementById('new-un');
-        
-        if(codInput.value && nomeInput.value) {
-            const tx = db.transaction("prods", "readwrite");
-            tx.objectStore("prods").put({
-                cod: codInput.value, 
-                nome: nomeInput.value.toUpperCase(), 
-                un: unInput.value.toUpperCase() || "KG"
-            });
-            tx.oncomplete = () => { 
-                codInput.value = '';
-                nomeInput.value = '';
-                unInput.value = '';
-                listarProdutos(); 
-            };
-        }
     }
 </script>
 </body>
