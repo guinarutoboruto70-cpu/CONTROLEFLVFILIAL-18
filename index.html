@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>FLV 1018</title>
+    <title>FLV 1018 - CONTROLE</title>
     <style>
         :root { --bg: #0a0a0a; --gold: #ffcc00; --card: #1a1a1a; --txt: #ffffff; }
         body { margin: 0; font-family: sans-serif; background: var(--bg); color: var(--txt); height: 100vh; overflow: hidden; }
@@ -25,38 +24,36 @@
 <body>
 
 <div class="app">
-    <div id="step0" class="screen active">
+    <div id="screen0" class="screen active">
         <h1 style="text-align:center; color:var(--gold); margin: 40px 0;">FLV 1018</h1>
-        <button class="btn" style="height:100px; margin-bottom:20px;" onclick="mudarTela(1)">🍎 LANÇAR TRATATIVA</button>
-        <button class="btn" style="background:#333; color:white; height:80px;" onclick="abrirCadastro()">➕ PRODUTOS CADASTRADOS</button>
+        <button class="btn" style="height:100px; margin-bottom:20px;" onclick="showScreen(1)">🍎 LANÇAR TRATATIVA</button>
+        <button class="btn" style="background:#333; color:white; height:80px;" onclick="showScreen(4)">➕ PRODUTOS CADASTRADOS</button>
     </div>
 
-    <div id="step1" class="screen">
-        <div class="header"><button class="back-btn" onclick="mudarTela(0)">⬅</button><h2>Tratativa</h2></div>
-        <div class="card">
-            <div id="area-busca">
-                <input type="text" id="search" placeholder="Buscar produto..." oninput="filtrar(this.value)">
-                <div id="results" style="max-height: 250px; overflow-y: auto;"></div>
-            </div>
-            <div id="dados-prod" style="display:none;">
-                <p style="color:var(--gold); font-weight:bold; margin-bottom:15px;">ITEM: <span id="label-nome"></span></p>
-                <input type="number" id="qtd-chegou" placeholder="Qtd Chegou" inputmode="decimal">
-                <input type="number" id="qtd-quebra" placeholder="Qtd Quebra" inputmode="decimal">
-                <button class="btn" onclick="alert('Próximo: Fotos')">PRÓXIMO: FOTOS</button>
-                <button class="btn" style="background:transparent; color:#888; font-size:0.7rem; border:1px solid #444;" onclick="voltarBusca()">TROCAR PRODUTO</button>
-            </div>
+    <div id="screen1" class="screen">
+        <div class="header"><button class="back-btn" onclick="showScreen(0)">⬅</button><h2>Nova Tratativa</h2></div>
+        <div class="card" id="area-pesquisa">
+            <input type="text" id="inputBusca" placeholder="Código ou Nome..." oninput="executarBusca(this.value)">
+            <div id="listaResultados" style="max-height: 250px; overflow-y: auto;"></div>
+        </div>
+        <div class="card" id="area-formulario" style="display:none;">
+            <p style="color:var(--gold); font-weight:bold; margin-bottom:15px;">PRODUTO: <span id="nome-selecionado"></span></p>
+            <input type="number" id="qtd-chegou" placeholder="Qtd Chegou" inputmode="decimal">
+            <input type="number" id="qtd-quebra" placeholder="Qtd Quebra" inputmode="decimal">
+            <button class="btn" onclick="alert('Próxima fase: Sistema de Câmera')">PRÓXIMO: FOTOS</button>
+            <button class="btn" style="background:transparent; color:#888; border:1px solid #444; font-size:0.7rem;" onclick="resetarTratativa()">TROCAR PRODUTO</button>
         </div>
     </div>
 
-    <div id="step4" class="screen">
-        <div class="header"><button class="back-btn" onclick="mudarTela(0)">⬅</button><h2>Produtos (A-Z)</h2></div>
-        <div class="list-container" id="lista-cadastrados"></div>
+    <div id="screen4" class="screen">
+        <div class="header"><button class="back-btn" onclick="showScreen(0)">⬅</button><h2>Lista (A-Z)</h2></div>
+        <div class="list-container" id="container-lista-geral"></div>
     </div>
 </div>
 
 <script>
     let db;
-    const cargaInicial = [
+    const listaProdutos = [
         { cod: "1124", nome: "ABACATE KG" }, { cod: "1125", nome: "ABACAXI UN" },
         { cod: "1129", nome: "ABOBORA ITALIA KG" }, { cod: "1133", nome: "ABOBORA MORANGA KG" },
         { cod: "1135", nome: "ABOBORA CABOTIA KG" }, { cod: "1138", nome: "ABOBRINHA MENINA KG" },
@@ -76,57 +73,73 @@
         { cod: "1025", nome: "VAGEM KG" }
     ];
 
-    const req = indexedDB.open("FLV_FINAL_1018", 1);
-    req.onupgradeneeded = e => { e.target.result.createObjectStore("prods", { keyPath: "cod" }); };
-    req.onsuccess = e => { 
-        db = e.target.result; 
-        const tx = db.transaction("prods", "readwrite");
-        cargaInicial.forEach(p => tx.objectStore("prods").put(p)); 
+    const request = indexedDB.open("FLV_CORE_1018", 1);
+
+    request.onupgradeneeded = e => {
+        let dbRef = e.target.result;
+        if (!dbRef.objectStoreNames.contains("prods")) {
+            dbRef.createObjectStore("prods", { keyPath: "cod" });
+        }
     };
 
-    function mudarTela(n) {
-        if(n === 1) voltarBusca();
+    request.onsuccess = e => {
+        db = e.target.result;
+        let tx = db.transaction("prods", "readwrite");
+        let store = tx.objectStore("prods");
+        listaProdutos.forEach(p => store.put(p));
+    };
+
+    function showScreen(num) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        document.getElementById('step' + n).classList.add('active');
+        document.getElementById('screen' + num).classList.add('active');
+        if (num === 4) atualizarListaGeral();
+        if (num === 1) resetarTratativa();
     }
 
-    function abrirCadastro() { 
-        mudarTela(4); 
-        const area = document.getElementById('lista-cadastrados');
-        area.innerHTML = '';
+    function atualizarListaGeral() {
+        const box = document.getElementById('container-lista-geral');
+        box.innerHTML = '';
         db.transaction("prods").objectStore("prods").getAll().onsuccess = e => {
-            e.target.result.sort((a, b) => a.nome.localeCompare(b.nome)).forEach(p => {
+            const itens = e.target.result.sort((a, b) => a.nome.localeCompare(b.nome));
+            itens.forEach(p => {
                 const row = document.createElement('div');
                 row.className = 'prod-row';
-                row.innerHTML = `<span><b>${p.nome}</b></span> <span style="color:var(--gold)">#${p.cod}</span>`;
-                area.appendChild(row);
+                row.innerHTML = `<span>${p.nome}</span><span style="color:var(--gold)">#${p.cod}</span>`;
+                box.appendChild(row);
             });
         };
     }
 
-    function filtrar(q) {
-        const res = document.getElementById('results'); res.innerHTML = '';
-        if(!q) return;
+    function executarBusca(val) {
+        const res = document.getElementById('listaResultados');
+        res.innerHTML = '';
+        if (!val) return;
+
         db.transaction("prods").objectStore("prods").getAll().onsuccess = e => {
-            e.target.result.filter(p => p.cod.includes(q) || p.nome.includes(q.toUpperCase())).slice(0, 8).forEach(p => {
+            const filtro = e.target.result.filter(p => 
+                p.cod.includes(val) || p.nome.includes(val.toUpperCase())
+            );
+            filtro.slice(0, 10).forEach(p => {
                 const d = document.createElement('div');
                 d.className = 'item-busca';
-                d.innerText = `${p.cod} - ${p.nome}`;
+                d.innerText = p.cod + " - " + p.nome;
                 d.onclick = () => {
-                    document.getElementById('area-busca').style.display = 'none';
-                    document.getElementById('label-nome').innerText = p.nome;
-                    document.getElementById('dados-prod').style.display = 'block';
+                    document.getElementById('area-pesquisa').style.display = 'none';
+                    document.getElementById('area-formulario').style.display = 'block';
+                    document.getElementById('nome-selecionado').innerText = p.nome;
                 };
                 res.appendChild(d);
             });
         };
     }
 
-    function voltarBusca() {
-        document.getElementById('area-busca').style.display = 'block';
-        document.getElementById('dados-prod').style.display = 'none';
-        document.getElementById('search').value = '';
-        document.getElementById('results').innerHTML = '';
+    function resetarTratativa() {
+        document.getElementById('area-pesquisa').style.display = 'block';
+        document.getElementById('area-formulario').style.display = 'none';
+        document.getElementById('inputBusca').value = '';
+        document.getElementById('listaResultados').innerHTML = '';
+        document.getElementById('qtd-chegou').value = '';
+        document.getElementById('qtd-quebra').value = '';
     }
 </script>
 </body>
