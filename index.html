@@ -30,26 +30,23 @@ h1,h2 { text-align:center; color:#ffcc00; }
 }
 
 .preview img{ width:70px; margin:5px; border-radius:6px; }
-.big img{ width:100px; margin:5px; border-radius:6px; }
+.big img{ width:80px; margin:5px; border-radius:6px; }
 </style>
 </head>
 
 <body>
 
-<!-- HOME -->
 <div id="tela0" class="screen active">
     <h1>Controle FLV</h1>
     <button class="btn" onclick="ir(1)">ENTRAR</button>
 </div>
 
-<!-- MENU -->
 <div id="tela1" class="screen">
     <h2>Menu</h2>
     <button class="btn" onclick="ir(2)">Nova Tratativa</button>
     <button class="btn" onclick="ir(7)">Lista</button>
 </div>
 
-<!-- TRATATIVA -->
 <div id="tela2" class="screen">
     <h2>Tratativa</h2>
 
@@ -58,21 +55,18 @@ h1,h2 { text-align:center; color:#ffcc00; }
     <input id="chegou" type="number" placeholder="Qtd Chegou">
     <input id="quebra" type="number" placeholder="Qtd Quebra">
 
-    <!-- PRODUTO -->
     <div class="card">
         Produto
         <input type="file" multiple accept="image/*" onchange="addFotos(event,'prod')">
         <div id="prev_prod" class="preview"></div>
     </div>
 
-    <!-- BALANÇA -->
     <div class="card">
         Balança
         <input type="file" multiple accept="image/*" onchange="addFotos(event,'bal')">
         <div id="prev_bal" class="preview"></div>
     </div>
 
-    <!-- ETIQUETA -->
     <div class="card">
         Etiqueta<br><br>
 
@@ -88,7 +82,6 @@ h1,h2 { text-align:center; color:#ffcc00; }
     <button class="btn" onclick="salvar()">Continuar</button>
 </div>
 
-<!-- ENVIO -->
 <div id="tela3" class="screen">
     <h2>Envio</h2>
 
@@ -102,7 +95,6 @@ h1,h2 { text-align:center; color:#ffcc00; }
     <button class="btn" onclick="finalizar()">FINALIZAR</button>
 </div>
 
-<!-- LISTA -->
 <div id="tela7" class="screen">
     <h2>Lista</h2>
     <div id="lista"></div>
@@ -113,7 +105,6 @@ h1,h2 { text-align:center; color:#ffcc00; }
 
 let fotos = {prod:[],bal:[],eti:[]};
 let banco = [];
-let atual = {};
 
 /* NAV */
 function ir(t){
@@ -124,11 +115,11 @@ function ir(t){
 /* ADD FOTOS */
 function addFotos(e,tipo){
     const div = document.getElementById('prev_'+tipo);
-    if(!div) return;
 
     [...e.target.files].forEach(file=>{
         const url = URL.createObjectURL(file);
-        fotos[tipo].push({file,url});
+
+        fotos[tipo].push(url);
 
         const img = document.createElement('img');
         img.src = url;
@@ -137,11 +128,13 @@ function addFotos(e,tipo){
 }
 
 /* SALVAR */
+let textoFinal = '';
+
 function salvar(){
-    const produto = document.getElementById('produto').value;
-    const cod = document.getElementById('cod').value;
-    const chegou = document.getElementById('chegou').value;
-    const quebra = document.getElementById('quebra').value;
+    const produto = produtoInput().value;
+    const cod = codInput().value;
+    const chegou = chegouInput().value;
+    const quebra = quebraInput().value;
     const data = new Date().toLocaleDateString();
 
     if(!produto || !cod){
@@ -149,18 +142,24 @@ function salvar(){
         return;
     }
 
-    atual = {produto,cod,chegou,quebra,data};
-
-    document.getElementById('texto').innerText =
+    textoFinal =
 `Cód: ${cod}
 ${produto}
 Data: ${data}
 Qtd Chegou: ${chegou}
 Qtd Quebra: ${quebra}`;
 
+    document.getElementById('texto').innerText = textoFinal;
+
     montarFotos();
     ir(3);
 }
+
+/* HELPERS */
+function produtoInput(){ return document.getElementById('produto'); }
+function codInput(){ return document.getElementById('cod'); }
+function chegouInput(){ return document.getElementById('chegou'); }
+function quebraInput(){ return document.getElementById('quebra'); }
 
 /* MOSTRAR FOTOS */
 function montarFotos(){
@@ -174,51 +173,48 @@ function montarFotos(){
             titulo.innerText = tipo.toUpperCase();
             div.appendChild(titulo);
 
-            fotos[tipo].forEach(obj=>{
+            fotos[tipo].forEach(url=>{
                 const box = document.createElement('div');
                 box.className = 'big';
 
                 const img = document.createElement('img');
-                img.src = obj.url;
-
-                const btn = document.createElement('button');
-                btn.className = 'btn';
-                btn.innerText = 'COMPARTILHAR FOTO';
-                btn.onclick = ()=>compartilhar(obj.file);
+                img.src = url;
 
                 box.appendChild(img);
-                box.appendChild(btn);
                 div.appendChild(box);
             });
         }
     });
 }
 
-/* COMPARTILHAR */
-async function compartilhar(file){
-    try{
-        if(navigator.canShare && navigator.canShare({files:[file]})){
-            await navigator.share({files:[file]});
-        }else{
-            alert("Compartilhamento não suportado neste aparelho");
-        }
-    }catch{
-        alert("Erro ao compartilhar");
-    }
-}
-
-/* TEXTO */
+/* WHATS */
 function enviarTexto(){
-    const texto = document.getElementById('texto').innerText;
-    window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`);
+    window.open(`https://wa.me/?text=${encodeURIComponent(textoFinal)}`);
 }
 
 /* FINALIZAR */
 function finalizar(){
-    banco.push(atual);
+
+    banco.push({
+        texto: textoFinal,
+        fotos: JSON.parse(JSON.stringify(fotos))
+    });
+
     atualizarLista();
+
     fotos = {prod:[],bal:[],eti:[]};
+    limparTela();
+
     ir(7);
+}
+
+/* LIMPAR */
+function limparTela(){
+    document.querySelectorAll('.preview').forEach(d=>d.innerHTML='');
+    produtoInput().value = '';
+    codInput().value = '';
+    chegouInput().value = '';
+    quebraInput().value = '';
 }
 
 /* LISTA */
@@ -226,13 +222,25 @@ function atualizarLista(){
     const div = document.getElementById('lista');
     div.innerHTML = '';
 
-    banco.forEach(d=>{
-        div.innerHTML += `
-        <div class="card">
-            ${d.cod} - ${d.produto}<br>
-            Data: ${d.data}<br>
-            Chegou: ${d.chegou} | Quebra: ${d.quebra}
-        </div>`;
+    banco.forEach(item=>{
+        const card = document.createElement('div');
+        card.className = 'card';
+
+        const txt = document.createElement('pre');
+        txt.innerText = item.texto;
+
+        card.appendChild(txt);
+
+        ['prod','bal','eti'].forEach(tipo=>{
+            item.fotos[tipo].forEach(url=>{
+                const img = document.createElement('img');
+                img.src = url;
+                img.style.width = '60px';
+                card.appendChild(img);
+            });
+        });
+
+        div.appendChild(card);
     });
 }
 
