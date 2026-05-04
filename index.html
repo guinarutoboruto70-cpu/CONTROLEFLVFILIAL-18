@@ -6,36 +6,46 @@
     <title>CONTROLE FLV 1018</title>
     <style>
         :root { --bg: #0a0a0a; --gold: #ffcc00; --card: #1a1a1a; --txt: #ffffff; --green: #25d366; }
-        body { margin: 0; font-family: sans-serif; background: var(--bg); color: var(--txt); }
-        .app { max-width: 500px; margin: 0 auto; padding: 15px; }
-        .screen { display: none; flex-direction: column; min-height: 90vh; }
+        body { margin: 0; font-family: sans-serif; background: var(--bg); color: var(--txt); overflow-x: hidden; }
+        .app { max-width: 500px; margin: 0 auto; padding: 15px; box-sizing: border-box; }
+        .screen { display: none; flex-direction: column; min-height: 95vh; }
         .active { display: flex; }
+        
         .header { display: flex; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 10px; }
         .back-btn { background: none; border: none; color: var(--gold); font-size: 1.8rem; cursor: pointer; padding-right: 20px; }
+        
         .card { background: var(--card); border-radius: 15px; padding: 20px; border: 1px solid #333; margin-bottom: 15px; }
         .btn { background: var(--gold); color: #000; border: none; padding: 18px; border-radius: 12px; font-weight: bold; width: 100%; cursor: pointer; text-transform: uppercase; font-size: 1rem; margin-top: 10px; }
         input { width: 100%; padding: 15px; background: #222; border: 1px solid #444; border-radius: 10px; color: #fff; font-size: 1.1rem; box-sizing: border-box; margin-bottom: 10px; }
         
+        /* LISTA DE PRODUTOS NO CADASTRO */
+        .prod-list-area { 
+            margin-top: 10px; 
+            background: #111; 
+            border-radius: 12px; 
+            border: 1px solid #333;
+            max-height: 400px; /* Altura generosa para ver vários itens */
+            overflow-y: auto;  /* Habilita a rolagem */
+        }
+        .prod-row { 
+            display: flex; 
+            justify-content: space-between; 
+            padding: 15px; 
+            border-bottom: 1px solid #222; 
+            font-size: 1rem;
+        }
+        .c-gold { color: var(--gold); font-weight: bold; width: 60px; }
+        .c-nome { flex: 1; padding-left: 10px; text-transform: uppercase; }
+        .c-un { width: 40px; text-align: right; opacity: 0.5; font-size: 0.8rem; }
+
+        /* OUTROS ESTILOS MANTIDOS */
         #results { max-height: 200px; overflow-y: auto; background: #111; border-radius: 8px; border: 1px solid #333; margin-bottom: 10px; }
         .item { padding: 15px; border-bottom: 1px solid #222; }
-
         .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 15px 0; }
         .thumb { background: #000; aspect-ratio: 1; border-radius: 8px; border: 1px solid #444; overflow: hidden; }
         .thumb img { width: 100%; height: 100%; object-fit: cover; }
         .report { background: #000; padding: 15px; border-radius: 10px; border: 1px solid #555; font-family: monospace; white-space: pre-wrap; font-size: 1.1rem; }
         .btn-wa { background: var(--green); color: #fff; margin-bottom: 10px; }
-        
-        /* AJUSTE NA LISTA DE CADASTRO */
-        .prod-list-container { margin-top: 20px; border-top: 1px solid #444; padding-top: 10px; }
-        #lista-cadastrados { 
-            max-height: 300px; /* Define altura máxima para forçar a rolagem */
-            overflow-y: auto;  /* Ativa a rolagem vertical */
-            margin-top: 10px;
-        }
-        .prod-row { display: flex; justify-content: space-between; padding: 12px 5px; border-bottom: 1px solid #222; font-size: 0.9rem; color: #ccc; }
-        .prod-row span:nth-child(1) { width: 50px; color: var(--gold); } /* Código */
-        .prod-row span:nth-child(2) { flex-grow: 1; padding-left: 10px; } /* Nome */
-        .prod-row span:nth-child(3) { width: 40px; text-align: right; opacity: 0.6; } /* Unidade */
     </style>
 </head>
 <body>
@@ -109,8 +119,8 @@
             <input type="text" id="new-un" placeholder="Unidade (KG ou UN)">
             <button class="btn" onclick="salvarProduto()">SALVAR PRODUTO</button>
             
-            <div class="prod-list-container">
-                <h3 style="font-size:0.8rem; color:var(--gold); text-transform: uppercase;">Produtos no Sistema:</h3>
+            <h3 style="font-size:0.8rem; color:var(--gold); margin: 20px 0 5px 0; text-transform: uppercase;">Produtos Cadastrados:</h3>
+            <div class="prod-list-area">
                 <div id="lista-cadastrados"></div>
             </div>
         </div>
@@ -123,11 +133,6 @@
     let fotos = { prod: [], bal: [], eti: [] };
 
     const req = indexedDB.open("DB_FLV_1018_FINAL", 1);
-    req.onupgradeneeded = e => {
-        let store = e.target.result.createObjectStore("prods", { keyPath: "cod" });
-        store.add({ cod: "688", nome: "BATATA KG", un: "KG" });
-        store.add({ cod: "538", nome: "BANANA NANICA KG", un: "KG" });
-    };
     req.onsuccess = e => db = e.target.result;
 
     function mudarTela(n) {
@@ -140,12 +145,11 @@
         const area = document.getElementById('lista-cadastrados');
         area.innerHTML = '';
         db.transaction("prods").objectStore("prods").getAll().onsuccess = e => {
-            // Ordenar por código para ficar organizado
             const lista = e.target.result.sort((a, b) => a.cod - b.cod);
             lista.forEach(p => {
                 const row = document.createElement('div');
                 row.className = 'prod-row';
-                row.innerHTML = `<span>${p.cod}</span> <span>${p.nome}</span> <span>${p.un}</span>`;
+                row.innerHTML = `<span class="c-gold">${p.cod}</span> <span class="c-nome">${p.nome}</span> <span class="c-un">${p.un}</span>`;
                 area.appendChild(row);
             });
         };
@@ -218,15 +222,21 @@
     }
 
     function salvarProduto() {
-        const cod = document.getElementById('new-cod').value;
-        const nome = document.getElementById('new-nome').value.toUpperCase();
-        const un = document.getElementById('new-un').value.toUpperCase() || "KG";
-        if(cod && nome) {
+        const codInput = document.getElementById('new-cod');
+        const nomeInput = document.getElementById('new-nome');
+        const unInput = document.getElementById('new-un');
+        
+        if(codInput.value && nomeInput.value) {
             const tx = db.transaction("prods", "readwrite");
-            tx.objectStore("prods").put({cod, nome, un});
+            tx.objectStore("prods").put({
+                cod: codInput.value, 
+                nome: nomeInput.value.toUpperCase(), 
+                un: unInput.value.toUpperCase() || "KG"
+            });
             tx.oncomplete = () => { 
-                document.getElementById('new-cod').value = '';
-                document.getElementById('new-nome').value = '';
+                codInput.value = '';
+                nomeInput.value = '';
+                unInput.value = '';
                 listarProdutos(); 
             };
         }
