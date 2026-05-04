@@ -11,28 +11,21 @@
         .screen { display: none; flex-direction: column; min-height: 90vh; }
         .active { display: flex; }
         
-        /* Cabeçalho com Seta */
-        .header { display: flex; align-items: center; margin-bottom: 20px; }
-        .back-btn { background: none; border: none; color: var(--gold); font-size: 1.5rem; cursor: pointer; padding: 10px 10px 10px 0; }
-        .header h2 { margin: 0; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; }
-
+        .header { display: flex; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .back-btn { background: none; border: none; color: var(--gold); font-size: 1.8rem; cursor: pointer; padding-right: 20px; }
+        
         .card { background: var(--card); border-radius: 15px; padding: 20px; border: 1px solid #333; margin-bottom: 15px; }
-        
-        /* Menu Inicial */
-        .menu-grid { display: grid; gap: 15px; margin-top: 50px; }
-        .menu-btn { height: 100px; font-size: 1.1rem; }
-
+        .btn { background: var(--gold); color: #000; border: none; padding: 18px; border-radius: 12px; font-weight: bold; width: 100%; cursor: pointer; text-transform: uppercase; font-size: 1rem; margin-top: 10px; }
         input { width: 100%; padding: 15px; background: #222; border: 1px solid #444; border-radius: 10px; color: #fff; font-size: 1.1rem; box-sizing: border-box; margin-bottom: 10px; }
-        .btn { background: var(--gold); color: #000; border: none; padding: 18px; border-radius: 12px; font-weight: bold; width: 100%; cursor: pointer; text-transform: uppercase; }
         
-        #results { max-height: 150px; overflow-y: auto; background: #111; border-radius: 8px; border: 1px solid #333; margin-bottom: 10px; }
+        #results { max-height: 200px; overflow-y: auto; background: #111; border-radius: 8px; border: 1px solid #333; margin-bottom: 10px; }
         .item { padding: 15px; border-bottom: 1px solid #222; }
 
         .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 15px 0; }
         .thumb { background: #000; aspect-ratio: 1; border-radius: 8px; border: 1px solid #444; overflow: hidden; }
         .thumb img { width: 100%; height: 100%; object-fit: cover; }
         
-        .report { background: #000; padding: 15px; border-radius: 10px; border: 1px solid #555; font-family: monospace; white-space: pre-wrap; font-size: 1.1rem; line-height: 1.5; }
+        .report { background: #000; padding: 15px; border-radius: 10px; border: 1px solid #555; font-family: monospace; white-space: pre-wrap; font-size: 1.1rem; }
         .btn-wa { background: var(--green); color: #fff; margin-bottom: 10px; }
     </style>
 </head>
@@ -40,26 +33,24 @@
 
 <div class="app">
     <div id="step0" class="screen active">
-        <h1 style="text-align:center; color:var(--gold); margin-top:40px;">FLV 1018</h1>
-        <div class="menu-grid">
-            <button class="btn menu-btn" onclick="mudarTela(1)">🍎 Nova Tratativa</button>
-            <button class="btn menu-btn" style="background:#333; color:white;" onclick="mudarTela(4)">➕ Cadastrar Produto</button>
-        </div>
+        <h1 style="text-align:center; color:var(--gold); margin: 40px 0;">FLV 1018</h1>
+        <button class="btn" style="height:100px; margin-bottom:20px;" onclick="mudarTela(1)">🍎 NOVA TRATATIVA</button>
+        <button class="btn" style="background:#333; color:white; height:80px;" onclick="mudarTela(4)">➕ CADASTRAR PRODUTO</button>
     </div>
 
     <div id="step1" class="screen">
         <div class="header">
             <button class="back-btn" onclick="mudarTela(0)">⬅</button>
-            <h2>Dados da Tratativa</h2>
+            <h2 style="margin:0">Dados</h2>
         </div>
         <div class="card">
-            <input type="text" id="search" placeholder="Buscar produto..." oninput="filtrar(this.value)">
+            <input type="text" id="search" placeholder="Buscar código ou nome..." oninput="filtrar(this.value)">
             <div id="results"></div>
             <div id="dados-prod" style="display:none">
-                <p id="label-nome" style="color:var(--gold); font-weight:bold; font-size:1.3rem; margin-bottom:15px;"></p>
+                <p id="label-nome" style="color:var(--gold); font-weight:bold; font-size:1.3rem; margin-bottom:10px;"></p>
                 <input type="number" id="qtd-chegou" placeholder="Qtd Chegou" inputmode="decimal">
                 <input type="number" id="qtd-quebra" placeholder="Qtd Quebra" inputmode="decimal">
-                <button class="btn" onclick="mudarTela(2)">Ir para Fotos</button>
+                <button class="btn" onclick="mudarTela(2)">PRÓXIMO: FOTOS</button>
             </div>
         </div>
     </div>
@@ -67,59 +58,62 @@
     <div id="step2" class="screen">
         <div class="header">
             <button class="back-btn" onclick="mudarTela(1)">⬅</button>
-            <h2>Fotos</h2>
+            <h2 style="margin:0">Fotos</h2>
         </div>
         <div class="card">
-            <button class="btn" style="background:#333; margin-bottom:10px" onclick="fClick('f-prod')">FOTO DO PRODUTO</button>
+            <button class="btn" style="background:#333; margin-bottom:10px" onclick="fClick('f-prod')">📸 FOTO PRODUTO</button>
             <input type="file" id="f-prod" accept="image/*" multiple hidden onchange="preview(this, 'g-prod', 'prod')">
             <div class="grid" id="g-prod"></div>
 
-            <button class="btn" style="background:#333; margin-bottom:10px" onclick="fClick('f-bal')">FOTO DA BALANÇA</button>
+            <button class="btn" style="background:#333; margin-bottom:10px" onclick="fClick('f-bal')">📸 FOTO BALANÇA</button>
             <input type="file" id="f-bal" accept="image/*" multiple hidden onchange="preview(this, 'g-bal', 'bal')">
             <div class="grid" id="g-bal"></div>
 
-            <button class="btn" style="background:#333" onclick="fClick('f-eti')">FOTO DA ETIQUETA</button>
+            <button class="btn" style="background:#333" onclick="fClick('f-eti')">📸 FOTO ETIQUETA</button>
             <input type="file" id="f-eti" accept="image/*" hidden onchange="preview(this, 'g-eti', 'eti')">
             <div class="grid" id="g-eti"></div>
         </div>
-        <button class="btn" onclick="gerarRelatorio()">Gerar Relatório</button>
+        <button class="btn" onclick="gerarRelatorio()">GERAR RELATÓRIO</button>
     </div>
 
     <div id="step3" class="screen">
         <div class="header">
             <button class="back-btn" onclick="mudarTela(2)">⬅</button>
-            <h2>Enviar Relatório</h2>
+            <h2 style="margin:0">Enviar</h2>
         </div>
         <div class="card">
             <div class="report" id="txt-final"></div>
             <button class="btn btn-wa" onclick="enviarTexto()">ENVIAR TEXTO</button>
         </div>
         <div id="area-fotos-final" class="card"></div>
-        <button class="btn" style="background:none; border:2px solid var(--gold); color:var(--gold); margin-bottom:20px" onclick="location.reload()">NOVA TRATATIVA</button>
+        <button class="btn" style="background:none; border:2px solid var(--gold); color:var(--gold);" onclick="location.reload()">NOVA TRATATIVA</button>
     </div>
 
     <div id="step4" class="screen">
         <div class="header">
             <button class="back-btn" onclick="mudarTela(0)">⬅</button>
-            <h2>Cadastrar Produto</h2>
+            <h2 style="margin:0">Novo Produto</h2>
         </div>
         <div class="card">
-            <input type="number" id="new-cod" placeholder="Código (Ex: 688)">
-            <input type="text" id="new-nome" placeholder="Nome (Ex: BATATA KG)">
+            <input type="number" id="new-cod" placeholder="Código">
+            <input type="text" id="new-nome" placeholder="Nome do Produto">
             <input type="text" id="new-un" placeholder="Unidade (KG ou UN)">
-            <button class="btn" onclick="salvarProduto()">Salvar Produto</button>
+            <button class="btn" onclick="salvarProduto()">SALVAR PRODUTO</button>
         </div>
     </div>
 </div>
 
 <script>
-    let db; let selecionado = null; let fotos = { prod: [], bal: [], eti: [] };
-    const prodsBase = [{ cod: "688", nome: "BATATA KG", un: "KG" }, { cod: "538", nome: "BANANA NANICA KG", un: "KG" }];
+    let db;
+    let selecionado = null;
+    let fotos = { prod: [], bal: [], eti: [] };
 
-    const req = indexedDB.open("TrataFLV_Final", 1);
+    // Banco de Dados com Nome Definitivo
+    const req = indexedDB.open("DB_FLV_1018_FINAL", 1);
     req.onupgradeneeded = e => {
         let store = e.target.result.createObjectStore("prods", { keyPath: "cod" });
-        prodsBase.forEach(p => store.add(p));
+        store.add({ cod: "688", nome: "BATATA KG", un: "KG" });
+        store.add({ cod: "538", nome: "BANANA NANICA KG", un: "KG" });
     };
     req.onsuccess = e => db = e.target.result;
 
@@ -130,15 +124,19 @@
     }
 
     function filtrar(q) {
-        const res = document.getElementById('results'); res.innerHTML = '';
+        const res = document.getElementById('results');
+        res.innerHTML = '';
         if(!q) return;
         db.transaction("prods").objectStore("prods").getAll().onsuccess = e => {
             e.target.result.filter(p => p.cod.includes(q) || p.nome.includes(q.toUpperCase())).slice(0,5).forEach(p => {
-                const d = document.createElement('div'); d.className = 'item'; d.innerText = `${p.cod} - ${p.nome}`;
+                const d = document.createElement('div'); d.className = 'item';
+                d.innerText = `${p.cod} - ${p.nome}`;
                 d.onclick = () => {
-                    selecionado = p; document.getElementById('label-nome').innerText = p.nome;
+                    selecionado = p;
+                    document.getElementById('label-nome').innerText = p.nome;
                     document.getElementById('dados-prod').style.display = 'block';
-                    document.getElementById('search').value = p.nome; res.innerHTML = '';
+                    document.getElementById('search').value = p.nome;
+                    res.innerHTML = '';
                 };
                 res.appendChild(d);
             });
@@ -168,12 +166,13 @@
         document.getElementById('txt-final').innerText = t;
 
         const area = document.getElementById('area-fotos-final');
-        area.innerHTML = '<h2 style="color:var(--gold); font-size:0.8rem;">ENVIAR FOTOS</h2>';
+        area.innerHTML = '<p style="color:var(--gold); font-size:0.8rem; text-align:center;">ENVIAR FOTOS:</p>';
         ['prod', 'bal', 'eti'].forEach(cat => {
             fotos[cat].forEach((img, i) => {
-                const b = document.createElement('button'); b.className = 'btn btn-wa';
+                const b = document.createElement('button');
+                b.className = 'btn btn-wa';
                 b.innerText = `FOTO ${cat.toUpperCase()} (${i+1})`;
-                b.onclick = () => navigator.share({ files: [img.file] });
+                b.onclick = () => { if(navigator.share) navigator.share({ files: [img.file] }); };
                 area.appendChild(b);
             });
         });
@@ -181,7 +180,8 @@
     }
 
     function enviarTexto() {
-        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(document.getElementById('txt-final').innerText)}`);
+        const t = document.getElementById('txt-final').innerText;
+        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(t)}`);
     }
 
     function salvarProduto() {
@@ -189,8 +189,9 @@
         const nome = document.getElementById('new-nome').value.toUpperCase();
         const un = document.getElementById('new-un').value.toUpperCase() || "KG";
         if(cod && nome) {
-            db.transaction("prods", "readwrite").objectStore("prods").add({cod, nome, un});
-            alert("Produto Salvo!"); mudarTela(0);
+            const tx = db.transaction("prods", "readwrite");
+            tx.objectStore("prods").put({cod, nome, un});
+            tx.oncomplete = () => { alert("Produto Salvo!"); mudarTela(0); };
         }
     }
 </script>
