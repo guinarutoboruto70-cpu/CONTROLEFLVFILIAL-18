@@ -15,7 +15,7 @@ h1,h2 { text-align:center; color:#ffcc00; }
 .btn {
     width:100%;
     padding:12px;
-    margin-top:8px;
+    margin-top:10px;
     border:none;
     border-radius:8px;
     background:#ffcc00;
@@ -56,13 +56,11 @@ input, select {
 
 <body>
 
-<!-- HOME -->
 <div id="tela0" class="screen active">
     <h1>Controle FLV</h1>
     <button class="btn" onclick="ir(1)">ENTRAR</button>
 </div>
 
-<!-- MENU -->
 <div id="tela1" class="screen">
     <h2>Menu</h2>
     <button class="btn" onclick="ir(2)">Nova Tratativa</button>
@@ -70,19 +68,251 @@ input, select {
     <button class="btn" onclick="ir(6)">Produtos</button>
 </div>
 
-<!-- TRATATIVA -->
 <div id="tela2" class="screen">
     <h2>Tratativa</h2>
 
-    <select id="produtoSelect" onchange="selecionarProduto()">
-        <option value="">Selecione</option>
-    </select>
+    <select id="produtoSelect"></select>
 
-    <input id="produto">
-    <input id="cod">
+    <input id="produto" placeholder="Produto">
+    <input id="cod" placeholder="Código">
     <input id="data" type="date">
 
     <input id="chegou" type="number" placeholder="Chegou">
-    <input id="quebra" type="number" placeholder="Quebra" oninput="calcular()">
+    <input id="quebra" type="number" placeholder="Quebra">
 
-    <div id="resultado
+    <div id="resultado"></div>
+
+    <button class="btn" onclick="salvar()">Continuar</button>
+    <button class="btn" onclick="ir(1)">Voltar</button>
+</div>
+
+<div id="tela3" class="screen">
+    <h2>Enviar</h2>
+    <pre id="texto"></pre>
+
+    <button class="btn" onclick="copiar()">COPIAR</button>
+    <button class="btn" onclick="enviar()">WHATSAPP</button>
+    <button class="btn" onclick="finalizar()">FINALIZAR</button>
+</div>
+
+<div id="tela4" class="screen">
+    <h2>Histórico</h2>
+    <div id="lista"></div>
+    <button class="btn" onclick="ir(1)">Voltar</button>
+</div>
+
+<div id="tela6" class="screen">
+    <h2>Produtos</h2>
+
+    <input id="novoCod" placeholder="Código">
+    <input id="novoNome" placeholder="Nome do Produto">
+
+    <button class="btn" onclick="salvarProduto()">Salvar</button>
+
+    <div id="listaProdutos"></div>
+
+    <button class="btn" onclick="ir(1)">Voltar</button>
+</div>
+
+<script>
+
+let banco = [];
+let produtos = [];
+let atual = {};
+let editando = null;
+
+/* ================= INIT ================= */
+function init(){
+    try {
+        banco = JSON.parse(localStorage.getItem('banco')) || [];
+        produtos = JSON.parse(localStorage.getItem('produtos')) || [];
+    } catch(e){
+        banco = [];
+        produtos = [];
+    }
+
+    renderProdutos();
+    atualizar();
+    carregarSelect();
+}
+
+/* ================= NAV ================= */
+function ir(t){
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    const tela = document.getElementById('tela'+t);
+    if(tela) tela.classList.add('active');
+}
+
+/* ================= PRODUTOS ================= */
+function salvarProduto(){
+
+    const cod = document.getElementById('novoCod').value.trim();
+    const nome = document.getElementById('novoNome').value.trim();
+
+    if(!cod || !nome){
+        alert("Preencha!");
+        return;
+    }
+
+    if(editando === null){
+        if(produtos.some(p=>p.cod == cod)){
+            alert("Código já existe!");
+            return;
+        }
+        produtos.push({cod,nome});
+    }else{
+        produtos[editando] = {cod,nome};
+        editando = null;
+    }
+
+    salvarProdutos();
+    limparCamposProduto();
+    renderProdutos();
+    carregarSelect();
+}
+
+function renderProdutos(){
+
+    const div = document.getElementById('listaProdutos');
+    if(!div) return;
+
+    div.innerHTML = '';
+
+    produtos.sort((a,b)=>a.nome.localeCompare(b.nome));
+
+    produtos.forEach((p,i)=>{
+        const card = document.createElement('div');
+        card.className = 'card';
+
+        card.innerHTML = `
+        ${p.cod} - ${p.nome}<br>
+        <button class="small-btn edit">Editar</button>
+        <button class="small-btn del">Excluir</button>
+        `;
+
+        card.querySelector('.edit').onclick = ()=>editar(i);
+        card.querySelector('.del').onclick = ()=>deletar(i);
+
+        div.appendChild(card);
+    });
+}
+
+function editar(i){
+    document.getElementById('novoCod').value = produtos[i].cod;
+    document.getElementById('novoNome').value = produtos[i].nome;
+    editando = i;
+}
+
+function deletar(i){
+    if(confirm("Excluir produto?")){
+        produtos.splice(i,1);
+        salvarProdutos();
+        renderProdutos();
+        carregarSelect();
+    }
+}
+
+function salvarProdutos(){
+    localStorage.setItem('produtos', JSON.stringify(produtos));
+}
+
+function limparCamposProduto(){
+    document.getElementById('novoCod').value = '';
+    document.getElementById('novoNome').value = '';
+}
+
+/* ================= TRATATIVA ================= */
+function carregarSelect(){
+    const select = document.getElementById('produtoSelect');
+    if(!select) return;
+
+    select.innerHTML = '<option value="">Selecione</option>';
+
+    produtos.forEach(p=>{
+        const op = document.createElement('option');
+        op.value = p.cod;
+        op.textContent = p.nome;
+        select.appendChild(op);
+    });
+
+    select.onchange = ()=>{
+        const cod = select.value;
+        const p = produtos.find(x=>x.cod == cod);
+        if(p){
+            document.getElementById('produto').value = p.nome;
+            document.getElementById('cod').value = p.cod;
+        }
+    };
+}
+
+function salvar(){
+
+    const produto = document.getElementById('produto').value;
+    const cod = document.getElementById('cod').value;
+
+    if(!produto || !cod){
+        alert("Preencha!");
+        return;
+    }
+
+    const data = new Date().toLocaleDateString();
+    const chegou = Number(document.getElementById('chegou').value) || 0;
+    const quebra = Number(document.getElementById('quebra').value) || 0;
+
+    const perc = chegou ? ((quebra/chegou)*100).toFixed(1) : 0;
+
+    atual = {produto,cod,data,chegou,quebra,perc};
+
+    const texto =
+`Cód: ${cod}
+${produto}
+${data}
+Chegou: ${chegou}
+Quebra: ${quebra}
+Perda: ${perc}%`;
+
+    document.getElementById('texto').innerText = texto;
+
+    ir(3);
+}
+
+/* ================= OUTROS ================= */
+function copiar(){
+    const texto = document.getElementById('texto').innerText;
+    navigator.clipboard.writeText(texto);
+    alert("Copiado!");
+}
+
+function enviar(){
+    const texto = document.getElementById('texto').innerText;
+    window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`);
+}
+
+function finalizar(){
+    banco.push(atual);
+    localStorage.setItem('banco', JSON.stringify(banco));
+    atualizar();
+    ir(4);
+}
+
+function atualizar(){
+    const lista = document.getElementById('lista');
+    if(!lista) return;
+
+    lista.innerHTML = '';
+
+    banco.forEach(d=>{
+        const div = document.createElement('div');
+        div.className = 'card';
+        div.innerText = `${d.cod} - ${d.produto} (${d.perc}%)`;
+        lista.appendChild(div);
+    });
+}
+
+/* ================= START ================= */
+window.onload = init;
+
+</script>
+
+</body>
+</html>
