@@ -23,8 +23,8 @@ h1,h2 { text-align:center; color:#ffcc00; }
 }
 
 .btn.enviado {
-    background: #00c853;
-    color: #000;
+    background:#00c853;
+    color:#000;
 }
 
 .card {
@@ -192,7 +192,7 @@ function montarFotos(){
                     btn.disabled = true;
                 }else{
                     btn.innerText = 'COMPARTILHAR FOTO';
-                    btn.onclick = ()=>compartilhar(obj,fileIndex= index,tipo,btn);
+                    btn.onclick = ()=>compartilhar(tipo,index,btn);
                 }
 
                 box.appendChild(img);
@@ -203,8 +203,8 @@ function montarFotos(){
     });
 }
 
-async function compartilhar(fileIndex,tipo,btn){
-    const obj = fotos[tipo][fileIndex];
+async function compartilhar(tipo,index,btn){
+    const obj = fotos[tipo][index];
 
     try{
         if(navigator.canShare && navigator.canShare({files:[obj.file]})){
@@ -217,7 +217,7 @@ async function compartilhar(fileIndex,tipo,btn){
             btn.disabled = true;
 
         }else{
-            alert("Não suportado neste aparelho");
+            alert("Seu celular não suporta envio direto");
         }
     }catch{
         alert("Erro ao compartilhar");
