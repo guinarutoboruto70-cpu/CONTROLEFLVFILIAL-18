@@ -24,8 +24,8 @@ h1,h2 { text-align:center; color:#ffcc00; }
 
 .card {
     background:#1a1a1a;
-    padding:12px;
-    margin-top:8px;
+    padding:10px;
+    margin-top:5px;
     border-radius:8px;
     cursor:pointer;
 }
@@ -36,6 +36,11 @@ input, select {
     margin-top:8px;
     border-radius:6px;
     border:none;
+}
+
+.autocomplete {
+    max-height:200px;
+    overflow:auto;
 }
 </style>
 </head>
@@ -61,8 +66,12 @@ input, select {
     <h2>Tratativa</h2>
     <button class="btn" onclick="ir(1)">⬅ VOLTAR</button>
 
+    <input id="buscaProduto" placeholder="Buscar produto..." oninput="autoProduto()">
+    <div id="autoLista" class="autocomplete"></div>
+
     <input id="produto" placeholder="Produto">
     <input id="cod" placeholder="Código">
+
     <input id="chegou" type="number" placeholder="Qtd Chegou">
     <input id="quebra" type="number" placeholder="Qtd Quebra">
 
@@ -145,6 +154,31 @@ function carregarBase(){
     setProdutos(lista);
 }
 
+/* AUTOCOMPLETE */
+function autoProduto(){
+    const texto = buscaProduto.value.toLowerCase();
+    const lista = getProdutos();
+
+    autoLista.innerHTML='';
+
+    lista
+    .filter(p=>p.nome.toLowerCase().includes(texto))
+    .forEach(p=>{
+        const div = document.createElement('div');
+        div.className='card';
+        div.innerText = `${p.nome} (${p.cod || '-'})`;
+
+        div.onclick = ()=>{
+            produto.value = p.nome;
+            cod.value = p.cod;
+            autoLista.innerHTML='';
+            buscaProduto.value='';
+        };
+
+        autoLista.appendChild(div);
+    });
+}
+
 /* CADASTRO */
 let indexSelecionado = null;
 
@@ -156,15 +190,13 @@ function abrirCadastro(){
 
 function renderLista(){
     const lista = getProdutos();
-    const container = document.getElementById('listaProdutos');
-
-    container.innerHTML='';
+    listaProdutos.innerHTML='';
 
     lista.sort((a,b)=>a.nome.localeCompare(b.nome))
     .forEach((p,i)=>{
         const div = document.createElement('div');
         div.className='card';
-        div.innerText = p.nome;
+        div.innerText = `${p.nome} (${p.cod || '-'})`;
 
         div.onclick = ()=>{
             indexSelecionado = i;
@@ -174,7 +206,7 @@ function renderLista(){
             p_tipo.value = p.tipo || 'KG';
         };
 
-        container.appendChild(div);
+        listaProdutos.appendChild(div);
     });
 }
 
@@ -213,10 +245,10 @@ function excluirProduto(){
 let textoFinal='';
 
 function salvar(){
-    const produto = document.getElementById('produto').value;
-    const cod = document.getElementById('cod').value;
-    const chegou = document.getElementById('chegou').value;
-    const quebra = document.getElementById('quebra').value;
+    const produto = produtoInput().value;
+    const cod = codInput().value;
+    const chegou = chegouInput().value;
+    const quebra = quebraInput().value;
     const data = new Date().toLocaleDateString();
 
     if(!produto || !cod){
@@ -231,7 +263,7 @@ Data: ${data}
 Qtd Chegou: ${chegou}
 Qtd Quebra: ${quebra}`;
 
-    document.getElementById('texto').innerText = textoFinal;
+    texto.innerText = textoFinal;
 
     ir(3);
 }
@@ -239,6 +271,12 @@ Qtd Quebra: ${quebra}`;
 function enviarTexto(){
     window.open(`https://wa.me/?text=${encodeURIComponent(textoFinal)}`);
 }
+
+/* HELPERS */
+function produtoInput(){ return document.getElementById('produto'); }
+function codInput(){ return document.getElementById('cod'); }
+function chegouInput(){ return document.getElementById('chegou'); }
+function quebraInput(){ return document.getElementById('quebra'); }
 
 /* INIT */
 carregarBase();
