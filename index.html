@@ -47,13 +47,11 @@ input, select {
 
 <body>
 
-<!-- HOME -->
 <div id="tela0" class="screen active">
     <h1>Controle FLV</h1>
     <button class="btn" onclick="ir(1)">ENTRAR</button>
 </div>
 
-<!-- MENU -->
 <div id="tela1" class="screen">
     <h2>Menu</h2>
     <button class="btn" onclick="ir(2)">Nova Tratativa</button>
@@ -69,8 +67,8 @@ input, select {
     <input id="buscaProduto" placeholder="Buscar produto..." oninput="autoProduto()">
     <div id="autoLista" class="autocomplete"></div>
 
-    <input id="produto" placeholder="Produto">
-    <input id="cod" placeholder="Código">
+    <input id="produto" placeholder="Produto" oninput="autoPorNome()">
+    <input id="cod" placeholder="Código" oninput="autoPorCodigo()">
 
     <input id="chegou" type="number" placeholder="Qtd Chegou">
     <input id="quebra" type="number" placeholder="Qtd Quebra">
@@ -78,7 +76,6 @@ input, select {
     <button class="btn" onclick="salvar()">Continuar</button>
 </div>
 
-<!-- ENVIO -->
 <div id="tela3" class="screen">
     <h2>Envio</h2>
     <pre id="texto"></pre>
@@ -86,7 +83,6 @@ input, select {
     <button class="btn" onclick="ir(2)">⬅ VOLTAR</button>
 </div>
 
-<!-- LISTA -->
 <div id="tela7" class="screen">
     <h2>Lista</h2>
     <div id="lista"></div>
@@ -123,15 +119,15 @@ function ir(t){
 
 /* BASE */
 const baseFLV = [
-"Abacate","Abacaxi","Abóbora","Abobrinha","Acerola","Ameixa",
-"Banana Nanica","Banana Prata","Batata Doce","Batata Inglesa",
-"Berinjela","Caju","Caqui","Cebola","Cenoura","Chuchu",
-"Coco Verde","Goiaba","Laranja","Limão","Maçã Fuji",
-"Maçã Gala","Mamão Formosa","Mamão Papaia","Manga",
-"Maracujá","Melancia","Melão","Mexerica","Morango",
-"Nectarina","Pera","Pêssego","Pepino","Pimentão",
-"Quiabo","Repolho","Tomate","Tomate Italiano","Uva"
-].sort();
+"ABACATE","ABACAXI","ABÓBORA","ABOBRINHA","ACEROLA","AMEIXA",
+"BANANA NANICA","BANANA PRATA","BATATA DOCE","BATATA INGLESA",
+"BERINJELA","CAJU","CAQUI","CEBOLA","CENOURA","CHUCHU",
+"COCO VERDE","GOIABA","LARANJA","LIMÃO","MAÇÃ FUJI",
+"MAÇÃ GALA","MAMÃO FORMOSA","MAMÃO PAPAIA","MANGA",
+"MARACUJÁ","MELANCIA","MELÃO","MEXERICA","MORANGO",
+"NECTARINA","PERA","PÊSSEGO","PEPINO","PIMENTÃO",
+"QUIABO","REPOLHO","TOMATE","TOMATE ITALIANO","UVA"
+];
 
 /* STORAGE */
 function getProdutos(){
@@ -156,13 +152,12 @@ function carregarBase(){
 
 /* AUTOCOMPLETE */
 function autoProduto(){
-    const texto = buscaProduto.value.toLowerCase();
+    const texto = buscaProduto.value.toUpperCase();
     const lista = getProdutos();
 
     autoLista.innerHTML='';
 
-    lista
-    .filter(p=>p.nome.toLowerCase().includes(texto))
+    lista.filter(p=>p.nome.includes(texto))
     .forEach(p=>{
         const div = document.createElement('div');
         div.className='card';
@@ -177,6 +172,26 @@ function autoProduto(){
 
         autoLista.appendChild(div);
     });
+}
+
+function autoPorNome(){
+    const nome = produto.value.toUpperCase();
+    const lista = getProdutos();
+
+    const p = lista.find(x=>x.nome === nome);
+    if(p){
+        cod.value = p.cod;
+    }
+}
+
+function autoPorCodigo(){
+    const codigo = cod.value;
+    const lista = getProdutos();
+
+    const p = lista.find(x=>x.cod === codigo);
+    if(p){
+        produto.value = p.nome;
+    }
 }
 
 /* CADASTRO */
@@ -216,13 +231,14 @@ function salvarProduto(){
     let lista = getProdutos();
 
     lista[indexSelecionado] = {
-        nome: p_nome.value,
+        nome: p_nome.value.toUpperCase(),
         cod: p_cod.value,
         custo: p_custo.value,
         tipo: p_tipo.value
     };
 
     setProdutos(lista);
+    alert("Produto salvo com sucesso!");
     renderLista();
 }
 
