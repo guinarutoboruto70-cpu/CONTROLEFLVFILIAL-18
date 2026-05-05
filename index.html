@@ -132,6 +132,9 @@ pre{white-space:pre-wrap}
 <option value="UN">UN</option>
 </select>
 
+<input id="q_custo_unit" placeholder="Custo unitário" disabled>
+<input id="q_valor_quebra" placeholder="Valor da quebra" disabled>
+
 <button id="btnAdicionarQuebra" class="btn">ADICIONAR QUEBRA</button>
 <div id="msgQuebra" class="status"></div>
 
@@ -261,7 +264,7 @@ return Number(s);
 
 if(temVirgula){
 const partes=s.split(',');
-if(partes[1]&&partes[1].length<=2){
+if(partes[1]&&partes[1].length<=3){
 return Number(partes[0].replace(/\./g,'')+'.'+partes[1]);
 }
 return Number(s.replace(/,/g,''));
@@ -269,7 +272,7 @@ return Number(s.replace(/,/g,''));
 
 if(temPonto){
 const partes=s.split('.');
-if(partes.length===2&&partes[1].length<=2){
+if(partes.length===2&&partes[1].length<=3){
 return Number(s);
 }
 return Number(s.replace(/\./g,''));
@@ -313,6 +316,32 @@ return custo.toFixed(3);
 
 el('p_custo_calc').value='';
 return '';
+}
+
+function calcularValorQuebra(){
+const qtd=numeroBR(el('q_quantidade').value);
+const custo=numeroBR(el('q_custo_unit').value);
+
+if(!isNaN(qtd)&&qtd>0&&!isNaN(custo)&&custo>0){
+const valor=qtd*custo;
+el('q_valor_quebra').value=dinheiroBR(valor.toFixed(2));
+return valor.toFixed(2);
+}
+
+el('q_valor_quebra').value='';
+return '';
+}
+
+function preencherCustoQuebraPorProduto(produtoNome,codigo){
+const produto=getProdutos().find(p=>
+String(p.cod).trim()===String(codigo||'').trim() ||
+gerarId(p.nome)===gerarId(produtoNome)
+);
+
+if(produto){
+el('q_custo_unit').value=produto.custo?formatarNumeroBR(Number(produto.custo),3):'';
+calcularValorQuebra();
+}
 }
 
 function getProdutos(){try{return JSON.parse(localStorage.getItem('produtos')||'[]')}catch{return []}}
@@ -543,6 +572,8 @@ div.onclick=()=>{
 el('q_produto').value=p.nome;
 el('q_cod').value=p.cod||'';
 el('q_tipo').value=p.tipo||'KG';
+el('q_custo_unit').value=p.custo?formatarNumeroBR(Number(p.custo),3):'';
+calcularValorQuebra();
 campo.value='';
 listaAuto.innerHTML='';
 };
@@ -565,6 +596,8 @@ el('q_produto').value='';
 el('q_cod').value='';
 el('q_quantidade').value='';
 el('q_tipo').value='KG';
+el('q_custo_unit').value='';
+el('q_valor_quebra').value='';
 el('btnAdicionarQuebra').textContent='ADICIONAR QUEBRA';
 el('msgQuebra').textContent='';
 }
@@ -575,9 +608,16 @@ const produto=el('q_produto').value.trim().toUpperCase();
 const cod=el('q_cod').value.trim();
 const quantidade=el('q_quantidade').value.trim();
 const tipo=el('q_tipo').value;
+const custoUnitario=numeroBR(el('q_custo_unit').value);
+const valorQuebra=calcularValorQuebra();
 
 if(!produto||!quantidade){
 alert('Preencha produto e quantidade da quebra.');
+return;
+}
+
+if(isNaN(custoUnitario)||custoUnitario<=0){
+alert('Produto sem custo cadastrado. Atualize o cadastro do produto antes de lançar a quebra.');
 return;
 }
 
@@ -585,7 +625,18 @@ const lista=getQuebras();
 
 if(quebraEditandoId){
 const index=lista.findIndex(q=>q.id===quebraEditandoId);
-if(index!==-1)lista[index]={...lista[index],data,produto,cod,quantidade,tipo};
+if(index!==-1){
+lista[index]={
+...lista[index],
+data,
+produto,
+cod,
+quantidade,
+tipo,
+custoUnitario:custoUnitario.toFixed(3),
+valorQuebra
+};
+}
 setQuebras(lista);
 limparCamposQuebra();
 renderListaQuebraDia();
@@ -600,6 +651,8 @@ produto,
 cod,
 quantidade,
 tipo,
+custoUnitario:custoUnitario.toFixed(3),
+valorQuebra,
 marcadoTratativa:false,
 aprovado:false
 });
@@ -629,7 +682,7 @@ const card=document.createElement('div');
 card.className='card';
 
 const info=document.createElement('div');
-info.innerHTML=`<b>${item.cod||'-'} - ${item.produto}</b><br>Quebra: ${item.quantidade} ${item.tipo}<br>Status: ${item.marcadoTratativa?'ENVIADO PARA TRATATIVA':'NA QUEBRA'}`;
+info.innerHTML=`<b>${item.cod||'-'} - ${item.produto}</b><br>Quebra: ${item.quantidade} ${item.tipo}<br>Custo: ${dinheiroBR(item.custoUnitario||0)} / ${item.tipo}<br>Valor: ${dinheiroBR(item.valorQuebra||0)}<br>Status: ${item.marcadoTratativa?'ENVIADO PARA TRATATIVA':'NA QUEBRA'}`;
 
 const tratar=document.createElement('button');
 tratar.className='btn-icon edit-icon';
@@ -664,6 +717,8 @@ el('q_produto').value=item.produto;
 el('q_cod').value=item.cod;
 el('q_quantidade').value=item.quantidade;
 el('q_tipo').value=item.tipo||'KG';
+el('q_custo_unit').value=item.custoUnitario?formatarNumeroBR(Number(item.custoUnitario),3):'';
+el('q_valor_quebra').value=item.valorQuebra?dinheiroBR(item.valorQuebra):'';
 el('btnAdicionarQuebra').textContent='SALVAR ALTERAÇÃO';
 el('msgQuebra').textContent='Editando item da quebra.';
 window.scrollTo({top:0,behavior:'smooth'});
@@ -996,6 +1051,7 @@ el('p_qtd_emb').oninput=calcularCustoProduto;
 
 el('buscaQuebraProduto').oninput=autoQuebraProduto;
 el('dataQuebra').onchange=renderListaQuebraDia;
+el('q_quantidade').oninput=calcularValorQuebra;
 el('btnAdicionarQuebra').onclick=adicionarOuEditarQuebra;
 
 el('valorVenda').onblur=formatarCampoVenda;
