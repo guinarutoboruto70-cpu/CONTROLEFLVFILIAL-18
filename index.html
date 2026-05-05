@@ -6,52 +6,23 @@
 <title>Controle FLV</title>
 
 <style>
-body { margin:0; font-family:sans-serif; background:#0a0a0a; color:#fff; }
-.screen { display:none; padding:20px; }
-.active { display:block; }
-h1,h2 { text-align:center; color:#ffcc00; }
-
-.btn {
-    width:100%;
-    padding:12px;
-    margin-top:10px;
-    border:none;
-    border-radius:8px;
-    background:#ffcc00;
-    font-weight:bold;
-}
-
-.btn-small {
-    padding:8px;
-    margin-top:8px;
-    margin-right:5px;
-    border:none;
-    border-radius:6px;
-    font-weight:bold;
-}
-
-.alt { background:#00c3ff; }
-.del { background:#ff4444; color:#fff; }
-
-.card {
-    background:#1a1a1a;
-    padding:10px;
-    margin-top:8px;
-    border-radius:8px;
-}
-
-input, select {
-    width:100%;
-    padding:10px;
-    margin-top:8px;
-    border-radius:6px;
-    border:none;
-}
-
-.autocomplete {
-    max-height:220px;
-    overflow:auto;
-}
+body{margin:0;font-family:sans-serif;background:#0a0a0a;color:#fff}
+.screen{display:none;padding:20px}
+.active{display:block}
+h1,h2{text-align:center;color:#ffcc00}
+.btn{width:100%;padding:12px;margin-top:10px;border:none;border-radius:8px;background:#ffcc00;font-weight:bold}
+.btn.enviado{background:#00c853;color:#000}
+.btn-small{padding:8px;margin-top:8px;margin-right:5px;border:none;border-radius:6px;font-weight:bold}
+.alt{background:#00c3ff}
+.del{background:#ff4444;color:#fff}
+.card{background:#1a1a1a;padding:10px;margin-top:8px;border-radius:8px}
+.click{cursor:pointer}
+input,select{width:100%;padding:10px;margin-top:8px;border-radius:6px;border:none}
+.autocomplete{max-height:220px;overflow:auto}
+.preview img{width:70px;height:70px;object-fit:cover;margin:5px;border-radius:6px}
+.mini{width:80px;height:80px;object-fit:cover;display:block;margin-top:5px;border-radius:6px}
+.status{margin-top:10px;color:#00ff88;text-align:center;font-weight:bold}
+pre{white-space:pre-wrap}
 </style>
 </head>
 
@@ -59,16 +30,488 @@ input, select {
 
 <div id="tela0" class="screen active">
     <h1>Controle FLV</h1>
-    <button class="btn" onclick="ir(1)">ENTRAR</button>
+    <button id="btnEntrar" class="btn">ENTRAR</button>
 </div>
 
 <div id="tela1" class="screen">
     <h2>Menu</h2>
-    <button class="btn" onclick="ir(2)">Nova Tratativa</button>
-    <button class="btn" onclick="ir(7)">Lista</button>
-    <button class="btn" onclick="abrirCadastro()">Cadastro de Produtos</button>
+    <button id="btnTratativa" class="btn">Nova Tratativa</button>
+    <button id="btnLista" class="btn">Lista</button>
+    <button id="btnCadastro" class="btn">Cadastro de Produtos</button>
 </div>
 
 <div id="tela2" class="screen">
     <h2>Tratativa</h2>
-    <button class="btn" onclick="ir(1)">⬅ VOLTAR</
+    <button id="voltarTratativa" class="btn">⬅ VOLTAR</button>
+
+    <input id="buscaProduto" placeholder="Buscar produto...">
+    <div id="autoLista" class="autocomplete"></div>
+
+    <input id="produto" placeholder="Produto">
+    <input id="cod" placeholder="Código">
+    <input id="chegou" type="number" placeholder="Qtd Chegou">
+    <input id="quebra" type="number" placeholder="Qtd Quebra">
+
+    <div class="card">
+        Produto
+        <input id="fotoProd" type="file" multiple accept="image/*">
+        <div id="prev_prod" class="preview"></div>
+    </div>
+
+    <div class="card">
+        Balança
+        <input id="fotoBal" type="file" multiple accept="image/*">
+        <div id="prev_bal" class="preview"></div>
+    </div>
+
+    <div class="card">
+        Etiqueta<br>
+        <button id="btnCamEtiqueta" class="btn">📷 Câmera</button>
+        <button id="btnGalEtiqueta" class="btn">🖼️ Galeria</button>
+        <input id="camEtiqueta" type="file" accept="image/*" capture="environment" style="display:none">
+        <input id="galEtiqueta" type="file" accept="image/*" style="display:none">
+        <div id="prev_eti" class="preview"></div>
+    </div>
+
+    <button id="btnContinuar" class="btn">Continuar</button>
+</div>
+
+<div id="tela3" class="screen">
+    <h2>Envio</h2>
+    <pre id="texto"></pre>
+    <button id="btnEnviarTexto" class="btn">ENVIAR TEXTO</button>
+    <div id="fotosEnvio"></div>
+    <button id="voltarEnvio" class="btn">⬅ VOLTAR</button>
+    <button id="btnFinalizar" class="btn">FINALIZAR</button>
+</div>
+
+<div id="tela7" class="screen">
+    <h2>Lista</h2>
+    <div id="lista"></div>
+    <button id="voltarLista" class="btn">⬅ VOLTAR</button>
+</div>
+
+<div id="tela8" class="screen">
+    <button id="voltarCadastro" class="btn">⬅ VOLTAR</button>
+    <h2>Cadastro de Produtos</h2>
+
+    <input id="p_nome" placeholder="Produto" readonly>
+    <input id="p_cod" placeholder="Código">
+    <input id="p_custo" placeholder="Preço de custo">
+
+    <select id="p_tipo">
+        <option value="KG">KG</option>
+        <option value="UN">UN</option>
+    </select>
+
+    <button id="btnSalvarProduto" class="btn">SALVAR ALTERAÇÃO</button>
+    <div id="msgProduto" class="status"></div>
+    <div id="listaProdutos"></div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+const baseFLV=[
+"ABACATE","ABACAXI","ABÓBORA","ABOBRINHA","ACEROLA","AMEIXA",
+"BANANA NANICA","BANANA PRATA","BATATA DOCE","BATATA INGLESA",
+"BERINJELA","CAJU","CAQUI","CEBOLA","CENOURA","CHUCHU",
+"COCO VERDE","GOIABA","LARANJA","LIMÃO","MAÇÃ FUJI",
+"MAÇÃ GALA","MAMÃO FORMOSA","MAMÃO PAPAIA","MANGA",
+"MARACUJÁ","MELANCIA","MELÃO","MEXERICA","MORANGO",
+"NECTARINA","PERA","PÊSSEGO","PEPINO","PIMENTÃO",
+"QUIABO","REPOLHO","TOMATE","TOMATE ITALIANO","UVA"
+].sort();
+
+let produtoSelecionadoId=null;
+let textoFinal='';
+let fotos={prod:[],bal:[],eti:[]};
+let banco=[];
+
+function el(id){return document.getElementById(id)}
+
+function ir(t){
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    const tela=el('tela'+t);
+    if(tela)tela.classList.add('active');
+}
+
+function gerarId(nome){
+    return String(nome||'').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+}
+
+function getProdutos(){
+    try{return JSON.parse(localStorage.getItem('produtos')||'[]')}
+    catch{return []}
+}
+
+function setProdutos(lista){
+    localStorage.setItem('produtos',JSON.stringify(lista));
+}
+
+function carregarBase(){
+    let lista=getProdutos().map(p=>({
+        id:p.id||gerarId(p.nome),
+        nome:String(p.nome||'').toUpperCase(),
+        cod:p.cod||'',
+        custo:p.custo||'',
+        tipo:p.tipo||'KG'
+    }));
+
+    baseFLV.forEach(nome=>{
+        const id=gerarId(nome);
+        if(!lista.some(p=>p.id===id)){
+            lista.push({id,nome,cod:'',custo:'',tipo:'KG'});
+        }
+    });
+
+    lista.sort((a,b)=>a.nome.localeCompare(b.nome));
+    setProdutos(lista);
+}
+
+function abrirCadastro(){
+    carregarBase();
+    renderListaProdutos();
+    limparCamposProduto();
+    ir(8);
+}
+
+function renderListaProdutos(){
+    const container=el('listaProdutos');
+    if(!container)return;
+
+    const lista=getProdutos().sort((a,b)=>a.nome.localeCompare(b.nome));
+    container.innerHTML='';
+
+    lista.forEach(p=>{
+        const card=document.createElement('div');
+        card.className='card';
+
+        card.innerHTML=`
+            <b>${p.nome}</b><br>
+            Código: ${p.cod||'-'}<br>
+            Custo: ${p.custo||'-'}<br>
+            Tipo: ${p.tipo||'KG'}<br>
+        `;
+
+        const alt=document.createElement('button');
+        alt.className='btn-small alt';
+        alt.textContent='ALTERAR';
+        alt.addEventListener('click',()=>alterarProduto(p.id));
+
+        const del=document.createElement('button');
+        del.className='btn-small del';
+        del.textContent='EXCLUIR';
+        del.addEventListener('click',()=>excluirProduto(p.id));
+
+        card.appendChild(alt);
+        card.appendChild(del);
+        container.appendChild(card);
+    });
+}
+
+function alterarProduto(id){
+    const p=getProdutos().find(x=>x.id===id);
+    if(!p)return;
+
+    produtoSelecionadoId=id;
+    el('p_nome').value=p.nome;
+    el('p_cod').value=p.cod;
+    el('p_custo').value=p.custo;
+    el('p_tipo').value=p.tipo||'KG';
+    el('msgProduto').textContent='Produto selecionado para alteração.';
+}
+
+function salvarProduto(){
+    if(!produtoSelecionadoId){
+        alert('Selecione um produto na lista para alterar.');
+        return;
+    }
+
+    let lista=getProdutos();
+    const index=lista.findIndex(p=>p.id===produtoSelecionadoId);
+
+    if(index===-1){
+        alert('Produto não encontrado.');
+        return;
+    }
+
+    lista[index].cod=el('p_cod').value.trim();
+    lista[index].custo=el('p_custo').value.trim();
+    lista[index].tipo=el('p_tipo').value;
+
+    setProdutos(lista);
+    renderListaProdutos();
+    el('msgProduto').textContent='Produto salvo com sucesso!';
+}
+
+function excluirProduto(id){
+    const lista=getProdutos();
+    const p=lista.find(x=>x.id===id);
+    if(!p)return;
+
+    if(!confirm('Excluir '+p.nome+'?'))return;
+
+    setProdutos(lista.filter(x=>x.id!==id));
+
+    if(produtoSelecionadoId===id)limparCamposProduto();
+
+    renderListaProdutos();
+    el('msgProduto').textContent='Produto excluído.';
+}
+
+function limparCamposProduto(){
+    produtoSelecionadoId=null;
+    el('p_nome').value='';
+    el('p_cod').value='';
+    el('p_custo').value='';
+    el('p_tipo').value='KG';
+    el('msgProduto').textContent='';
+}
+
+function autoProduto(){
+    const campo=el('buscaProduto');
+    const listaAuto=el('autoLista');
+    if(!campo||!listaAuto)return;
+
+    const texto=campo.value.toUpperCase().trim();
+    listaAuto.innerHTML='';
+
+    if(!texto)return;
+
+    getProdutos()
+    .filter(p=>p.nome.includes(texto)||String(p.cod).includes(texto))
+    .sort((a,b)=>a.nome.localeCompare(b.nome))
+    .slice(0,30)
+    .forEach(p=>{
+        const div=document.createElement('div');
+        div.className='card click';
+        div.textContent=`${p.nome} (${p.cod||'-'})`;
+
+        div.addEventListener('click',()=>{
+            el('produto').value=p.nome;
+            el('cod').value=p.cod||'';
+            campo.value='';
+            listaAuto.innerHTML='';
+        });
+
+        listaAuto.appendChild(div);
+    });
+}
+
+function autoPorCodigo(){
+    const codigo=el('cod').value.trim();
+    if(!codigo)return;
+
+    const p=getProdutos().find(x=>String(x.cod).trim()===codigo);
+    if(p)el('produto').value=p.nome;
+}
+
+function autoPorNome(){
+    const nome=el('produto').value.toUpperCase().trim();
+    if(!nome)return;
+
+    const p=getProdutos().find(x=>x.nome===nome);
+    if(p)el('cod').value=p.cod||'';
+}
+
+function addFotos(evento,tipo){
+    const preview=el('prev_'+tipo);
+    if(!preview)return;
+
+    Array.from(evento.target.files||[]).forEach(file=>{
+        const url=URL.createObjectURL(file);
+        fotos[tipo].push({file,url,enviado:false});
+
+        const img=document.createElement('img');
+        img.src=url;
+        preview.appendChild(img);
+    });
+
+    evento.target.value='';
+}
+
+function montarFotosEnvio(){
+    const div=el('fotosEnvio');
+    if(!div)return;
+
+    div.innerHTML='';
+
+    ['prod','bal','eti'].forEach(tipo=>{
+        if(fotos[tipo].length){
+            const titulo=document.createElement('h3');
+            titulo.textContent=tipo.toUpperCase();
+            div.appendChild(titulo);
+
+            fotos[tipo].forEach((obj,index)=>{
+                const box=document.createElement('div');
+
+                const img=document.createElement('img');
+                img.src=obj.url;
+                img.className='mini';
+
+                const btn=document.createElement('button');
+                btn.className='btn';
+                btn.textContent=obj.enviado?'ENVIADO ✔':'COMPARTILHAR FOTO';
+
+                if(obj.enviado){
+                    btn.classList.add('enviado');
+                    btn.disabled=true;
+                }else{
+                    btn.addEventListener('click',()=>compartilharFoto(tipo,index,btn));
+                }
+
+                box.appendChild(img);
+                box.appendChild(btn);
+                div.appendChild(box);
+            });
+        }
+    });
+}
+
+async function compartilharFoto(tipo,index,btn){
+    const obj=fotos[tipo][index];
+    if(!obj)return;
+
+    try{
+        if(navigator.canShare&&navigator.canShare({files:[obj.file]})){
+            await navigator.share({files:[obj.file]});
+            obj.enviado=true;
+            btn.textContent='ENVIADO ✔';
+            btn.classList.add('enviado');
+            btn.disabled=true;
+        }else{
+            alert('Seu celular não suporta envio direto.');
+        }
+    }catch{
+        alert('Erro ao compartilhar.');
+    }
+}
+
+function salvarTratativa(){
+    const produto=el('produto').value.trim();
+    const cod=el('cod').value.trim();
+    const chegou=el('chegou').value.trim();
+    const quebra=el('quebra').value.trim();
+    const data=new Date().toLocaleDateString();
+
+    if(!produto||!cod){
+        alert('Preencha produto e código.');
+        return;
+    }
+
+    textoFinal=`Cód: ${cod}
+${produto}
+Data: ${data}
+Qtd Chegou: ${chegou}
+Qtd Quebra: ${quebra}`;
+
+    el('texto').innerText=textoFinal;
+    montarFotosEnvio();
+    ir(3);
+}
+
+function enviarTexto(){
+    if(!textoFinal){
+        alert('Nenhum texto para enviar.');
+        return;
+    }
+    window.open('https://wa.me/?text='+encodeURIComponent(textoFinal),'_blank');
+}
+
+function finalizarTratativa(){
+    banco.push({
+        texto:textoFinal,
+        fotos:JSON.parse(JSON.stringify(fotos))
+    });
+
+    atualizarLista();
+
+    fotos={prod:[],bal:[],eti:[]};
+
+    ['prev_prod','prev_bal','prev_eti'].forEach(id=>{
+        const d=el(id);
+        if(d)d.innerHTML='';
+    });
+
+    ['buscaProduto','produto','cod','chegou','quebra'].forEach(id=>{
+        const c=el(id);
+        if(c)c.value='';
+    });
+
+    ir(7);
+}
+
+function atualizarLista(){
+    const div=el('lista');
+    if(!div)return;
+
+    div.innerHTML='';
+
+    banco.forEach(item=>{
+        const card=document.createElement('div');
+        card.className='card';
+
+        const pre=document.createElement('pre');
+        pre.textContent=item.texto;
+        card.appendChild(pre);
+
+        ['prod','bal','eti'].forEach(tipo=>{
+            if(item.fotos&&item.fotos[tipo]&&item.fotos[tipo].length){
+                const title=document.createElement('b');
+                title.textContent=tipo.toUpperCase();
+                card.appendChild(title);
+
+                item.fotos[tipo].forEach(obj=>{
+                    const img=document.createElement('img');
+                    img.src=obj.url;
+                    img.className='mini';
+                    card.appendChild(img);
+                });
+            }
+        });
+
+        div.appendChild(card);
+    });
+}
+
+function bind(){
+    el('btnEntrar').addEventListener('click',()=>ir(1));
+    el('btnTratativa').addEventListener('click',()=>ir(2));
+    el('btnLista').addEventListener('click',()=>{atualizarLista();ir(7)});
+    el('btnCadastro').addEventListener('click',abrirCadastro);
+
+    el('voltarTratativa').addEventListener('click',()=>ir(1));
+    el('voltarEnvio').addEventListener('click',()=>ir(2));
+    el('voltarLista').addEventListener('click',()=>ir(1));
+    el('voltarCadastro').addEventListener('click',()=>ir(1));
+
+    el('buscaProduto').addEventListener('input',autoProduto);
+    el('produto').addEventListener('input',autoPorNome);
+    el('cod').addEventListener('input',autoPorCodigo);
+
+    el('fotoProd').addEventListener('change',e=>addFotos(e,'prod'));
+    el('fotoBal').addEventListener('change',e=>addFotos(e,'bal'));
+
+    el('btnCamEtiqueta').addEventListener('click',()=>el('camEtiqueta').click());
+    el('btnGalEtiqueta').addEventListener('click',()=>el('galEtiqueta').click());
+
+    el('camEtiqueta').addEventListener('change',e=>addFotos(e,'eti'));
+    el('galEtiqueta').addEventListener('change',e=>addFotos(e,'eti'));
+
+    el('btnContinuar').addEventListener('click',salvarTratativa);
+    el('btnEnviarTexto').addEventListener('click',enviarTexto);
+    el('btnFinalizar').addEventListener('click',finalizarTratativa);
+    el('btnSalvarProduto').addEventListener('click',salvarProduto);
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+    carregarBase();
+    bind();
+});
+})();
+</script>
+
+</body>
+</html>
