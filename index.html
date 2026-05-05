@@ -48,9 +48,9 @@ pre{white-space:pre-wrap}
     <div id="autoLista" class="autocomplete"></div>
 
     <input id="produto" placeholder="Produto">
-    <input id="cod" placeholder="Código">
-    <input id="chegou" type="number" placeholder="Qtd Chegou">
-    <input id="quebra" type="number" placeholder="Qtd Quebra">
+    <input id="cod" placeholder="Código" inputmode="numeric" pattern="[0-9]*">
+    <input id="chegou" type="text" inputmode="decimal" placeholder="Qtd Chegou">
+    <input id="quebra" type="text" inputmode="decimal" placeholder="Qtd Quebra">
 
     <div class="card">
         Produto
@@ -96,8 +96,8 @@ pre{white-space:pre-wrap}
     <h2>Cadastro de Produtos</h2>
 
     <input id="p_nome" placeholder="Produto">
-    <input id="p_cod" placeholder="Código">
-    <input id="p_custo" placeholder="Preço de custo">
+    <input id="p_cod" placeholder="Código" inputmode="numeric" pattern="[0-9]*">
+    <input id="p_custo" placeholder="Preço de custo" inputmode="decimal">
 
     <select id="p_tipo">
         <option value="KG">KG</option>
