@@ -41,6 +41,7 @@ pre{white-space:pre-wrap}
     <h2>Menu</h2>
     <button id="btnTratativa" class="btn">Nova Tratativa</button>
     <button id="btnQuebraDia" class="btn">Quebra do Dia</button>
+    <button id="btnAprovacao" class="btn">Aprovação de Tratativa</button>
     <button id="btnLista" class="btn">Lista</button>
     <button id="btnCadastro" class="btn">Cadastro de Produtos</button>
 </div>
@@ -139,6 +140,12 @@ pre{white-space:pre-wrap}
     <div id="listaQuebraDia"></div>
 </div>
 
+<div id="tela11" class="screen">
+    <button id="voltarAprovacao" class="btn">⬅ VOLTAR</button>
+    <h2>Aprovação de Tratativa</h2>
+    <div id="listaAprovacao"></div>
+</div>
+
 <script>
 (function(){
 'use strict';
@@ -156,9 +163,9 @@ const baseFLV=[
 
 let produtoSelecionadoId=null;
 let quebraEditandoId=null;
+let origemQuebraAtualId=null;
 let textoFinal='';
 let fotos={prod:[],bal:[],eti:[]};
-let banco=[];
 
 function el(id){return document.getElementById(id)}
 
@@ -170,6 +177,18 @@ function ir(t){
 
 function hojeISO(){
     return new Date().toISOString().split('T')[0];
+}
+
+function dataBR(){
+    return new Date().toLocaleDateString();
+}
+
+function numero(valor){
+    return Number(String(valor||'0').replace(',','.')) || 0;
+}
+
+function formatarNumero(valor){
+    return String(Number(valor.toFixed(3))).replace('.',',');
 }
 
 function gerarId(nome){
@@ -198,6 +217,15 @@ function setQuebras(lista){
     localStorage.setItem('quebrasDia',JSON.stringify(lista));
 }
 
+function getTratativas(){
+    try{return JSON.parse(localStorage.getItem('tratativas')||'[]')}
+    catch{return []}
+}
+
+function setTratativas(lista){
+    localStorage.setItem('tratativas',JSON.stringify(lista));
+}
+
 function limparDuplicados(lista){
     const mapa=new Map();
 
@@ -215,11 +243,6 @@ function limparDuplicados(lista){
                 custo:p.custo||'',
                 tipo:p.tipo||'KG'
             });
-        }else{
-            const existente=mapa.get(id);
-            if(!existente.cod && p.cod) existente.cod=p.cod;
-            if(!existente.custo && p.custo) existente.custo=p.custo;
-            if(!existente.tipo && p.tipo) existente.tipo=p.tipo;
         }
     });
 
@@ -334,7 +357,6 @@ function salvarProduto(){
     };
 
     produtoSelecionadoId=novoId;
-
     lista=limparDuplicados(lista);
     setProdutos(lista);
     renderListaProdutos();
@@ -477,7 +499,6 @@ function adicionarOuEditarQuebra(){
 
     if(quebraEditandoId){
         const index=lista.findIndex(q=>q.id===quebraEditandoId);
-
         if(index!==-1){
             lista[index].data=data;
             lista[index].produto=produto;
@@ -500,8 +521,7 @@ function adicionarOuEditarQuebra(){
         cod,
         quantidade,
         tipo,
-        marcadoTratativa:false,
-        aprovado:false
+        marcadoTratativa:false
     });
 
     setQuebras(lista);
@@ -579,12 +599,13 @@ function enviarQuebraParaTratativa(id){
     lista[index].marcadoTratativa=true;
     setQuebras(lista);
 
+    origemQuebraAtualId=id;
+
     el('produto').value=item.produto;
     el('cod').value=item.cod || '';
     el('chegou').value='';
     el('quebra').value=item.quantidade || '';
 
-    el('msgQuebra').textContent='Item enviado para tela de tratativa.';
     renderListaQuebraDia();
     ir(2);
 }
@@ -684,7 +705,6 @@ function salvarTratativa(){
     const cod=el('cod').value.trim();
     const chegou=el('chegou').value.trim();
     const quebra=el('quebra').value.trim();
-    const data=new Date().toLocaleDateString();
 
     if(!produto||!cod){
         alert('Preencha produto e código.');
@@ -693,7 +713,7 @@ function salvarTratativa(){
 
     textoFinal=`Cód: ${cod}
 ${produto}
-Data: ${data}
+Data: ${dataBR()}
 Qtd Chegou: ${chegou}
 Qtd Quebra: ${quebra}`;
 
@@ -711,13 +731,22 @@ function enviarTexto(){
 }
 
 function finalizarTratativa(){
-    banco.push({
+    const lista=getTratativas();
+
+    lista.push({
+        id:Date.now().toString(),
         texto:textoFinal,
+        origemQuebraId:origemQuebraAtualId,
+        produto:el('produto').value.trim(),
+        cod:el('cod').value.trim(),
+        quantidadeEnviada:el('quebra').value.trim(),
+        status:origemQuebraAtualId ? 'PENDENTE' : 'ENVIADA',
         fotos:JSON.parse(JSON.stringify(fotos))
     });
 
-    atualizarLista();
+    setTratativas(lista);
 
+    origemQuebraAtualId=null;
     fotos={prod:[],bal:[],eti:[]};
 
     ['prev_prod','prev_bal','prev_eti'].forEach(id=>{
@@ -730,6 +759,7 @@ function finalizarTratativa(){
         if(c)c.value='';
     });
 
+    atualizarLista();
     ir(7);
 }
 
@@ -739,7 +769,7 @@ function atualizarLista(){
 
     div.innerHTML='';
 
-    banco.forEach(item=>{
+    getTratativas().forEach(item=>{
         const card=document.createElement('div');
         card.className='card';
 
@@ -747,29 +777,126 @@ function atualizarLista(){
         pre.textContent=item.texto;
         card.appendChild(pre);
 
-        ['prod','bal','eti'].forEach(tipo=>{
-            if(item.fotos&&item.fotos[tipo]&&item.fotos[tipo].length){
-                const title=document.createElement('b');
-                title.textContent=tipo.toUpperCase();
-                card.appendChild(title);
-
-                item.fotos[tipo].forEach(obj=>{
-                    const img=document.createElement('img');
-                    img.src=obj.url;
-                    img.className='mini';
-                    card.appendChild(img);
-                });
-            }
-        });
+        const st=document.createElement('b');
+        st.textContent='Status: '+(item.status || 'ENVIADA');
+        card.appendChild(st);
 
         div.appendChild(card);
     });
 }
 
+function abrirAprovacao(){
+    renderAprovacao();
+    ir(11);
+}
+
+function renderAprovacao(){
+    const div=el('listaAprovacao');
+    if(!div)return;
+
+    const lista=getTratativas().filter(t=>t.status==='PENDENTE');
+    div.innerHTML='';
+
+    if(lista.length===0){
+        div.innerHTML='<div class="card">Nenhuma tratativa pendente.</div>';
+        return;
+    }
+
+    lista.forEach(t=>{
+        const card=document.createElement('div');
+        card.className='card';
+
+        const pre=document.createElement('pre');
+        pre.textContent=t.texto;
+
+        const input=document.createElement('input');
+        input.placeholder='Quantidade aprovada';
+        input.inputMode='decimal';
+
+        const aprovar=document.createElement('button');
+        aprovar.className='btn-small ok';
+        aprovar.textContent='APROVAR';
+        aprovar.addEventListener('click',()=>aprovarTratativa(t.id,input.value));
+
+        const reprovar=document.createElement('button');
+        reprovar.className='btn-small del';
+        reprovar.textContent='REPROVAR';
+        reprovar.addEventListener('click',()=>reprovarTratativa(t.id));
+
+        card.appendChild(pre);
+        card.appendChild(input);
+        card.appendChild(aprovar);
+        card.appendChild(reprovar);
+        div.appendChild(card);
+    });
+}
+
+function aprovarTratativa(id,valorAprovado){
+    const qtdAprovada=numero(valorAprovado);
+
+    if(qtdAprovada<=0){
+        alert('Informe a quantidade aprovada.');
+        return;
+    }
+
+    const tratativas=getTratativas();
+    const index=tratativas.findIndex(t=>t.id===id);
+    if(index===-1)return;
+
+    const tratativa=tratativas[index];
+    const qtdEnviada=numero(tratativa.quantidadeEnviada);
+
+    let quebras=getQuebras();
+    const qIndex=quebras.findIndex(q=>q.id===tratativa.origemQuebraId);
+
+    if(qIndex!==-1){
+        const restante=qtdEnviada-qtdAprovada;
+
+        if(restante>0){
+            quebras[qIndex].quantidade=formatarNumero(restante);
+            quebras[qIndex].marcadoTratativa=false;
+        }else{
+            quebras.splice(qIndex,1);
+        }
+
+        setQuebras(quebras);
+    }
+
+    tratativas[index].status='APROVADA';
+    tratativas[index].quantidadeAprovada=String(valorAprovado);
+    setTratativas(tratativas);
+
+    renderAprovacao();
+    atualizarLista();
+}
+
+function reprovarTratativa(id){
+    const tratativas=getTratativas();
+    const index=tratativas.findIndex(t=>t.id===id);
+    if(index===-1)return;
+
+    const tratativa=tratativas[index];
+
+    let quebras=getQuebras();
+    const qIndex=quebras.findIndex(q=>q.id===tratativa.origemQuebraId);
+
+    if(qIndex!==-1){
+        quebras[qIndex].marcadoTratativa=false;
+        setQuebras(quebras);
+    }
+
+    tratativas[index].status='REPROVADA';
+    setTratativas(tratativas);
+
+    renderAprovacao();
+    atualizarLista();
+}
+
 function bind(){
     el('btnEntrar').addEventListener('click',()=>ir(1));
-    el('btnTratativa').addEventListener('click',()=>ir(2));
+    el('btnTratativa').addEventListener('click',()=>{origemQuebraAtualId=null;ir(2)});
     el('btnQuebraDia').addEventListener('click',abrirQuebraDia);
+    el('btnAprovacao').addEventListener('click',abrirAprovacao);
     el('btnLista').addEventListener('click',()=>{atualizarLista();ir(7)});
     el('btnCadastro').addEventListener('click',abrirCadastro);
 
@@ -778,6 +905,7 @@ function bind(){
     el('voltarLista').addEventListener('click',()=>ir(1));
     el('voltarCadastro').addEventListener('click',()=>ir(1));
     el('voltarQuebraDia').addEventListener('click',()=>ir(1));
+    el('voltarAprovacao').addEventListener('click',()=>ir(1));
 
     el('buscaProduto').addEventListener('input',autoProduto);
     el('produto').addEventListener('input',autoPorNome);
@@ -804,9 +932,7 @@ function bind(){
 
 function registrarServiceWorker(){
     if("serviceWorker" in navigator){
-        navigator.serviceWorker.register("sw.js")
-        .then(()=>console.log("Service Worker registrado"))
-        .catch(err=>console.log("Erro ao registrar Service Worker:",err));
+        navigator.serviceWorker.register("sw.js");
     }
 }
 
