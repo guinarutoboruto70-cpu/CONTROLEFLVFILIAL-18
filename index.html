@@ -15,6 +15,7 @@ h1,h2{text-align:center;color:#ffcc00}
 .btn-small{padding:6px 10px;margin-top:8px;margin-right:6px;border:none;border-radius:6px;font-size:12px;font-weight:bold}
 .alt{background:#ffe680;color:#000}
 .del{background:#ff4444;color:#fff}
+.ok{background:#00c853;color:#000}
 .card{background:#1a1a1a;padding:10px;margin-top:8px;border-radius:8px}
 .produto-linha{font-weight:bold;font-size:15px}
 input,select{width:100%;padding:10px;margin-top:8px;border-radius:6px;border:none}
@@ -36,6 +37,7 @@ pre{white-space:pre-wrap}
 <div id="tela1" class="screen">
     <h2>Menu</h2>
     <button id="btnTratativa" class="btn">Nova Tratativa</button>
+    <button id="btnQuebraDia" class="btn">Quebra do Dia</button>
     <button id="btnLista" class="btn">Lista</button>
     <button id="btnCadastro" class="btn">Cadastro de Produtos</button>
 </div>
@@ -109,6 +111,31 @@ pre{white-space:pre-wrap}
     <div id="listaProdutos"></div>
 </div>
 
+<div id="tela10" class="screen">
+    <button id="voltarQuebraDia" class="btn">⬅ VOLTAR</button>
+    <h2>Quebra do Dia</h2>
+
+    <input id="dataQuebra" type="date">
+
+    <input id="buscaQuebraProduto" placeholder="Buscar produto...">
+    <div id="autoQuebraLista" class="autocomplete"></div>
+
+    <input id="q_produto" placeholder="Produto">
+    <input id="q_cod" placeholder="Código" inputmode="numeric" pattern="[0-9]*">
+    <input id="q_quantidade" placeholder="Quantidade da quebra" inputmode="decimal">
+
+    <select id="q_tipo">
+        <option value="KG">KG</option>
+        <option value="UN">UN</option>
+    </select>
+
+    <button id="btnAdicionarQuebra" class="btn">ADICIONAR QUEBRA</button>
+    <div id="msgQuebra" class="status"></div>
+
+    <h2>Lista da Quebra</h2>
+    <div id="listaQuebraDia"></div>
+</div>
+
 <script>
 (function(){
 'use strict';
@@ -137,6 +164,10 @@ function ir(t){
     if(tela)tela.classList.add('active');
 }
 
+function hojeISO(){
+    return new Date().toISOString().split('T')[0];
+}
+
 function gerarId(nome){
     return String(nome||'')
         .toUpperCase()
@@ -152,6 +183,15 @@ function getProdutos(){
 
 function setProdutos(lista){
     localStorage.setItem('produtos',JSON.stringify(lista));
+}
+
+function getQuebras(){
+    try{return JSON.parse(localStorage.getItem('quebrasDia')||'[]')}
+    catch{return []}
+}
+
+function setQuebras(lista){
+    localStorage.setItem('quebrasDia',JSON.stringify(lista));
 }
 
 function limparDuplicados(lista){
@@ -367,6 +407,141 @@ function autoPorNome(){
     if(p)el('cod').value=p.cod||'';
 }
 
+function autoQuebraProduto(){
+    const campo=el('buscaQuebraProduto');
+    const listaAuto=el('autoQuebraLista');
+    if(!campo||!listaAuto)return;
+
+    const texto=campo.value.toUpperCase().trim();
+    listaAuto.innerHTML='';
+
+    if(!texto)return;
+
+    getProdutos()
+    .filter(p=>p.nome.includes(texto)||String(p.cod).includes(texto))
+    .sort((a,b)=>a.nome.localeCompare(b.nome))
+    .slice(0,30)
+    .forEach(p=>{
+        const div=document.createElement('div');
+        div.className='card';
+        div.textContent=`${p.cod || '-'} - ${p.nome}`;
+
+        div.addEventListener('click',()=>{
+            el('q_produto').value=p.nome;
+            el('q_cod').value=p.cod||'';
+            el('q_tipo').value=p.tipo||'KG';
+            campo.value='';
+            listaAuto.innerHTML='';
+        });
+
+        listaAuto.appendChild(div);
+    });
+}
+
+function abrirQuebraDia(){
+    el('dataQuebra').value=hojeISO();
+    limparCamposQuebra();
+    renderListaQuebraDia();
+    ir(10);
+}
+
+function limparCamposQuebra(){
+    el('buscaQuebraProduto').value='';
+    el('autoQuebraLista').innerHTML='';
+    el('q_produto').value='';
+    el('q_cod').value='';
+    el('q_quantidade').value='';
+    el('q_tipo').value='KG';
+    el('msgQuebra').textContent='';
+}
+
+function adicionarQuebra(){
+    const data=el('dataQuebra').value || hojeISO();
+    const produto=el('q_produto').value.trim().toUpperCase();
+    const cod=el('q_cod').value.trim();
+    const quantidade=el('q_quantidade').value.trim();
+    const tipo=el('q_tipo').value;
+
+    if(!produto || !quantidade){
+        alert('Preencha produto e quantidade da quebra.');
+        return;
+    }
+
+    const lista=getQuebras();
+
+    lista.push({
+        id:Date.now().toString(),
+        data,
+        produto,
+        cod,
+        quantidade,
+        tipo,
+        marcadoTratativa:false,
+        aprovado:false
+    });
+
+    setQuebras(lista);
+    limparCamposQuebra();
+    renderListaQuebraDia();
+    el('msgQuebra').textContent='Quebra adicionada.';
+}
+
+function renderListaQuebraDia(){
+    const container=el('listaQuebraDia');
+    if(!container)return;
+
+    const dataFiltro=el('dataQuebra').value || hojeISO();
+    const lista=getQuebras().filter(q=>q.data===dataFiltro);
+
+    container.innerHTML='';
+
+    if(lista.length===0){
+        container.innerHTML='<div class="card">Nenhuma quebra lançada para esta data.</div>';
+        return;
+    }
+
+    lista.forEach(item=>{
+        const card=document.createElement('div');
+        card.className='card';
+
+        const info=document.createElement('div');
+        info.innerHTML=`<b>${item.cod || '-'} - ${item.produto}</b><br>Quebra: ${item.quantidade} ${item.tipo}<br>Status: ${item.marcadoTratativa ? 'MARCADO PARA TRATATIVA' : 'NA QUEBRA'}`;
+
+        const marcar=document.createElement('button');
+        marcar.className=item.marcadoTratativa?'btn-small ok':'btn-small alt';
+        marcar.textContent=item.marcadoTratativa?'MARCADO':'MARCAR TRATATIVA';
+        marcar.addEventListener('click',()=>marcarTratativa(item.id));
+
+        const excluir=document.createElement('button');
+        excluir.className='btn-small del';
+        excluir.textContent='EXCLUIR';
+        excluir.addEventListener('click',()=>excluirQuebra(item.id));
+
+        card.appendChild(info);
+        card.appendChild(marcar);
+        card.appendChild(excluir);
+        container.appendChild(card);
+    });
+}
+
+function marcarTratativa(id){
+    const lista=getQuebras();
+    const index=lista.findIndex(q=>q.id===id);
+    if(index===-1)return;
+
+    lista[index].marcadoTratativa=!lista[index].marcadoTratativa;
+    setQuebras(lista);
+    renderListaQuebraDia();
+}
+
+function excluirQuebra(id){
+    if(!confirm('Excluir este item da quebra?'))return;
+
+    const lista=getQuebras().filter(q=>q.id!==id);
+    setQuebras(lista);
+    renderListaQuebraDia();
+}
+
 function addFotos(evento,tipo){
     const preview=el('prev_'+tipo);
     if(!preview)return;
@@ -530,6 +705,7 @@ function atualizarLista(){
 function bind(){
     el('btnEntrar').addEventListener('click',()=>ir(1));
     el('btnTratativa').addEventListener('click',()=>ir(2));
+    el('btnQuebraDia').addEventListener('click',abrirQuebraDia);
     el('btnLista').addEventListener('click',()=>{atualizarLista();ir(7)});
     el('btnCadastro').addEventListener('click',abrirCadastro);
 
@@ -537,10 +713,15 @@ function bind(){
     el('voltarEnvio').addEventListener('click',()=>ir(2));
     el('voltarLista').addEventListener('click',()=>ir(1));
     el('voltarCadastro').addEventListener('click',()=>ir(1));
+    el('voltarQuebraDia').addEventListener('click',()=>ir(1));
 
     el('buscaProduto').addEventListener('input',autoProduto);
     el('produto').addEventListener('input',autoPorNome);
     el('cod').addEventListener('input',autoPorCodigo);
+
+    el('buscaQuebraProduto').addEventListener('input',autoQuebraProduto);
+    el('dataQuebra').addEventListener('change',renderListaQuebraDia);
+    el('btnAdicionarQuebra').addEventListener('click',adicionarQuebra);
 
     el('fotoProd').addEventListener('change',e=>addFotos(e,'prod'));
     el('fotoBal').addEventListener('change',e=>addFotos(e,'bal'));
