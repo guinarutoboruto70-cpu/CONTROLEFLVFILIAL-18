@@ -332,19 +332,32 @@ el('q_valor_quebra').value='';
 return '';
 }
 
-function preencherCustoQuebraPorProduto(produtoNome,codigo){
-const produto=getProdutos().find(p=>{
-const mesmoCodigo=String(p.cod||'').trim()===String(codigo||'').trim();
-const mesmoNome=gerarId(p.nome)===gerarId(produtoNome);
-return mesmoCodigo || mesmoNome;
-});
+function selecionarProdutoQuebra(produto){
+if(!produto)return;
 
-if(produto){
 el('q_produto').value=produto.nome;
 el('q_cod').value=produto.cod||'';
 el('q_tipo').value=produto.tipo||'KG';
 el('q_custo_unit').value=produto.custo?formatarNumeroBR(Number(produto.custo),3):'';
+
 calcularValorQuebra();
+
+el('buscaQuebraProduto').value='';
+el('autoQuebraLista').innerHTML='';
+}
+
+function preencherCustoQuebraPorProduto(){
+const nome=el('q_produto').value;
+const codigo=el('q_cod').value;
+
+const produto=getProdutos().find(p=>{
+const mesmoCodigo=String(p.cod||'').trim()===String(codigo||'').trim() && String(codigo||'').trim()!=='';
+const mesmoNome=gerarId(p.nome)===gerarId(nome) && gerarId(nome)!=='';
+return mesmoCodigo || mesmoNome;
+});
+
+if(produto){
+selecionarProdutoQuebra(produto);
 }else{
 el('q_custo_unit').value='';
 el('q_valor_quebra').value='';
@@ -571,25 +584,19 @@ const texto=campo.value.toUpperCase().trim();
 listaAuto.innerHTML='';
 if(!texto)return;
 
-getProdutos().filter(p=>p.nome.includes(texto)||String(p.cod).includes(texto)).slice(0,30).forEach(p=>{
+getProdutos()
+.filter(p=>p.nome.includes(texto)||String(p.cod).includes(texto))
+.slice(0,30)
+.forEach(p=>{
 const div=document.createElement('div');
 div.className='card';
 div.textContent=`${p.cod||'-'} - ${p.nome}`;
-div.onclick=()=>{
-el('q_produto').value=p.nome;
-el('q_cod').value=p.cod||'';
-el('q_tipo').value=p.tipo||'KG';
-el('q_custo_unit').value=p.custo?formatarNumeroBR(Number(p.custo),3):'';
-calcularValorQuebra();
-campo.value='';
-listaAuto.innerHTML='';
-};
+
+div.onclick=()=>selecionarProdutoQuebra(p);
+div.ontouchstart=()=>selecionarProdutoQuebra(p);
+
 listaAuto.appendChild(div);
 });
-}
-
-function atualizarCustoQuebraManual(){
-preencherCustoQuebraPorProduto(el('q_produto').value, el('q_cod').value);
 }
 
 function abrirQuebraDia(){
@@ -1061,8 +1068,8 @@ el('p_valor_emb').oninput=calcularCustoProduto;
 el('p_qtd_emb').oninput=calcularCustoProduto;
 
 el('buscaQuebraProduto').oninput=autoQuebraProduto;
-el('q_produto').oninput=atualizarCustoQuebraManual;
-el('q_cod').oninput=atualizarCustoQuebraManual;
+el('q_produto').onchange=preencherCustoQuebraPorProduto;
+el('q_cod').onchange=preencherCustoQuebraPorProduto;
 el('dataQuebra').onchange=renderListaQuebraDia;
 el('q_quantidade').oninput=calcularValorQuebra;
 el('btnAdicionarQuebra').onclick=adicionarOuEditarQuebra;
