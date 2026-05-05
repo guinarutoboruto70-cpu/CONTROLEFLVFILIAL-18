@@ -13,7 +13,7 @@ h1,h2{text-align:center;color:#ffcc00}
 .btn{width:100%;padding:12px;margin-top:10px;border:none;border-radius:8px;background:#ffcc00;font-weight:bold}
 .btn.enviado{background:#00c853;color:#000}
 .btn-small{padding:6px 10px;margin-top:8px;margin-right:6px;border:none;border-radius:6px;font-size:12px;font-weight:bold}
-.alt{background:#00c3ff}
+.alt{background:#ffe680;color:#000}
 .del{background:#ff4444;color:#fff}
 .card{background:#1a1a1a;padding:10px;margin-top:8px;border-radius:8px}
 .produto-linha{font-weight:bold;font-size:15px}
@@ -95,7 +95,7 @@ pre{white-space:pre-wrap}
     <button id="voltarCadastro" class="btn">⬅ VOLTAR</button>
     <h2>Cadastro de Produtos</h2>
 
-    <input id="p_nome" placeholder="Produto" readonly>
+    <input id="p_nome" placeholder="Produto">
     <input id="p_cod" placeholder="Código">
     <input id="p_custo" placeholder="Preço de custo">
 
@@ -161,7 +161,7 @@ function limparDuplicados(lista){
         const nome=String(p.nome||'').toUpperCase().trim();
         if(!nome)return;
 
-        const id=gerarId(nome);
+        const id=p.id||gerarId(nome);
 
         if(!mapa.has(id)){
             mapa.set(id,{
@@ -184,13 +184,17 @@ function limparDuplicados(lista){
 
 function carregarBase(){
     let lista=limparDuplicados(getProdutos());
+    const baseJaCarregada=localStorage.getItem('baseFLVCarregada')==='sim';
 
-    baseFLV.forEach(nome=>{
-        const id=gerarId(nome);
-        if(!lista.some(p=>p.id===id)){
-            lista.push({id,nome,cod:'',custo:'',tipo:'KG'});
-        }
-    });
+    if(!baseJaCarregada || lista.length===0){
+        baseFLV.forEach(nome=>{
+            const id=gerarId(nome);
+            if(!lista.some(p=>p.id===id)){
+                lista.push({id,nome,cod:'',custo:'',tipo:'KG'});
+            }
+        });
+        localStorage.setItem('baseFLVCarregada','sim');
+    }
 
     lista=limparDuplicados(lista);
     setProdutos(lista);
@@ -262,9 +266,30 @@ function salvarProduto(){
         return;
     }
 
-    lista[index].cod=el('p_cod').value.trim();
-    lista[index].custo=el('p_custo').value.trim();
-    lista[index].tipo=el('p_tipo').value;
+    const novoNome=el('p_nome').value.toUpperCase().trim();
+    const novoId=gerarId(novoNome);
+
+    if(!novoNome){
+        alert('O nome do produto não pode ficar vazio.');
+        return;
+    }
+
+    const duplicado=lista.some(p=>p.id!==produtoSelecionadoId && gerarId(p.nome)===novoId);
+
+    if(duplicado){
+        alert('Já existe um produto com esse nome.');
+        return;
+    }
+
+    lista[index]={
+        id:novoId,
+        nome:novoNome,
+        cod:el('p_cod').value.trim(),
+        custo:el('p_custo').value.trim(),
+        tipo:el('p_tipo').value
+    };
+
+    produtoSelecionadoId=novoId;
 
     lista=limparDuplicados(lista);
     setProdutos(lista);
