@@ -152,6 +152,7 @@ const baseFLV=[
 ].sort();
 
 let produtoSelecionadoId=null;
+let quebraEditandoId=null;
 let textoFinal='';
 let fotos={prod:[],bal:[],eti:[]};
 let banco=[];
@@ -446,16 +447,18 @@ function abrirQuebraDia(){
 }
 
 function limparCamposQuebra(){
+    quebraEditandoId=null;
     el('buscaQuebraProduto').value='';
     el('autoQuebraLista').innerHTML='';
     el('q_produto').value='';
     el('q_cod').value='';
     el('q_quantidade').value='';
     el('q_tipo').value='KG';
+    el('btnAdicionarQuebra').textContent='ADICIONAR QUEBRA';
     el('msgQuebra').textContent='';
 }
 
-function adicionarQuebra(){
+function adicionarOuEditarQuebra(){
     const data=el('dataQuebra').value || hojeISO();
     const produto=el('q_produto').value.trim().toUpperCase();
     const cod=el('q_cod').value.trim();
@@ -468,6 +471,24 @@ function adicionarQuebra(){
     }
 
     const lista=getQuebras();
+
+    if(quebraEditandoId){
+        const index=lista.findIndex(q=>q.id===quebraEditandoId);
+
+        if(index!==-1){
+            lista[index].data=data;
+            lista[index].produto=produto;
+            lista[index].cod=cod;
+            lista[index].quantidade=quantidade;
+            lista[index].tipo=tipo;
+        }
+
+        setQuebras(lista);
+        limparCamposQuebra();
+        renderListaQuebraDia();
+        el('msgQuebra').textContent='Quebra alterada.';
+        return;
+    }
 
     lista.push({
         id:Date.now().toString(),
@@ -505,12 +526,17 @@ function renderListaQuebraDia(){
         card.className='card';
 
         const info=document.createElement('div');
-        info.innerHTML=`<b>${item.cod || '-'} - ${item.produto}</b><br>Quebra: ${item.quantidade} ${item.tipo}<br>Status: ${item.marcadoTratativa ? 'MARCADO PARA TRATATIVA' : 'NA QUEBRA'}`;
+        info.innerHTML=`<b>${item.cod || '-'} - ${item.produto}</b><br>Quebra: ${item.quantidade} ${item.tipo}<br>Status: ${item.marcadoTratativa ? 'ENVIADO PARA TRATATIVA' : 'NA QUEBRA'}`;
 
-        const marcar=document.createElement('button');
-        marcar.className=item.marcadoTratativa?'btn-small ok':'btn-small alt';
-        marcar.textContent=item.marcadoTratativa?'MARCADO':'MARCAR TRATATIVA';
-        marcar.addEventListener('click',()=>marcarTratativa(item.id));
+        const tratar=document.createElement('button');
+        tratar.className=item.marcadoTratativa?'btn-small ok':'btn-small alt';
+        tratar.textContent=item.marcadoTratativa?'ENVIADO':'ENVIAR P/ TRATATIVA';
+        tratar.addEventListener('click',()=>enviarQuebraParaTratativa(item.id));
+
+        const editar=document.createElement('button');
+        editar.className='btn-small alt';
+        editar.textContent='EDITAR';
+        editar.addEventListener('click',()=>editarQuebra(item.id));
 
         const excluir=document.createElement('button');
         excluir.className='btn-small del';
@@ -518,28 +544,63 @@ function renderListaQuebraDia(){
         excluir.addEventListener('click',()=>excluirQuebra(item.id));
 
         card.appendChild(info);
-        card.appendChild(marcar);
+        card.appendChild(tratar);
+        card.appendChild(editar);
         card.appendChild(excluir);
         container.appendChild(card);
     });
 }
 
-function marcarTratativa(id){
+function editarQuebra(id){
+    const item=getQuebras().find(q=>q.id===id);
+    if(!item)return;
+
+    quebraEditandoId=id;
+    el('dataQuebra').value=item.data;
+    el('q_produto').value=item.produto;
+    el('q_cod').value=item.cod;
+    el('q_quantidade').value=item.quantidade;
+    el('q_tipo').value=item.tipo || 'KG';
+    el('btnAdicionarQuebra').textContent='SALVAR ALTERAÇÃO';
+    el('msgQuebra').textContent='Editando item da quebra.';
+    window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function enviarQuebraParaTratativa(id){
     const lista=getQuebras();
     const index=lista.findIndex(q=>q.id===id);
     if(index===-1)return;
 
-    lista[index].marcadoTratativa=!lista[index].marcadoTratativa;
+    const item=lista[index];
+
+    lista[index].marcadoTratativa=true;
     setQuebras(lista);
+
+    el('produto').value=item.produto;
+    el('cod').value=item.cod || '';
+    el('chegou').value='';
+    el('quebra').value=item.quantidade || '';
+
+    el('msgQuebra').textContent='Item enviado para tela de tratativa.';
     renderListaQuebraDia();
+    ir(2);
 }
 
 function excluirQuebra(id){
-    if(!confirm('Excluir este item da quebra?'))return;
+    const lista=getQuebras();
+    const item=lista.find(q=>q.id===id);
+    if(!item)return;
 
-    const lista=getQuebras().filter(q=>q.id!==id);
-    setQuebras(lista);
+    if(!confirm(`Excluir ${item.produto} (${item.quantidade} ${item.tipo})?`))return;
+
+    setQuebras(lista.filter(q=>q.id!==id));
+
+    if(quebraEditandoId===id){
+        limparCamposQuebra();
+    }
+
     renderListaQuebraDia();
+    el('msgQuebra').textContent='Item excluído com sucesso.';
 }
 
 function addFotos(evento,tipo){
@@ -721,7 +782,7 @@ function bind(){
 
     el('buscaQuebraProduto').addEventListener('input',autoQuebraProduto);
     el('dataQuebra').addEventListener('change',renderListaQuebraDia);
-    el('btnAdicionarQuebra').addEventListener('click',adicionarQuebra);
+    el('btnAdicionarQuebra').addEventListener('click',adicionarOuEditarQuebra);
 
     el('fotoProd').addEventListener('change',e=>addFotos(e,'prod'));
     el('fotoBal').addEventListener('change',e=>addFotos(e,'bal'));
