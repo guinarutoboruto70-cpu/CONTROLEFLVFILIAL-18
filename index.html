@@ -42,6 +42,7 @@ pre{white-space:pre-wrap}
 <button id="btnTratativa" class="btn">Nova Tratativa</button>
 <button id="btnQuebraDia" class="btn">Quebra do Dia</button>
 <button id="btnVendaDia" class="btn">Venda do Dia</button>
+<button id="btnResultadoTratativa" class="btn">Resultado Tratativa</button>
 <button id="btnLista" class="btn">Lista</button>
 <button id="btnCadastro" class="btn">Cadastro de Produtos</button>
 </div>
@@ -156,6 +157,14 @@ pre{white-space:pre-wrap}
 
 <h2>Vendas Salvas</h2>
 <div id="listaVendas"></div>
+</div>
+
+<div id="tela12" class="screen">
+<button id="voltarResultadoTratativa" class="btn">⬅ VOLTAR</button>
+<h2>Resultado Tratativa</h2>
+
+<input id="filtroResultadoData" type="date">
+<div id="listaResultadoTratativa"></div>
 </div>
 
 <script>
@@ -341,7 +350,7 @@ function setQuebras(lista){localStorage.setItem('quebrasDia',JSON.stringify(list
 function getVendas(){try{return JSON.parse(localStorage.getItem('vendasFLV')||'[]')}catch{return []}}
 function setVendas(lista){localStorage.setItem('vendasFLV',JSON.stringify(lista))}
 
-function carregarBase(){
+  function carregarBase(){
 const versaoAtual=localStorage.getItem("baseFLVVersao");
 const listaAntiga=getProdutos();
 
@@ -694,7 +703,10 @@ tipo,
 custoUnitario:custoUnitario.toFixed(3),
 valorQuebra,
 marcadoTratativa:false,
-aprovado:false
+aprovado:false,
+statusTratativa:'PENDENTE',
+valorConciliado:'0',
+quebraLiquida:valorQuebra
 });
 
 setQuebras(lista);
@@ -771,6 +783,7 @@ if(index===-1)return;
 
 const item=lista[index];
 lista[index].marcadoTratativa=true;
+if(!lista[index].statusTratativa)lista[index].statusTratativa='PENDENTE';
 setQuebras(lista);
 
 el('produto').value=item.produto;
@@ -795,6 +808,129 @@ if(quebraEditandoId===id)limparCamposQuebra();
 
 renderListaQuebraDia();
 el('msgQuebra').textContent='Item excluído com sucesso.';
+}
+
+function abrirResultadoTratativa(){
+el('filtroResultadoData').value=hojeISO();
+renderResultadoTratativa();
+ir(12);
+}
+
+function renderResultadoTratativa(){
+const container=el('listaResultadoTratativa');
+if(!container)return;
+
+const dataFiltro=el('filtroResultadoData').value||hojeISO();
+const lista=getQuebras().filter(q=>q.data===dataFiltro&&q.marcadoTratativa===true);
+
+container.innerHTML='';
+
+if(lista.length===0){
+container.innerHTML='<div class="card">Nenhuma tratativa enviada nesta data.</div>';
+return;
+}
+
+lista.forEach(item=>{
+const card=document.createElement('div');
+card.className='card';
+
+const status=item.statusTratativa||'PENDENTE';
+
+card.innerHTML=`
+<div style="font-size:18px;font-weight:bold;margin-bottom:8px;">${item.cod||'-'} - ${item.produto}</div>
+<div>Quantidade enviada: ${item.quantidade} ${item.tipo}</div>
+<div>Valor original: ${dinheiroBR(item.valorQuebra||0)}</div>
+<div>Valor aprovado: ${dinheiroBR(item.valorConciliado||0)}</div>
+<div>Quebra restante: ${dinheiroBR(item.quebraLiquida||item.valorQuebra||0)}</div>
+<div style="margin-top:10px;">Status: <b>${status}</b></div>
+`;
+
+const btnAprovado=document.createElement('button');
+btnAprovado.className='btn';
+btnAprovado.style.background='#00c853';
+btnAprovado.style.color='#000';
+btnAprovado.textContent='APROVADO';
+btnAprovado.onclick=()=>aprovarTratativa(item.id);
+
+const btnParcial=document.createElement('button');
+btnParcial.className='btn';
+btnParcial.style.background='#ffcc00';
+btnParcial.style.color='#000';
+btnParcial.textContent='PARCIAL';
+btnParcial.onclick=()=>aprovarParcial(item.id);
+
+const btnReprovado=document.createElement('button');
+btnReprovado.className='btn';
+btnReprovado.style.background='#ff4444';
+btnReprovado.style.color='#fff';
+btnReprovado.textContent='REPROVADO';
+btnReprovado.onclick=()=>reprovarTratativa(item.id);
+
+card.appendChild(btnAprovado);
+card.appendChild(btnParcial);
+card.appendChild(btnReprovado);
+container.appendChild(card);
+});
+}
+
+function aprovarTratativa(id){
+const lista=getQuebras();
+const index=lista.findIndex(q=>q.id===id);
+if(index===-1)return;
+
+lista[index].statusTratativa='APROVADO';
+lista[index].aprovado=true;
+lista[index].valorConciliado=lista[index].valorQuebra||'0';
+lista[index].quebraLiquida='0';
+
+setQuebras(lista);
+renderResultadoTratativa();
+}
+
+function aprovarParcial(id){
+const lista=getQuebras();
+const index=lista.findIndex(q=>q.id===id);
+if(index===-1)return;
+
+const item=lista[index];
+const valorAprovado=prompt('Digite o valor aprovado parcialmente:');
+if(valorAprovado===null)return;
+
+const valorNumero=numeroBR(valorAprovado);
+if(isNaN(valorNumero)||valorNumero<=0){
+alert('Valor inválido.');
+return;
+}
+
+const valorOriginal=numeroBR(item.valorQuebra||0);
+if(valorNumero>valorOriginal){
+alert('O valor aprovado não pode ser maior que o valor original da quebra.');
+return;
+}
+
+const restante=valorOriginal-valorNumero;
+
+lista[index].statusTratativa='PARCIAL';
+lista[index].aprovado=true;
+lista[index].valorConciliado=valorNumero.toFixed(2);
+lista[index].quebraLiquida=restante.toFixed(2);
+
+setQuebras(lista);
+renderResultadoTratativa();
+}
+
+function reprovarTratativa(id){
+const lista=getQuebras();
+const index=lista.findIndex(q=>q.id===id);
+if(index===-1)return;
+
+lista[index].statusTratativa='REPROVADO';
+lista[index].aprovado=false;
+lista[index].valorConciliado='0';
+lista[index].quebraLiquida=lista[index].valorQuebra||'0';
+
+setQuebras(lista);
+renderResultadoTratativa();
 }
 
 function abrirVendaDia(){
@@ -1035,99 +1171,5 @@ ir(7);
 }
 
 function atualizarLista(){
-const div=el('lista');
-if(!div)return;
-
-div.innerHTML='';
-
-banco.forEach(item=>{
-const card=document.createElement('div');
-card.className='card';
-
-const pre=document.createElement('pre');
-pre.textContent=item.texto;
-card.appendChild(pre);
-
-['prod','bal','eti'].forEach(tipo=>{
-if(item.fotos&&item.fotos[tipo]&&item.fotos[tipo].length){
-const title=document.createElement('b');
-title.textContent=tipo.toUpperCase();
-card.appendChild(title);
-
-item.fotos[tipo].forEach(obj=>{
-const img=document.createElement('img');
-img.src=obj.url;
-img.className='mini';
-card.appendChild(img);
-});
-}
-});
-
-div.appendChild(card);
-});
-}
-
-function bind(){
-el('btnEntrar').onclick=()=>ir(1);
-el('btnTratativa').onclick=()=>ir(2);
-el('btnQuebraDia').onclick=abrirQuebraDia;
-el('btnVendaDia').onclick=abrirVendaDia;
-el('btnLista').onclick=()=>{atualizarLista();ir(7)};
-el('btnCadastro').onclick=abrirCadastro;
-
-el('voltarTratativa').onclick=()=>ir(1);
-el('voltarEnvio').onclick=()=>ir(2);
-el('voltarLista').onclick=()=>ir(1);
-el('voltarCadastro').onclick=()=>ir(1);
-el('voltarQuebraDia').onclick=()=>ir(1);
-el('voltarVendaDia').onclick=()=>ir(1);
-
-el('buscaProduto').oninput=autoProduto;
-el('produto').oninput=autoPorNome;
-el('cod').oninput=autoPorCodigo;
-
-el('p_nome').oninput=autoCadastroProduto;
-el('p_valor_emb').oninput=calcularCustoProduto;
-el('p_qtd_emb').oninput=calcularCustoProduto;
-
-el('buscaQuebraProduto').oninput=autoQuebraProduto;
-el('q_produto').onchange=preencherCustoQuebraPorProduto;
-el('q_cod').onchange=preencherCustoQuebraPorProduto;
-el('dataQuebra').onchange=renderListaQuebraDia;
-el('q_quantidade').oninput=calcularValorQuebra;
-el('btnAdicionarQuebra').onclick=adicionarOuEditarQuebra;
-
-el('valorVenda').onblur=formatarCampoVenda;
-el('btnSalvarVenda').onclick=salvarVenda;
-
-el('fotoProd').onchange=e=>addFotos(e,'prod');
-el('fotoBal').onchange=e=>addFotos(e,'bal');
-
-el('btnCamEtiqueta').onclick=()=>el('camEtiqueta').click();
-el('btnGalEtiqueta').onclick=()=>el('galEtiqueta').click();
-
-el('camEtiqueta').onchange=e=>addFotos(e,'eti');
-el('galEtiqueta').onchange=e=>addFotos(e,'eti');
-
-el('btnContinuar').onclick=salvarTratativa;
-el('btnEnviarTexto').onclick=enviarTexto;
-el('btnFinalizar').onclick=finalizarTratativa;
-el('btnSalvarProduto').onclick=salvarProduto;
-}
-
-function registrarServiceWorker(){
-if("serviceWorker" in navigator){
-navigator.serviceWorker.register("sw.js").catch(err=>console.log("Erro ao registrar Service Worker:",err));
-}
-}
-
-document.addEventListener('DOMContentLoaded',()=>{
-carregarBase();
-bind();
-registrarServiceWorker();
-});
-})();
-</script>
-
-</body>
-</html>
+const div=el
+  
