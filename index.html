@@ -98,7 +98,9 @@ pre{white-space:pre-wrap}
 <button id="voltarCadastro" class="btn">⬅ VOLTAR</button>
 <h2>Cadastro de Produtos</h2>
 
-<input id="p_nome" placeholder="Produto">
+<input id="p_nome" placeholder="Digite para buscar produto...">
+<div id="autoCadastroLista" class="autocomplete"></div>
+
 <input id="p_cod" placeholder="Código" inputmode="numeric">
 
 <select id="p_tipo">
@@ -332,38 +334,6 @@ el('q_valor_quebra').value='';
 return '';
 }
 
-function selecionarProdutoQuebra(produto){
-if(!produto)return;
-
-el('q_produto').value=produto.nome;
-el('q_cod').value=produto.cod||'';
-el('q_tipo').value=produto.tipo||'KG';
-el('q_custo_unit').value=produto.custo?formatarNumeroBR(Number(produto.custo),3):'';
-
-calcularValorQuebra();
-
-el('buscaQuebraProduto').value='';
-el('autoQuebraLista').innerHTML='';
-}
-
-function preencherCustoQuebraPorProduto(){
-const nome=el('q_produto').value;
-const codigo=el('q_cod').value;
-
-const produto=getProdutos().find(p=>{
-const mesmoCodigo=String(p.cod||'').trim()===String(codigo||'').trim() && String(codigo||'').trim()!=='';
-const mesmoNome=gerarId(p.nome)===gerarId(nome) && gerarId(nome)!=='';
-return mesmoCodigo || mesmoNome;
-});
-
-if(produto){
-selecionarProdutoQuebra(produto);
-}else{
-el('q_custo_unit').value='';
-el('q_valor_quebra').value='';
-}
-}
-
 function getProdutos(){try{return JSON.parse(localStorage.getItem('produtos')||'[]')}catch{return []}}
 function setProdutos(lista){localStorage.setItem('produtos',JSON.stringify(lista))}
 function getQuebras(){try{return JSON.parse(localStorage.getItem('quebrasDia')||'[]')}catch{return []}}
@@ -403,6 +373,44 @@ limparCamposProduto();
 ir(8);
 }
 
+function selecionarProdutoCadastro(p){
+if(!p)return;
+produtoSelecionadoId=p.id;
+el('p_nome').value=p.nome;
+el('p_cod').value=p.cod||'';
+el('p_tipo').value=p.tipo||'KG';
+el('p_valor_emb').value=p.valorEmbalagem||'';
+el('p_qtd_emb').value=p.qtdEmbalagem||'';
+el('p_custo_calc').value=p.custo?formatarNumeroBR(Number(p.custo),3):'';
+el('autoCadastroLista').innerHTML='';
+el('msgProduto').textContent='Produto selecionado para alteração.';
+calcularCustoProduto();
+}
+
+function autoCadastroProduto(){
+const campo=el('p_nome');
+const listaAuto=el('autoCadastroLista');
+if(!campo||!listaAuto)return;
+
+const texto=campo.value.toUpperCase().trim();
+listaAuto.innerHTML='';
+produtoSelecionadoId=null;
+
+if(!texto)return;
+
+getProdutos()
+.filter(p=>p.nome.includes(texto)||String(p.cod).includes(texto))
+.slice(0,40)
+.forEach(p=>{
+const div=document.createElement('div');
+div.className='card';
+div.textContent=`${p.cod||'-'} - ${p.nome}`;
+div.onclick=()=>selecionarProdutoCadastro(p);
+div.ontouchstart=()=>selecionarProdutoCadastro(p);
+listaAuto.appendChild(div);
+});
+}
+
 function renderListaProdutos(){
 const container=el('listaProdutos');
 if(!container)return;
@@ -422,7 +430,7 @@ const alt=document.createElement('button');
 alt.className='btn-icon edit-icon';
 alt.innerHTML='✏️';
 alt.title='Alterar';
-alt.onclick=()=>alterarProduto(p.id);
+alt.onclick=()=>selecionarProdutoCadastro(p);
 
 const del=document.createElement('button');
 del.className='btn-icon delete-icon';
@@ -446,26 +454,9 @@ container.appendChild(card);
 });
 }
 
-function alterarProduto(id){
-const p=getProdutos().find(x=>x.id===id);
-if(!p)return;
-
-produtoSelecionadoId=id;
-
-el('p_nome').value=p.nome;
-el('p_cod').value=p.cod;
-el('p_tipo').value=p.tipo||'KG';
-el('p_valor_emb').value=p.valorEmbalagem||'';
-el('p_qtd_emb').value=p.qtdEmbalagem||'';
-el('p_custo_calc').value=p.custo?formatarNumeroBR(Number(p.custo),3):'';
-
-el('msgProduto').textContent='Produto selecionado para alteração.';
-window.scrollTo({top:0,behavior:'smooth'});
-}
-
 function salvarProduto(){
 if(!produtoSelecionadoId){
-alert('Selecione um produto na lista para alterar.');
+alert('Selecione um produto na lista/autocomplete para alterar.');
 return;
 }
 
@@ -533,6 +524,7 @@ el('p_tipo').value='KG';
 el('p_valor_emb').value='';
 el('p_qtd_emb').value='';
 el('p_custo_calc').value='';
+el('autoCadastroLista').innerHTML='';
 el('msgProduto').textContent='';
 }
 
@@ -575,6 +567,38 @@ const p=getProdutos().find(x=>x.nome===nome);
 if(p)el('cod').value=p.cod||'';
 }
 
+function selecionarProdutoQuebra(produto){
+if(!produto)return;
+
+el('q_produto').value=produto.nome;
+el('q_cod').value=produto.cod||'';
+el('q_tipo').value=produto.tipo||'KG';
+el('q_custo_unit').value=produto.custo?formatarNumeroBR(Number(produto.custo),3):'';
+
+calcularValorQuebra();
+
+el('buscaQuebraProduto').value='';
+el('autoQuebraLista').innerHTML='';
+}
+
+function preencherCustoQuebraPorProduto(){
+const nome=el('q_produto').value;
+const codigo=el('q_cod').value;
+
+const produto=getProdutos().find(p=>{
+const mesmoCodigo=String(p.cod||'').trim()===String(codigo||'').trim() && String(codigo||'').trim()!=='';
+const mesmoNome=gerarId(p.nome)===gerarId(nome) && gerarId(nome)!=='';
+return mesmoCodigo || mesmoNome;
+});
+
+if(produto){
+selecionarProdutoQuebra(produto);
+}else{
+el('q_custo_unit').value='';
+el('q_valor_quebra').value='';
+}
+}
+
 function autoQuebraProduto(){
 const campo=el('buscaQuebraProduto');
 const listaAuto=el('autoQuebraLista');
@@ -591,10 +615,8 @@ getProdutos()
 const div=document.createElement('div');
 div.className='card';
 div.textContent=`${p.cod||'-'} - ${p.nome}`;
-
 div.onclick=()=>selecionarProdutoQuebra(p);
 div.ontouchstart=()=>selecionarProdutoQuebra(p);
-
 listaAuto.appendChild(div);
 });
 }
@@ -1064,6 +1086,7 @@ el('buscaProduto').oninput=autoProduto;
 el('produto').oninput=autoPorNome;
 el('cod').oninput=autoPorCodigo;
 
+el('p_nome').oninput=autoCadastroProduto;
 el('p_valor_emb').oninput=calcularCustoProduto;
 el('p_qtd_emb').oninput=calcularCustoProduto;
 
