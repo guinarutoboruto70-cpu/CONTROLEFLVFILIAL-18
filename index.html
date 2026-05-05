@@ -12,11 +12,11 @@ body{margin:0;font-family:sans-serif;background:#0a0a0a;color:#fff}
 h1,h2{text-align:center;color:#ffcc00}
 .btn{width:100%;padding:12px;margin-top:10px;border:none;border-radius:8px;background:#ffcc00;font-weight:bold}
 .btn.enviado{background:#00c853;color:#000}
-.btn-small{padding:8px;margin-top:8px;margin-right:5px;border:none;border-radius:6px;font-weight:bold}
+.btn-small{padding:6px 10px;margin-top:8px;margin-right:6px;border:none;border-radius:6px;font-size:12px;font-weight:bold}
 .alt{background:#00c3ff}
 .del{background:#ff4444;color:#fff}
 .card{background:#1a1a1a;padding:10px;margin-top:8px;border-radius:8px}
-.click{cursor:pointer}
+.produto-linha{font-weight:bold;font-size:15px}
 input,select{width:100%;padding:10px;margin-top:8px;border-radius:6px;border:none}
 .autocomplete{max-height:220px;overflow:auto}
 .preview img{width:70px;height:70px;object-fit:cover;margin:5px;border-radius:6px}
@@ -138,7 +138,11 @@ function ir(t){
 }
 
 function gerarId(nome){
-    return String(nome||'').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    return String(nome||'')
+        .toUpperCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g,'')
+        .trim();
 }
 
 function getProdutos(){
@@ -150,14 +154,36 @@ function setProdutos(lista){
     localStorage.setItem('produtos',JSON.stringify(lista));
 }
 
+function limparDuplicados(lista){
+    const mapa=new Map();
+
+    lista.forEach(p=>{
+        const nome=String(p.nome||'').toUpperCase().trim();
+        if(!nome)return;
+
+        const id=gerarId(nome);
+
+        if(!mapa.has(id)){
+            mapa.set(id,{
+                id,
+                nome,
+                cod:p.cod||'',
+                custo:p.custo||'',
+                tipo:p.tipo||'KG'
+            });
+        }else{
+            const existente=mapa.get(id);
+            if(!existente.cod && p.cod) existente.cod=p.cod;
+            if(!existente.custo && p.custo) existente.custo=p.custo;
+            if(!existente.tipo && p.tipo) existente.tipo=p.tipo;
+        }
+    });
+
+    return Array.from(mapa.values()).sort((a,b)=>a.nome.localeCompare(b.nome));
+}
+
 function carregarBase(){
-    let lista=getProdutos().map(p=>({
-        id:p.id||gerarId(p.nome),
-        nome:String(p.nome||'').toUpperCase(),
-        cod:p.cod||'',
-        custo:p.custo||'',
-        tipo:p.tipo||'KG'
-    }));
+    let lista=limparDuplicados(getProdutos());
 
     baseFLV.forEach(nome=>{
         const id=gerarId(nome);
@@ -166,7 +192,7 @@ function carregarBase(){
         }
     });
 
-    lista.sort((a,b)=>a.nome.localeCompare(b.nome));
+    lista=limparDuplicados(lista);
     setProdutos(lista);
 }
 
@@ -188,12 +214,9 @@ function renderListaProdutos(){
         const card=document.createElement('div');
         card.className='card';
 
-        card.innerHTML=`
-            <b>${p.nome}</b><br>
-            Código: ${p.cod||'-'}<br>
-            Custo: ${p.custo||'-'}<br>
-            Tipo: ${p.tipo||'KG'}<br>
-        `;
+        const linha=document.createElement('div');
+        linha.className='produto-linha';
+        linha.textContent=`${p.cod || '-'} - ${p.nome}`;
 
         const alt=document.createElement('button');
         alt.className='btn-small alt';
@@ -205,6 +228,7 @@ function renderListaProdutos(){
         del.textContent='EXCLUIR';
         del.addEventListener('click',()=>excluirProduto(p.id));
 
+        card.appendChild(linha);
         card.appendChild(alt);
         card.appendChild(del);
         container.appendChild(card);
@@ -221,6 +245,7 @@ function alterarProduto(id){
     el('p_custo').value=p.custo;
     el('p_tipo').value=p.tipo||'KG';
     el('msgProduto').textContent='Produto selecionado para alteração.';
+    window.scrollTo({top:0,behavior:'smooth'});
 }
 
 function salvarProduto(){
@@ -241,6 +266,7 @@ function salvarProduto(){
     lista[index].custo=el('p_custo').value.trim();
     lista[index].tipo=el('p_tipo').value;
 
+    lista=limparDuplicados(lista);
     setProdutos(lista);
     renderListaProdutos();
     el('msgProduto').textContent='Produto salvo com sucesso!';
@@ -286,8 +312,8 @@ function autoProduto(){
     .slice(0,30)
     .forEach(p=>{
         const div=document.createElement('div');
-        div.className='card click';
-        div.textContent=`${p.nome} (${p.cod||'-'})`;
+        div.className='card';
+        div.textContent=`${p.cod || '-'} - ${p.nome}`;
 
         div.addEventListener('click',()=>{
             el('produto').value=p.nome;
