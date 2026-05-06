@@ -870,7 +870,51 @@ if(quebraEditandoId===id)limparCamposQuebra();
 renderListaQuebraDia();
 el('msgQuebra').textContent='Item excluído com sucesso.';
 }
+function mesAtualISO(){
+const hoje=new Date();
+return hoje.toISOString().slice(0,7);
+}
 
+function mesmoMes(data,mes){
+return String(data||'').slice(0,7)===mes;
+}
+
+function abrirResultadoMensal(){
+el('mesResultado').value=mesAtualISO();
+calcularResultadoMensal();
+ir(13);
+}
+
+function calcularResultadoMensal(){
+const mes=el('mesResultado').value||mesAtualISO();
+
+const vendas=getVendas().filter(v=>mesmoMes(v.data,mes));
+const quebras=getQuebras().filter(q=>mesmoMes(q.data,mes));
+
+const vendaTotal=vendas.reduce((s,v)=>s+numeroBR(v.valor),0);
+const quebraBruta=quebras.reduce((s,q)=>s+numeroBR(q.valorQuebra||0),0);
+const tratativas=quebras.reduce((s,q)=>s+numeroBR(q.valorConciliado||0),0);
+const quebraLiquida=quebraBruta-tratativas;
+const indice=vendaTotal>0?(quebraLiquida/vendaTotal)*100:0;
+
+el('resVendaTotal').textContent=dinheiroBR(vendaTotal);
+el('resQuebraBruta').textContent=dinheiroBR(quebraBruta);
+el('resTratativas').textContent=dinheiroBR(tratativas);
+el('resQuebraLiquida').textContent=dinheiroBR(quebraLiquida);
+el('resIndice').textContent=indice.toFixed(2).replace('.',',')+'%';
+
+let status='---';
+
+if(vendaTotal<=0){
+status='SEM VENDA';
+}else if(indice<=3.5){
+status='✅ DENTRO DA META';
+}else{
+status='❌ FORA DA META';
+}
+
+el('resStatus').textContent=status;
+}
 function abrirResultadoTratativa(){
 el('filtroResultadoData').value=hojeISO();
 renderResultadoTratativa();
@@ -1270,6 +1314,7 @@ el('btnTratativa').onclick=()=>ir(2);
 el('btnQuebraDia').onclick=abrirQuebraDia;
 el('btnVendaDia').onclick=abrirVendaDia;
 el('btnResultadoTratativa').onclick=abrirResultadoTratativa;
+el('btnResultadoMensal').onclick=abrirResultadoMensal;
 el('btnLista').onclick=()=>{atualizarLista();ir(7)};
 el('btnCadastro').onclick=abrirCadastro;
 
@@ -1280,7 +1325,7 @@ el('voltarCadastro').onclick=()=>ir(1);
 el('voltarQuebraDia').onclick=()=>ir(1);
 el('voltarVendaDia').onclick=()=>ir(1);
 el('voltarResultadoTratativa').onclick=()=>ir(1);
-
+el('voltarResultadoMensal').onclick=()=>ir(1);
 el('buscaProduto').oninput=autoProduto;
 el('produto').oninput=autoPorNome;
 el('cod').oninput=autoPorCodigo;
@@ -1295,7 +1340,7 @@ el('q_quantidade').oninput=calcularValorQuebra;
 el('btnAdicionarQuebra').onclick=adicionarOuEditarQuebra;
 
 el('filtroResultadoData').onchange=renderResultadoTratativa;
-
+el('mesResultado').onchange=calcularResultadoMensal;
 el('valorVenda').onblur=formatarCampoVenda;
 el('btnSalvarVenda').onclick=salvarVenda;
 
