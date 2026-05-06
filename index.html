@@ -315,30 +315,38 @@ return String(nome||'').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/
 }
 
 function numeroBR(valor){
-  let s=String(valor??'').trim();
+let s=String(valor??'').trim();
+if(!s)return NaN;
 
-  if(!s)return NaN;
+s=s.replace(/[R$\s]/g,'').replace(/[^\d.,-]/g,'');
+if(!s||s==='-'||s===','||s==='.')return NaN;
 
-  s=s.replace(/[R$\s]/g,'');
+const negativo=s.startsWith('-');
+s=s.replace(/-/g,'');
 
-  const temVirgula=s.includes(',');
-  const temPonto=s.includes('.');
+const temVirgula=s.includes(',');
+const temPonto=s.includes('.');
 
-  if(temVirgula){
-    s=s.replace(/\./g,'').replace(',','.');
-    return Number(s);
-  }
+if(temVirgula){
+const partes=s.split(',');
+const decimal=partes.pop();
+const inteiro=partes.join('').replace(/\./g,'');
+s=inteiro+'.'+decimal;
+}else if(temPonto){
+const partes=s.split('.');
+const todosMilhares=partes.length>1&&partes.slice(1).every(p=>p.length===3);
+if(todosMilhares){
+s=partes.join('');
+}else{
+const decimal=partes.pop();
+const inteiro=partes.join('');
+s=inteiro+'.'+decimal;
+}
+}
 
-  if(temPonto){
-    const partes=s.split('.');
-
-    if(partes.length>1&&partes[partes.length-1].length===3){
-      s=partes.join('');
-      return Number(s);
-    }
-
-    return Number(s);
-  }
+const numero=Number((negativo?'-':'')+s);
+return Number.isFinite(numero)?numero:NaN;
+}
 
 function dinheiroBR(valor){
 const numero=numeroBR(valor);
@@ -351,12 +359,17 @@ if(isNaN(numero))return '';
 return Number(numero).toLocaleString('pt-BR',{minimumFractionDigits:casas,maximumFractionDigits:casas});
 }
 
-function formatarCampoVenda(){
-const campo=el('valorVenda');
+function formatarCampoMoeda(id,casas=2){
+const campo=el(id);
+if(!campo)return;
 const numero=numeroBR(campo.value);
 if(!isNaN(numero)){
-campo.value=formatarNumeroBR(numero,2);
+campo.value=formatarNumeroBR(numero,casas);
 }
+}
+
+function formatarCampoVenda(){
+formatarCampoMoeda('valorVenda',2);
 }
 
 function calcularCustoProduto(){
@@ -535,6 +548,7 @@ alert('Já existe um produto com esse nome.');
 return;
 }
 
+formatarCampoMoeda('p_valor_emb',2);
 const custoCalc=calcularCustoProduto();
 
 lista[index]={
@@ -1315,6 +1329,7 @@ el('cod').oninput=autoPorCodigo;
 
 el('p_nome').oninput=autoCadastroProduto;
 el('p_valor_emb').oninput=calcularCustoProduto;
+el('p_valor_emb').onblur=()=>formatarCampoMoeda('p_valor_emb',2);
 el('p_qtd_emb').oninput=calcularCustoProduto;
 
 el('buscaQuebraProduto').oninput=autoQuebraProduto;
@@ -1347,28 +1362,10 @@ if("serviceWorker" in navigator){
 navigator.serviceWorker.register("sw.js").catch(err=>console.log("Erro ao registrar Service Worker:",err));
 }
 }
-function mascaraMoedaBR(campo){
-
-campo.addEventListener('input', ()=>{
-
-let valor=campo.value.replace(/\D/g,'');
-
-valor=(Number(valor)/100).toFixed(2)+ '';
-
-valor=valor.replace('.',',');
-
-valor=valor.replace(/\B(?=(\d{3})+(?!\d))/g,'.');
-
-campo.value='R$ '+valor;
-
-});
-
-}
 document.addEventListener('DOMContentLoaded',()=>{
 carregarBase();
 bind();
 registrarServiceWorker();
-
 
 });
 })();
