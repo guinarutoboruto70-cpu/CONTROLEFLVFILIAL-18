@@ -174,60 +174,84 @@ pre{white-space:pre-wrap}
 const BASE_VERSION="lista-flv-real-v5";
 
 const baseFLV=[
-{cod:"1124",nome:"ABACATE",tipo:"KG"},
-{cod:"1125",nome:"ABACAXI",tipo:"UN"},
-{cod:"1129",nome:"ABOBORA ITALIA",tipo:"KG"},
-{cod:"1130",nome:"ABOBORA JAPONESA",tipo:"KG"},
-{cod:"1134",nome:"ABOBORA MORANGA",tipo:"KG"},
-{cod:"242",nome:"ALHO",tipo:"KG"},
-{cod:"744",nome:"AMEIXA BDJ 500G",tipo:"UN"},
-{cod:"739",nome:"AMEIXA",tipo:"KG"},
-{cod:"537",nome:"BANANA MACA",tipo:"KG"},
-{cod:"538",nome:"BANANA NANICA",tipo:"KG"},
-{cod:"541",nome:"BANANA PRATA",tipo:"KG"},
-{cod:"543",nome:"BANANA TERRA",tipo:"KG"},
-{cod:"681",nome:"BATATA DOCE",tipo:"KG"},
-{cod:"688",nome:"BATATA INGLESA",tipo:"KG"},
-{cod:"7714",nome:"BETERRABA",tipo:"KG"},
-{cod:"8459",nome:"CAQUI BDJ 500G",tipo:"UN"},
-{cod:"8461",nome:"CARA",tipo:"KG"},
-{cod:"8572",nome:"CEBOLA",tipo:"KG"},
-{cod:"8574",nome:"CEBOLA ROXA",tipo:"KG"},
-{cod:"8589",nome:"CENOURA",tipo:"KG"},
-{cod:"7547",nome:"CHUCHU",tipo:"KG"},
-{cod:"7620",nome:"COCO SECO",tipo:"KG"},
-{cod:"7622",nome:"COCO VERDE",tipo:"UN"},
-{cod:"5022",nome:"GENGIBRE",tipo:"KG"},
-{cod:"5213",nome:"INHAME",tipo:"KG"},
-{cod:"5473",nome:"KIWI BDJ 600G",tipo:"UN"},
-{cod:"5558",nome:"LARANJA PERA",tipo:"KG"},
-{cod:"4362",nome:"LIMAO",tipo:"KG"},
-{cod:"10750",nome:"MACA FUJI",tipo:"KG"},
-{cod:"3280",nome:"MACA GALA NAC",tipo:"KG"},
-{cod:"3284",nome:"MACA PCT 1KG",tipo:"UN"},
-{cod:"3343",nome:"MAMAO FORMOSA",tipo:"KG"},
-{cod:"3346",nome:"MAMAO PAPAYA",tipo:"KG"},
-{cod:"3369",nome:"MANGA PALMER",tipo:"KG"},
-{cod:"3370",nome:"MANGA TOMMY",tipo:"KG"},
-{cod:"3422",nome:"MARACUJA AZEDO",tipo:"KG"},
-{cod:"3560",nome:"MELANCIA",tipo:"KG"},
-{cod:"3563",nome:"MELANCIA PINGO DOCE",tipo:"KG"},
-{cod:"3565",nome:"MELAO AMARELO",tipo:"KG"},
-{cod:"3582",nome:"MEXERICA PONKAN",tipo:"KG"},
-{cod:"3585",nome:"MILHO VERDE BDJ 5 UN",tipo:"UN"},
-{cod:"1766",nome:"PEPINO COMUM",tipo:"KG"},
-{cod:"1768",nome:"PEPINO JAPONES",tipo:"KG"},
-{cod:"1778",nome:"PERA",tipo:"KG"},
-{cod:"1895",nome:"PIMENTAO VERDE",tipo:"KG"},
-{cod:"1327",nome:"REPOLHO BCO",tipo:"KG"},
-{cod:"1329",nome:"REPOLHO ROXO",tipo:"KG"},
-{cod:"7028",nome:"TOMATE",tipo:"KG"},
-{cod:"7018",nome:"TOMATE GRAPE 180G",tipo:"UN"},
-{cod:"7021",nome:"TOMATE GRAPE",tipo:"KG"},
-{cod:"7090",nome:"UVA PTA 500G S SEMENTE",tipo:"UN"},
-{cod:"7089",nome:"UVA VERDE 500G S SEMENTE",tipo:"UN"},
-{cod:"7088",nome:"UVA VERM 500G S SEMENTE",tipo:"UN"},
-{cod:"7094",nome:"UVA VITORIA MIMO SELECAO 400G S SEMENTE",tipo:"UN"}
+
+
+{cod:"1124",nome:"ABACATE",tipo:"KG",fator:20},
+{cod:"1125",nome:"ABACAXI",tipo:"UN",fator:12},
+{cod:"1129",nome:"ABOBORA ITALIA",tipo:"KG",fator:16},
+{cod:"1130",nome:"ABOBORA JAPONESA",tipo:"KG",fator:1},
+{cod:"1134",nome:"ABOBORA MORANGA",tipo:"KG",fator:20},
+{cod:"242",nome:"ALHO",tipo:"KG",fator:10},
+{cod:"744",nome:"AMEIXA BDJ 500G",tipo:"UN",fator:20},
+{cod:"739",nome:"AMEIXA",tipo:"KG",fator:9},
+
+{cod:"537",nome:"BANANA MACA",tipo:"KG",fator:14},
+{cod:"538",nome:"BANANA NANICA",tipo:"KG",fator:16},
+{cod:"541",nome:"BANANA PRATA",tipo:"KG",fator:16},
+{cod:"543",nome:"BANANA TERRA",tipo:"KG",fator:14},
+
+{cod:"688",nome:"BATATA INGLESA",tipo:"KG",fator:18},
+{cod:"681",nome:"BATATA DOCE",tipo:"KG",fator:18},
+{cod:"7714",nome:"BETERRABA",tipo:"KG",fator:25},
+
+{cod:"8459",nome:"CAQUI BDJ 500G",tipo:"UN",fator:20},
+{cod:"8461",nome:"CARA",tipo:"KG",fator:1},
+
+{cod:"8572",nome:"CEBOLA",tipo:"KG",fator:20},
+{cod:"8574",nome:"CEBOLA ROXA",tipo:"KG",fator:20},
+{cod:"8589",nome:"CENOURA",tipo:"KG",fator:20},
+
+{cod:"7547",nome:"CHUCHU",tipo:"KG",fator:18},
+
+{cod:"7620",nome:"COCO SECO",tipo:"KG",fator:1},
+{cod:"7622",nome:"COCO VERDE",tipo:"UN",fator:1},
+
+{cod:"5022",nome:"GENGIBRE",tipo:"KG",fator:12},
+{cod:"5213",nome:"INHAME",tipo:"KG",fator:1},
+
+{cod:"5473",nome:"KIWI BDJ 600G",tipo:"UN",fator:1},
+
+{cod:"5558",nome:"LARANJA PERA",tipo:"KG",fator:20},
+{cod:"4362",nome:"LIMAO",tipo:"KG",fator:20},
+
+{cod:"10750",nome:"MACA FUJI",tipo:"KG",fator:18},
+{cod:"3280",nome:"MACA GALA NAC",tipo:"KG",fator:18},
+{cod:"3284",nome:"MACA PCT 1KG",tipo:"UN",fator:18},
+
+{cod:"3343",nome:"MAMAO FORMOSA",tipo:"KG",fator:10},
+{cod:"3346",nome:"MAMAO PAPAYA",tipo:"KG",fator:10},
+
+{cod:"3369",nome:"MANGA PALMER",tipo:"KG",fator:18},
+{cod:"3370",nome:"MANGA TOMMY",tipo:"KG",fator:18},
+
+{cod:"3422",nome:"MARACUJA AZEDO",tipo:"KG",fator:12},
+
+{cod:"3560",nome:"MELANCIA",tipo:"KG",fator:1},
+{cod:"3563",nome:"MELANCIA PINGO DOCE",tipo:"KG",fator:1},
+{cod:"3565",nome:"MELAO AMARELO",tipo:"KG",fator:1},
+
+{cod:"3582",nome:"MEXERICA PONKAN",tipo:"KG",fator:20},
+
+{cod:"3585",nome:"MILHO VERDE BDJ 5 UN",tipo:"UN",fator:14},
+
+{cod:"1766",nome:"PEPINO COMUM",tipo:"KG",fator:18},
+{cod:"1768",nome:"PEPINO JAPONES",tipo:"KG",fator:18},
+
+{cod:"1778",nome:"PERA",tipo:"KG",fator:18},
+
+{cod:"1895",nome:"PIMENTAO VERDE",tipo:"KG",fator:10},
+
+{cod:"1327",nome:"REPOLHO BCO",tipo:"KG",fator:10},
+{cod:"1329",nome:"REPOLHO ROXO",tipo:"KG",fator:10},
+
+{cod:"7028",nome:"TOMATE",tipo:"KG",fator:20},
+{cod:"7018",nome:"TOMATE GRAPE 180G",tipo:"UN",fator:50},
+{cod:"7021",nome:"TOMATE GRAPE",tipo:"KG",fator:50},
+
+{cod:"7090",nome:"UVA PTA 500G S SEMENTE",tipo:"UN",fator:10},
+{cod:"7089",nome:"UVA VERDE 500G S SEMENTE",tipo:"UN",fator:10},
+{cod:"7088",nome:"UVA VERM 500G S SEMENTE",tipo:"UN",fator:10},
+{cod:"7094",nome:"UVA VITORIA MIMO SELECAO 400G S SEMENTE",tipo:"UN",fator:12},  
 ].sort((a,b)=>a.nome.localeCompare(b.nome));
 
 let produtoSelecionadoId=null;
