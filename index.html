@@ -1364,11 +1364,29 @@ if("serviceWorker" in navigator){
 navigator.serviceWorker.register("sw.js").catch(err=>console.log("Erro ao registrar Service Worker:",err));
 }
 }
+function mascaraMoedaBR(campo){
 
+campo.addEventListener('input', ()=>{
+
+let valor=campo.value.replace(/\D/g,'');
+
+valor=(Number(valor)/100).toFixed(2)+ '';
+
+valor=valor.replace('.',',');
+
+valor=valor.replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+
+campo.value='R$ '+valor;
+
+});
+
+}
 document.addEventListener('DOMContentLoaded',()=>{
 carregarBase();
 bind();
 registrarServiceWorker();
+
+mascaraMoedaBR(el('p_valor_emb'));
 });
 })();
 </script>
