@@ -1333,9 +1333,7 @@ el('produto').oninput=autoPorNome;
 el('cod').oninput=autoPorCodigo;
 
 el('p_nome').oninput=autoCadastroProduto;
-el('p_valor_emb').oninput=()=>{formataMoedaCentavosCampo(el('p_valor_em b')); 
-calcularCustoProduto();};
-el('p_qtd_emb').oninput=calcularCustoProduto;
+el('p_valor_emb').oninput=()=>{formatarMoedaCentavosCampo(el('p_valor_emb'));calcularCustoProduto();};
 
 el('buscaQuebraProduto').oninput=autoQuebraProduto;
 el('q_produto').onchange=preencherCustoQuebraPorProduto;
