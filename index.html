@@ -171,7 +171,7 @@ pre{white-space:pre-wrap}
 (function(){
 'use strict';
 
-const BASE_VERSION="lista-flv-real-v5";
+const BASE_VERSION="lista-flv-real-v6";
 
 const baseFLV=[
 
@@ -380,7 +380,7 @@ const listaAntiga=getProdutos();
 if(versaoAtual!==BASE_VERSION){
 const novaLista=baseFLV.map(item=>{
 const antigo=listaAntiga.find(p=>p.cod===item.cod||gerarId(p.nome)===gerarId(item.nome));
-return{
+return{ 
 id:gerarId(item.nome),
 nome:item.nome,
 cod:item.cod,
@@ -412,7 +412,7 @@ el('p_nome').value=p.nome;
 el('p_cod').value=p.cod||'';
 el('p_tipo').value=p.tipo||'KG';
 el('p_valor_emb').value=p.valorEmbalagem||'';
-el('p_qtd_emb').value=p.qtdEmbalagem||'';
+el('p_qtd_emb').value=p.qtdEmbalagem||p.fator||'';  
 el('p_custo_calc').value=p.custo?formatarNumeroBR(Number(p.custo),3):'';
 el('autoCadastroLista').innerHTML='';
 el('msgProduto').textContent='Produto selecionado para alteração.';
@@ -522,6 +522,7 @@ id:novoId,
 nome:novoNome,
 cod:el('p_cod').value.trim(),
 tipo:el('p_tipo').value,
+fator:el('p_qtd_emb').value.trim()||lista[index].fator||'',
 valorEmbalagem:el('p_valor_emb').value.trim(),
 qtdEmbalagem:el('p_qtd_emb').value.trim(),
 custo:custoCalc
