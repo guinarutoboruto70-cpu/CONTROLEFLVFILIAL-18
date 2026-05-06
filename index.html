@@ -43,6 +43,7 @@ pre{white-space:pre-wrap}
 <button id="btnQuebraDia" class="btn">Quebra do Dia</button>
 <button id="btnVendaDia" class="btn">Venda do Dia</button>
 <button id="btnResultadoTratativa" class="btn">Resultado Tratativa</button>
+<button id="btnResultadoMensal" class="btn">Resultado Mensal</button>
 <button id="btnLista" class="btn">Lista</button>
 <button id="btnCadastro" class="btn">Cadastro de Produtos</button>
 </div>
@@ -165,6 +166,42 @@ pre{white-space:pre-wrap}
 
 <input id="filtroResultadoData" type="date">
 <div id="listaResultadoTratativa"></div>
+</div>
+<div id="tela13" class="screen">
+<button id="voltarResultadoMensal" class="btn">⬅ VOLTAR</button>
+<h2>Resultado Mensal</h2>
+
+<input id="mesResultado" type="month">
+
+<div class="card">
+<div>Venda Total</div>
+<h2 id="resVendaTotal">R$ 0,00</h2>
+</div>
+
+<div class="card">
+<div>Quebra Bruta</div>
+<h2 id="resQuebraBruta">R$ 0,00</h2>
+</div>
+
+<div class="card">
+<div>Tratativas Aprovadas</div>
+<h2 id="resTratativas">R$ 0,00</h2>
+</div>
+
+<div class="card">
+<div>Quebra Líquida</div>
+<h2 id="resQuebraLiquida">R$ 0,00</h2>
+</div>
+
+<div class="card">
+<div>Índice Atual</div>
+<h2 id="resIndice">0,00%</h2>
+</div>
+
+<div class="card">
+<div>Status da Meta 3,5%</div>
+<h2 id="resStatus">---</h2>
+</div>
 </div>
 
 <script>
