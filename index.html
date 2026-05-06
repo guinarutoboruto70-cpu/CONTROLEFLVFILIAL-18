@@ -109,7 +109,10 @@ pre{white-space:pre-wrap}
 <option value="KG">KG</option>
 <option value="UN">UN</option>
 </select>
-
+<select id="p_calc_tipo">
+<option value="EMBALAGEM">Caixa / Embalagem</option>
+<option value="UNITARIO">Valor unitário direto</option>
+</select>
 <input id="p_valor_emb" placeholder="Valor da embalagem / caixa" inputmode="decimal">
 <input id="p_qtd_emb" placeholder="Qtd dentro da embalagem" inputmode="decimal">
 <input id="p_custo_calc" placeholder="Custo calculado" disabled>
@@ -386,11 +389,26 @@ campo.value=formatarNumeroBR(numero,2);
 
 
 function calcularCustoProduto(){
+
+const tipoCalc=el('p_calc_tipo').value;
 const valorEmb=numeroBR(el('p_valor_emb').value);
 const qtdEmb=numeroBR(el('p_qtd_emb').value);
 
-if(!isNaN(valorEmb)&&!isNaN(qtdEmb)&&qtdEmb>0){
-const custo=valorEmb/qtdEmb;
+if(!isNaN(valorEmb)){
+
+let custo=0;
+
+if(tipoCalc==='UNITARIO'){
+custo=valorEmb;
+}else{
+
+if(!isNaN(qtdEmb)&&qtdEmb>0){
+custo=valorEmb/qtdEmb;
+}else{
+el('p_custo_calc').value='';
+return '';
+}
+}
 el('p_custo_calc').value=formatarNumeroBR(custo,3);
 return custo.toFixed(3);
 }
@@ -398,7 +416,6 @@ return custo.toFixed(3);
 el('p_custo_calc').value='';
 return '';
 }
-
 function calcularValorQuebra(){
 const qtd=numeroBR(el('q_quantidade').value);
 const custo=numeroBR(el('q_custo_unit').value);
