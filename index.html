@@ -167,41 +167,19 @@ pre{white-space:pre-wrap}
 <input id="filtroResultadoData" type="date">
 <div id="listaResultadoTratativa"></div>
 </div>
+
 <div id="tela13" class="screen">
 <button id="voltarResultadoMensal" class="btn">⬅ VOLTAR</button>
 <h2>Resultado Mensal</h2>
 
 <input id="mesResultado" type="month">
 
-<div class="card">
-<div>Venda Total</div>
-<h2 id="resVendaTotal">R$ 0,00</h2>
-</div>
-
-<div class="card">
-<div>Quebra Bruta</div>
-<h2 id="resQuebraBruta">R$ 0,00</h2>
-</div>
-
-<div class="card">
-<div>Tratativas Aprovadas</div>
-<h2 id="resTratativas">R$ 0,00</h2>
-</div>
-
-<div class="card">
-<div>Quebra Líquida</div>
-<h2 id="resQuebraLiquida">R$ 0,00</h2>
-</div>
-
-<div class="card">
-<div>Índice Atual</div>
-<h2 id="resIndice">0,00%</h2>
-</div>
-
-<div class="card">
-<div>Status da Meta 3,5%</div>
-<h2 id="resStatus">---</h2>
-</div>
+<div class="card"><div>Venda Total</div><h2 id="resVendaTotal">R$ 0,00</h2></div>
+<div class="card"><div>Quebra Bruta</div><h2 id="resQuebraBruta">R$ 0,00</h2></div>
+<div class="card"><div>Tratativas Aprovadas</div><h2 id="resTratativas">R$ 0,00</h2></div>
+<div class="card"><div>Quebra Líquida</div><h2 id="resQuebraLiquida">R$ 0,00</h2></div>
+<div class="card"><div>Índice Atual</div><h2 id="resIndice">0,00%</h2></div>
+<div class="card"><div>Status Meta 3,5%</div><h2 id="resStatus">---</h2></div>
 </div>
 
 <script>
@@ -211,8 +189,6 @@ pre{white-space:pre-wrap}
 const BASE_VERSION="lista-flv-real-v6";
 
 const baseFLV=[
-
-
 {cod:"1124",nome:"ABACATE",tipo:"KG",fator:20},
 {cod:"1125",nome:"ABACAXI",tipo:"UN",fator:12},
 {cod:"1129",nome:"ABOBORA ITALIA",tipo:"KG",fator:16},
@@ -221,76 +197,53 @@ const baseFLV=[
 {cod:"242",nome:"ALHO",tipo:"KG",fator:10},
 {cod:"744",nome:"AMEIXA BDJ 500G",tipo:"UN",fator:20},
 {cod:"739",nome:"AMEIXA",tipo:"KG",fator:9},
-
 {cod:"537",nome:"BANANA MACA",tipo:"KG",fator:14},
 {cod:"538",nome:"BANANA NANICA",tipo:"KG",fator:16},
 {cod:"541",nome:"BANANA PRATA",tipo:"KG",fator:16},
 {cod:"543",nome:"BANANA TERRA",tipo:"KG",fator:14},
-
-{cod:"688",nome:"BATATA INGLESA",tipo:"KG",fator:18},
 {cod:"681",nome:"BATATA DOCE",tipo:"KG",fator:18},
+{cod:"688",nome:"BATATA INGLESA",tipo:"KG",fator:18},
 {cod:"7714",nome:"BETERRABA",tipo:"KG",fator:25},
-
 {cod:"8459",nome:"CAQUI BDJ 500G",tipo:"UN",fator:20},
 {cod:"8461",nome:"CARA",tipo:"KG",fator:1},
-
 {cod:"8572",nome:"CEBOLA",tipo:"KG",fator:20},
 {cod:"8574",nome:"CEBOLA ROXA",tipo:"KG",fator:20},
 {cod:"8589",nome:"CENOURA",tipo:"KG",fator:20},
-
 {cod:"7547",nome:"CHUCHU",tipo:"KG",fator:18},
-
 {cod:"7620",nome:"COCO SECO",tipo:"KG",fator:1},
 {cod:"7622",nome:"COCO VERDE",tipo:"UN",fator:1},
-
 {cod:"5022",nome:"GENGIBRE",tipo:"KG",fator:12},
 {cod:"5213",nome:"INHAME",tipo:"KG",fator:1},
-
 {cod:"5473",nome:"KIWI BDJ 600G",tipo:"UN",fator:1},
-
 {cod:"5558",nome:"LARANJA PERA",tipo:"KG",fator:20},
 {cod:"4362",nome:"LIMAO",tipo:"KG",fator:20},
-
 {cod:"10750",nome:"MACA FUJI",tipo:"KG",fator:18},
 {cod:"3280",nome:"MACA GALA NAC",tipo:"KG",fator:18},
 {cod:"3284",nome:"MACA PCT 1KG",tipo:"UN",fator:18},
-
 {cod:"3343",nome:"MAMAO FORMOSA",tipo:"KG",fator:10},
 {cod:"3346",nome:"MAMAO PAPAYA",tipo:"KG",fator:10},
-
 {cod:"3369",nome:"MANGA PALMER",tipo:"KG",fator:18},
 {cod:"3370",nome:"MANGA TOMMY",tipo:"KG",fator:18},
-
 {cod:"3422",nome:"MARACUJA AZEDO",tipo:"KG",fator:12},
-
 {cod:"3560",nome:"MELANCIA",tipo:"KG",fator:1},
 {cod:"3563",nome:"MELANCIA PINGO DOCE",tipo:"KG",fator:1},
 {cod:"3565",nome:"MELAO AMARELO",tipo:"KG",fator:1},
-
 {cod:"3582",nome:"MEXERICA PONKAN",tipo:"KG",fator:20},
-
 {cod:"3585",nome:"MILHO VERDE BDJ 5 UN",tipo:"UN",fator:14},
-
 {cod:"1766",nome:"PEPINO COMUM",tipo:"KG",fator:18},
 {cod:"1768",nome:"PEPINO JAPONES",tipo:"KG",fator:18},
-
 {cod:"1778",nome:"PERA",tipo:"KG",fator:18},
-
 {cod:"1895",nome:"PIMENTAO VERDE",tipo:"KG",fator:10},
-
 {cod:"1327",nome:"REPOLHO BCO",tipo:"KG",fator:10},
 {cod:"1329",nome:"REPOLHO ROXO",tipo:"KG",fator:10},
-
 {cod:"7028",nome:"TOMATE",tipo:"KG",fator:20},
 {cod:"7018",nome:"TOMATE GRAPE 180G",tipo:"UN",fator:50},
 {cod:"7021",nome:"TOMATE GRAPE",tipo:"KG",fator:50},
-
 {cod:"7090",nome:"UVA PTA 500G S SEMENTE",tipo:"UN",fator:10},
 {cod:"7089",nome:"UVA VERDE 500G S SEMENTE",tipo:"UN",fator:10},
 {cod:"7088",nome:"UVA VERM 500G S SEMENTE",tipo:"UN",fator:10},
-{cod:"7094",nome:"UVA VITORIA MIMO SELECAO 400G S SEMENTE",tipo:"UN",fator:12},  
+{cod:"7094",nome:"UVA VITORIA MIMO SELECAO 400G S SEMENTE",tipo:"UN",fator:12}
 ].sort((a,b)=>a.nome.localeCompare(b.nome));
-
 let produtoSelecionadoId=null;
 let quebraEditandoId=null;
 let vendaEditandoId=null;
@@ -310,42 +263,95 @@ function hojeISO(){
 return new Date().toISOString().split('T')[0];
 }
 
+function mesAtualISO(){
+return new Date().toISOString().slice(0,7);
+}
+
+function mesmoMes(data,mes){
+return String(data||'').slice(0,7)===mes;
+}
+
 function gerarId(nome){
 return String(nome||'').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
 }
 
 function numeroBR(valor){
-let s=String(valor??'').trim();
+let s=String(valor ?? '').trim();
 if(!s)return NaN;
 
-s=s.replace(/[R$\s]/g,'').replace(/[^\d.,-]/g,'');
-if(!s||s==='-'||s===','||s==='.')return NaN;
+s=s.replace(/[^\d.,-]/g,'');
 
 const negativo=s.startsWith('-');
 s=s.replace(/-/g,'');
 
+if(!s)return NaN;
+
 const temVirgula=s.includes(',');
 const temPonto=s.includes('.');
+
+if(temVirgula && temPonto){
+const ultimaVirgula=s.lastIndexOf(',');
+const ultimoPonto=s.lastIndexOf('.');
+
+if(ultimaVirgula>ultimoPonto){
+s=s.replace(/\./g,'').replace(',','.');
+}else{
+s=s.replace(/,/g,'');
+}
+
+const n=Number(s);
+return negativo?-n:n;
+}
 
 if(temVirgula){
 const partes=s.split(',');
 const decimal=partes.pop();
 const inteiro=partes.join('').replace(/\./g,'');
-s=inteiro+'.'+decimal;
-}else if(temPonto){
-const partes=s.split('.');
-const todosMilhares=partes.length>1&&partes.slice(1).every(p=>p.length===3);
-if(todosMilhares){
-s=partes.join('');
-}else{
-const decimal=partes.pop();
-const inteiro=partes.join('');
-s=inteiro+'.'+decimal;
-}
+
+if(decimal.length>0){
+const n=Number(inteiro+'.'+decimal);
+return negativo?-n:n;
 }
 
-const numero=Number((negativo?'-':'')+s);
-return Number.isFinite(numero)?numero:NaN;
+const n=Number(inteiro);
+return negativo?-n:n;
+}
+
+if(temPonto){
+const partes=s.split('.');
+
+if(partes.length>2){
+const ultimo=partes[partes.length-1];
+
+if(ultimo.length===2){
+const inteiro=partes.slice(0,-1).join('');
+const n=Number(inteiro+'.'+ultimo);
+return negativo?-n:n;
+}
+
+const n=Number(partes.join(''));
+return negativo?-n:n;
+}
+
+const inteiro=partes[0];
+const decimal=partes[1]||'';
+
+if(decimal.length===3 && inteiro.length>=2){
+const n=Number(inteiro+decimal);
+return negativo?-n:n;
+}
+
+if(decimal.length===3 && inteiro.length===1){
+const n=Number(inteiro+'.'+decimal);
+return negativo?-n:n;
+}
+
+const n=Number(s);
+return negativo?-n:n;
+}
+
+const n=Number(s);
+return negativo?-n:n;
 }
 
 function dinheiroBR(valor){
@@ -359,17 +365,12 @@ if(isNaN(numero))return '';
 return Number(numero).toLocaleString('pt-BR',{minimumFractionDigits:casas,maximumFractionDigits:casas});
 }
 
-function formatarCampoMoeda(id,casas=2){
-const campo=el(id);
-if(!campo)return;
+function formatarCampoVenda(){
+const campo=el('valorVenda');
 const numero=numeroBR(campo.value);
 if(!isNaN(numero)){
-campo.value=formatarNumeroBR(numero,casas);
+campo.value=formatarNumeroBR(numero,2);
 }
-}
-
-function formatarCampoVenda(){
-formatarCampoMoeda('valorVenda',2);
 }
 
 function calcularCustoProduto(){
@@ -406,20 +407,22 @@ function getQuebras(){try{return JSON.parse(localStorage.getItem('quebrasDia')||
 function setQuebras(lista){localStorage.setItem('quebrasDia',JSON.stringify(lista))}
 function getVendas(){try{return JSON.parse(localStorage.getItem('vendasFLV')||'[]')}catch{return []}}
 function setVendas(lista){localStorage.setItem('vendasFLV',JSON.stringify(lista))}
-  function carregarBase(){
+
+function carregarBase(){
 const versaoAtual=localStorage.getItem("baseFLVVersao");
 const listaAntiga=getProdutos();
 
 if(versaoAtual!==BASE_VERSION){
 const novaLista=baseFLV.map(item=>{
 const antigo=listaAntiga.find(p=>p.cod===item.cod||gerarId(p.nome)===gerarId(item.nome));
-return{ 
+return{
 id:gerarId(item.nome),
 nome:item.nome,
 cod:item.cod,
 tipo:item.tipo,
+fator:item.fator||antigo?.fator||'',
 valorEmbalagem:antigo?.valorEmbalagem||'',
-qtdEmbalagem:antigo?.qtdEmbalagem||'',
+qtdEmbalagem:antigo?.qtdEmbalagem||item.fator||'',
 custo:antigo?.custo||''
 };
 });
@@ -445,7 +448,7 @@ el('p_nome').value=p.nome;
 el('p_cod').value=p.cod||'';
 el('p_tipo').value=p.tipo||'KG';
 el('p_valor_emb').value=p.valorEmbalagem||'';
-el('p_qtd_emb').value=p.qtdEmbalagem||p.fator||'';  
+el('p_qtd_emb').value=p.qtdEmbalagem||p.fator||'';
 el('p_custo_calc').value=p.custo?formatarNumeroBR(Number(p.custo),3):'';
 el('autoCadastroLista').innerHTML='';
 el('msgProduto').textContent='Produto selecionado para alteração.';
@@ -548,7 +551,6 @@ alert('Já existe um produto com esse nome.');
 return;
 }
 
-formatarCampoMoeda('p_valor_emb',2);
 const custoCalc=calcularCustoProduto();
 
 lista[index]={
@@ -593,9 +595,8 @@ el('p_qtd_emb').value='';
 el('p_custo_calc').value='';
 el('autoCadastroLista').innerHTML='';
 el('msgProduto').textContent='';
-}
-
-function autoProduto(){
+  }  
+ function autoProduto(){
 const campo=el('buscaProduto');
 const listaAuto=el('autoLista');
 if(!campo||!listaAuto)return;
@@ -621,7 +622,6 @@ listaAuto.appendChild(div);
 function autoPorCodigo(){
 const codigo=el('cod').value.trim();
 if(!codigo)return;
-
 const p=getProdutos().find(x=>String(x.cod).trim()===codigo);
 if(p)el('produto').value=p.nome;
 }
@@ -629,7 +629,6 @@ if(p)el('produto').value=p.nome;
 function autoPorNome(){
 const nome=el('produto').value.toUpperCase().trim();
 if(!nome)return;
-
 const p=getProdutos().find(x=>x.nome===nome);
 if(p)el('cod').value=p.cod||'';
 }
@@ -867,51 +866,7 @@ if(quebraEditandoId===id)limparCamposQuebra();
 renderListaQuebraDia();
 el('msgQuebra').textContent='Item excluído com sucesso.';
 }
-function mesAtualISO(){
-const hoje=new Date();
-return hoje.toISOString().slice(0,7);
-}
 
-function mesmoMes(data,mes){
-return String(data||'').slice(0,7)===mes;
-}
-
-function abrirResultadoMensal(){
-el('mesResultado').value=mesAtualISO();
-calcularResultadoMensal();
-ir(13);
-}
-
-function calcularResultadoMensal(){
-const mes=el('mesResultado').value||mesAtualISO();
-
-const vendas=getVendas().filter(v=>mesmoMes(v.data,mes));
-const quebras=getQuebras().filter(q=>mesmoMes(q.data,mes));
-
-const vendaTotal=vendas.reduce((s,v)=>s+numeroBR(v.valor),0);
-const quebraBruta=quebras.reduce((s,q)=>s+numeroBR(q.valorQuebra||0),0);
-const tratativas=quebras.reduce((s,q)=>s+numeroBR(q.valorConciliado||0),0);
-const quebraLiquida=quebraBruta-tratativas;
-const indice=vendaTotal>0?(quebraLiquida/vendaTotal)*100:0;
-
-el('resVendaTotal').textContent=dinheiroBR(vendaTotal);
-el('resQuebraBruta').textContent=dinheiroBR(quebraBruta);
-el('resTratativas').textContent=dinheiroBR(tratativas);
-el('resQuebraLiquida').textContent=dinheiroBR(quebraLiquida);
-el('resIndice').textContent=indice.toFixed(2).replace('.',',')+'%';
-
-let status='---';
-
-if(vendaTotal<=0){
-status='SEM VENDA';
-}else if(indice<=3.5){
-status='✅ DENTRO DA META';
-}else{
-status='❌ FORA DA META';
-}
-
-el('resStatus').textContent=status;
-}
 function abrirResultadoTratativa(){
 el('filtroResultadoData').value=hojeISO();
 renderResultadoTratativa();
@@ -1033,6 +988,43 @@ lista[index].quebraLiquida=lista[index].valorQuebra||'0';
 
 setQuebras(lista);
 renderResultadoTratativa();
+}
+
+function abrirResultadoMensal(){
+el('mesResultado').value=mesAtualISO();
+calcularResultadoMensal();
+ir(13);
+}
+
+function calcularResultadoMensal(){
+const mes=el('mesResultado').value||mesAtualISO();
+
+const vendas=getVendas().filter(v=>mesmoMes(v.data,mes));
+const quebras=getQuebras().filter(q=>mesmoMes(q.data,mes));
+
+const vendaTotal=vendas.reduce((s,v)=>s+numeroBR(v.valor),0);
+const quebraBruta=quebras.reduce((s,q)=>s+numeroBR(q.valorQuebra||0),0);
+const tratativas=quebras.reduce((s,q)=>s+numeroBR(q.valorConciliado||0),0);
+const quebraLiquida=quebraBruta-tratativas;
+const indice=vendaTotal>0?(quebraLiquida/vendaTotal)*100:0;
+
+el('resVendaTotal').textContent=dinheiroBR(vendaTotal);
+el('resQuebraBruta').textContent=dinheiroBR(quebraBruta);
+el('resTratativas').textContent=dinheiroBR(tratativas);
+el('resQuebraLiquida').textContent=dinheiroBR(quebraLiquida);
+el('resIndice').textContent=indice.toFixed(2).replace('.',',')+'%';
+
+let status='---';
+
+if(vendaTotal<=0){
+status='SEM VENDA';
+}else if(indice<=3.5){
+status='✅ DENTRO DA META';
+}else{
+status='❌ FORA DA META';
+}
+
+el('resStatus').textContent=status;
 }
 
 function abrirVendaDia(){
@@ -1323,22 +1315,25 @@ el('voltarQuebraDia').onclick=()=>ir(1);
 el('voltarVendaDia').onclick=()=>ir(1);
 el('voltarResultadoTratativa').onclick=()=>ir(1);
 el('voltarResultadoMensal').onclick=()=>ir(1);
+
 el('buscaProduto').oninput=autoProduto;
 el('produto').oninput=autoPorNome;
 el('cod').oninput=autoPorCodigo;
 
 el('p_nome').oninput=autoCadastroProduto;
 el('p_valor_emb').oninput=calcularCustoProduto;
-el('p_valor_emb').onblur=()=>formatarCampoMoeda('p_valor_emb',2);
 el('p_qtd_emb').oninput=calcularCustoProduto;
 
 el('buscaQuebraProduto').oninput=autoQuebraProduto;
+el('q_produto').onchange=preencherCustoQuebraPorProduto;
+el('q_cod').onchange=preencherCustoQuebraPorProduto;
 el('dataQuebra').onchange=renderListaQuebraDia;
 el('q_quantidade').oninput=calcularValorQuebra;
 el('btnAdicionarQuebra').onclick=adicionarOuEditarQuebra;
 
 el('filtroResultadoData').onchange=renderResultadoTratativa;
 el('mesResultado').onchange=calcularResultadoMensal;
+
 el('valorVenda').onblur=formatarCampoVenda;
 el('btnSalvarVenda').onclick=salvarVenda;
 
@@ -1362,11 +1357,11 @@ if("serviceWorker" in navigator){
 navigator.serviceWorker.register("sw.js").catch(err=>console.log("Erro ao registrar Service Worker:",err));
 }
 }
+
 document.addEventListener('DOMContentLoaded',()=>{
 carregarBase();
 bind();
 registrarServiceWorker();
-
 });
 })();
 </script>
