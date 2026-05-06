@@ -372,6 +372,18 @@ if(!isNaN(numero)){
 campo.value=formatarNumeroBR(numero,2);
 }
 }
+function formatarMoedaCentavosCampo(campo){
+let digitos=String(campo.value||'').replace(/\D/g,'');
+
+if(!digitos){
+campo.value='';
+return;
+}
+
+const numero=Number(digitos)/100;
+campo.value=formatarNumeroBR(numero,2);
+}
+
 
 function calcularCustoProduto(){
 const valorEmb=numeroBR(el('p_valor_emb').value);
@@ -1321,7 +1333,8 @@ el('produto').oninput=autoPorNome;
 el('cod').oninput=autoPorCodigo;
 
 el('p_nome').oninput=autoCadastroProduto;
-el('p_valor_emb').oninput=calcularCustoProduto;
+el('p_valor_emb').oninput=()=>{formataMoedaCentavosCampo(el('p_valor_em b')); 
+calcularCustoProduto();};
 el('p_qtd_emb').oninput=calcularCustoProduto;
 
 el('buscaQuebraProduto').oninput=autoQuebraProduto;
