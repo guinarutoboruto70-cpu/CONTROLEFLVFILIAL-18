@@ -974,32 +974,43 @@ renderResultadoTratativa();
 }
 
 function aprovarParcial(id){
+
 const lista=getQuebras();
 const index=lista.findIndex(q=>q.id===id);
 if(index===-1)return;
 
 const item=lista[index];
-const valorAprovado=prompt('Digite o valor aprovado parcialmente:');
-if(valorAprovado===null)return;
 
-const valorNumero=numeroBR(valorAprovado);
-if(isNaN(valorNumero)||valorNumero<=0){
-alert('Valor inválido.');
+const qtdAprovadaTexto=prompt('Digite a quantidade aprovada em '+(item.tipo||'KG')+':');
+if(qtdAprovadaTexto===null)return;
+
+const qtdAprovada=numeroBR(qtdAprovadaTexto);
+if(isNaN(qtdAprovada)||qtdAprovada<=0){
+alert('Quantidade inválida.');
 return;
 }
 
-const valorOriginal=numeroBR(item.valorQuebra||0);
-if(valorNumero>valorOriginal){
-alert('O valor aprovado não pode ser maior que o valor original da quebra.');
+const qtdOriginal=numeroBR(item.quantidade||0);
+if(qtdAprovada>qtdOriginal){
+alert('A quantidade aprovada não pode ser maior que a quantidade original da quebra.');
 return;
 }
 
-const restante=valorOriginal-valorNumero;
+const custoUnitario=numeroBR(item.custoUnitario||0);
+if(isNaN(custoUnitario)||custoUnitario<=0){
+alert('Custo unitário inválido para calcular a tratativa.');
+return;
+}
+
+const valorAprovado=qtdAprovada*custoUnitario;
+const qtdRestante=qtdOriginal-qtdAprovada;
+const valorRestante=qtdRestante*custoUnitario;
 
 lista[index].statusTratativa='PARCIAL';
 lista[index].aprovado=true;
-lista[index].valorConciliado=valorNumero.toFixed(2);
-lista[index].quebraLiquida=restante.toFixed(2);
+lista[index].qtdAprovada=qtdAprovada.toFixed(3);
+lista[index].valorConciliado=valorAprovado.toFixed(2);
+lista[index].quebraLiquida=valorRestante.toFixed(2);
 
 setQuebras(lista);
 renderResultadoTratativa();
