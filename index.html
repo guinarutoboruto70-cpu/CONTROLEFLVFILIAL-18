@@ -941,7 +941,12 @@ btnAprovado.style.background='#00c853';
 btnAprovado.style.color='#000';
 btnAprovado.textContent='APROVADO';
 btnAprovado.onclick=()=>aprovarTratativa(item.id);
-
+const btnExcluir=document.createElement('button');
+btnExcluir.className='btn';
+btnExcluir.style.background='#b71c1c';
+btnExcluir.style.color='#fff';
+btnExcluir.textContent='EXCLUIR';
+btnExcluir.onclick=()=>excluirTratativa(item.id);
 const btnParcial=document.createElement('button');
 btnParcial.className='btn';
 btnParcial.style.background='#ffcc00';
@@ -959,6 +964,7 @@ btnReprovado.onclick=()=>reprovarTratativa(item.id);
 card.appendChild(btnAprovado);
 card.appendChild(btnParcial);
 card.appendChild(btnReprovado);
+card.appendChild(btnExcluir);
 container.appendChild(card);
 });
 }
@@ -1034,6 +1040,15 @@ setQuebras(lista);
 renderResultadoTratativa();
 }
 
+function excluirTratativa(id){
+const lista=getQuebras();
+
+const novaLista=lista.filter(q=>q.id!==id);
+
+setQuebras(novaLista);
+
+renderResultadoTratativa();
+}
 function abrirResultadoMensal(){
 el('mesResultado').value=mesAtualISO();
 calcularResultadoMensal();
