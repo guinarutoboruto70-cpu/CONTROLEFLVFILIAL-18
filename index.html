@@ -927,9 +927,9 @@ card.innerHTML=`
 <div style="font-size:18px;font-weight:bold;margin-bottom:8px;">${item.cod||'-'} - ${item.produto}</div>
 <div>Quantidade enviada: ${item.quantidade} ${item.tipo}</div>
 <div>Valor original: ${dinheiroBR(item.valorQuebra||0)}</div>
-<div>Quantidade aprovada: ${formatarNumeroBR(Number(item.qtdAprovada||0),3)} ${item.tipo}</div>
+<div>Quantidade aprovada: ${formatarNumeroBR(Number(item.qtdAprovada||0),0)} ${item.tipo}</div>
 
-<div>Quantidade restante: ${formatarNumeroBR((Number(item.quantidade||0)-Number(item.qtdAprovada||0)),3)} ${item.tipo}</div>
+<div>Quantidade restante: ${formatarNumeroBR((Number(item.quantidade||0)-Number(item.qtdAprovada||0)),0)} ${item.tipo}</div>
 <div>Valor aprovado: ${dinheiroBR(item.valorConciliado||0)}</div>
 <div>Quebra restante: ${dinheiroBR(item.quebraLiquida||item.valorQuebra||0)}</div>
 <div style="margin-top:10px;">Status: <b>${status}</b></div>
