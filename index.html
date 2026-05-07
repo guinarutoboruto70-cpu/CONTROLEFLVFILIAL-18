@@ -1117,12 +1117,26 @@ el('dashQuebra').textContent=dinheiroBR(quebraBruta);
 el('dashLiquida').textContent=dinheiroBR(quebraLiquida);
 el('dashIndice').textContent=formatarNumeroBR(indice,2)+'%';
 
-if(indice<=3.5){
+if(vendaTotal<=0){
+
+el('dashStatus').textContent='SEM VENDAS';
+el('dashStatus').style.color='#cccccc';
+
+}else if(indice<=3.5){
+
 el('dashStatus').textContent='META ATINGIDA';
 el('dashStatus').style.color='#00ff88';
+
+}else if(indice<=5){
+
+el('dashStatus').textContent='ATENÇÃO';
+el('dashStatus').style.color='#ffcc00';
+
 }else{
-el('dashStatus').textContent='ACIMA DA META';
+
+el('dashStatus').textContent='CRÍTICO';
 el('dashStatus').style.color='#ff4444';
+
 }
 
 ir(14);
