@@ -44,6 +44,7 @@ pre{white-space:pre-wrap}
 <button id="btnVendaDia" class="btn">Venda do Dia</button>
 <button id="btnResultadoTratativa" class="btn">Resultado Tratativa</button>
 <button id="btnResultadoMensal" class="btn">Resultado Mensal</button>
+<button id="btnDashboard" class="btn">Dashboard</button>
 <button id="btnLista" class="btn">Lista</button>
 <button id="btnCadastro" class="btn">Cadastro de Produtos</button>
 </div>
@@ -184,7 +185,42 @@ pre{white-space:pre-wrap}
 <div class="card"><div>Índice Atual</div><h2 id="resIndice">0,00%</h2></div>
 <div class="card"><div>Status Meta 3,5%</div><h2 id="resStatus">---</h2></div>
 </div>
+<div id="tela14" class="screen">
+  <button id="voltarDashboard" class="btn">← VOLTAR</button>
 
+<h2>Dashboard</h2>
+
+<div class="card">
+<div style="font-size:18px;">Venda Total</div>
+<h1 id="dashVenda">R$ 0,00</h1>
+</div>
+
+<div class="card">
+<div style="font-size:18px;">Quebra Bruta</div>
+<h1 id="dashQuebra">R$ 0,00</h1>
+</div>
+
+<div class="card">
+<div style="font-size:18px;">Quebra Líquida</div>
+<h1 id="dashLiquida">R$ 0,00</h1>
+</div>
+
+<div class="card">
+<div style="font-size:18px;">Índice Atual</div>
+<h1 id="dashIndice">0,00%</h1>
+</div>
+
+<div class="card">
+<div style="font-size:18px;">Meta FLV</div>
+<h1 style="color:#00ff88;">3,5%</h1>
+</div>
+
+<div class="card">
+<div style="font-size:18px;">Status</div>
+<h1 id="dashStatus">--</h1>
+</div>
+
+</div>
 <script>
 (function(){
 'use strict';
@@ -1054,7 +1090,44 @@ el('mesResultado').value=mesAtualISO();
 calcularResultadoMensal();
 ir(13);
 }
+function abrirDashboard(){
 
+const vendas=getVendas();
+const quebras=getQuebras();
+
+let vendaTotal=0;
+let quebraBruta=0;
+let quebraLiquida=0;
+
+vendas.forEach(v=>{
+vendaTotal+=numeroBR(v.valorTotal||0);
+});
+
+quebras.forEach(q=>{
+quebraBruta+=numeroBR(q.valorQuebra||0);
+quebraLiquida+=numeroBR(q.quebraLiquida||q.valorQuebra||0);
+});
+
+const indice=vendaTotal>0
+?((quebraLiquida/vendaTotal)*100)
+:0;
+
+el('dashVenda').textContent=dinheiroBR(vendaTotal);
+el('dashQuebra').textContent=dinheiroBR(quebraBruta);
+el('dashLiquida').textContent=dinheiroBR(quebraLiquida);
+el('dashIndice').textContent=formatarNumeroBR(indice,2)+'%';
+
+if(indice<=3.5){
+el('dashStatus').textContent='META ATINGIDA';
+el('dashStatus').style.color='#00ff88';
+}else{
+el('dashStatus').textContent='ACIMA DA META';
+el('dashStatus').style.color='#ff4444';
+}
+
+ir(14);
+
+}
 function calcularResultadoMensal(){
 const mes=el('mesResultado').value||mesAtualISO();
 
@@ -1363,6 +1436,7 @@ el('btnQuebraDia').onclick=abrirQuebraDia;
 el('btnVendaDia').onclick=abrirVendaDia;
 el('btnResultadoTratativa').onclick=abrirResultadoTratativa;
 el('btnResultadoMensal').onclick=abrirResultadoMensal;
+el('btnDashboard').onclick=abrirDashboard;
 el('btnLista').onclick=()=>{atualizarLista();ir(7)};
 el('btnCadastro').onclick=abrirCadastro;
 
@@ -1374,7 +1448,7 @@ el('voltarQuebraDia').onclick=()=>ir(1);
 el('voltarVendaDia').onclick=()=>ir(1);
 el('voltarResultadoTratativa').onclick=()=>ir(1);
 el('voltarResultadoMensal').onclick=()=>ir(1);
-
+el('voltarDashboard').onclick=()=>ir(1);
 el('buscaProduto').oninput=autoProduto;
 el('produto').oninput=autoPorNome;
 el('cod').oninput=autoPorCodigo;
