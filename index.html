@@ -31,7 +31,25 @@ pre{white-space:pre-wrap}
 </head>
 
 <body>
-
+<button id="btnRefresh"
+style="
+position:fixed;
+top:10px;
+right:10px;
+z-index:9999;
+width:45px;
+height:45px;
+border:none;
+border-radius:50%;
+background:#ffcc00;
+color:#000;
+font-size:22px;
+font-weight:bold;
+cursor:pointer;
+box-shadow:0 2px 8px rgba(0,0,0,0.4);
+">
+↻
+</button>
 <div id="tela0" class="screen active">
 <img src="icons/icon-192.png" style="width:120px;height:120px;display:block;margin:20px auto;object-fit:contain;">
 
@@ -1540,6 +1558,9 @@ carregarBase();
 bind();
 registrarServiceWorker();
 });
+el('btnRefresh').onclick=()=>{
+location.reload();
+};
 })();
 </script>
 
