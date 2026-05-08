@@ -60,6 +60,14 @@ box-shadow:0 2px 8px rgba(0,0,0,0.4);
 <button id="btnAtivarPremium" class="btn">ATIVAR PREMIUM</button>
 
 <div id="msgPremium" class="status"></div>
+<div id="painelAdmin" class="card" style="display:none;margin-top:20px;border-left:6px solid #00ff88;">
+<h3>Painel Admin</h3>
+
+<button id="adminLiberar" class="btn">LIBERAR PREMIUM 31 DIAS</button>
+<button id="adminResetar" class="btn" style="background:#ff4444;color:#fff;">RESETAR PREMIUM</button>
+
+<div id="adminStatus" class="status"></div>
+</div>
 </div>
 
 <div id="tela1" class="screen">
@@ -1527,6 +1535,41 @@ location.reload();
 function bind(){
 el('btnEntrar').onclick=()=>ir(1);
 el('btnAtivarPremium').onclick=ativarPremium;
+let cliquesAdmin=0;
+
+el('iconLogo').onclick=()=>{
+
+cliquesAdmin++;
+
+if(cliquesAdmin>=5){
+
+el('painelAdmin').style.display='block';
+
+el('adminStatus').textContent='Painel admin liberado';
+
+}
+
+
+
+el('adminLiberar').onclick=()=>{
+
+const dias31=31*24*60*60*1000;
+
+const vencimento=new Date().getTime()+dias31;
+
+localStorage.setItem('premiumVencimento',vencimento);
+
+el('adminStatus').textContent='Premium liberado por 31 dias';
+
+};
+
+el('adminResetar').onclick=()=>{
+
+localStorage.removeItem('premiumVencimento');
+
+el('adminStatus').textContent='Premium resetado';
+
+};
 el('btnTratativa').onclick=()=>ir(2);
 el('btnQuebraDia').onclick=abrirQuebraDia;
 el('btnVendaDia').onclick=abrirVendaDia;
