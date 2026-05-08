@@ -1126,7 +1126,7 @@ let quebraBruta=0;
 let quebraLiquida=0;
 
 vendas.forEach(v=>{
-vendaTotal+=numeroBR(v.valorTotal||0);
+vendaTotal+=numeroBR(v.valor||v.valorTotal||0);
 });
 
 quebras.forEach(q=>{
