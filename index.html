@@ -1535,6 +1535,8 @@ el('btnResultadoMensal').onclick=abrirResultadoMensal;
 el('btnDashboard').onclick=abrirDashboard;
 el('btnLista').onclick=()=>{atualizarLista();ir(7)};
 el('btnCadastro').onclick=abrirCadastro;
+if(!premiumAtivo()){
+
 el('btnQuebraDia').style.display='none';
 el('btnVendaDia').style.display='none';
 el('btnResultadoTratativa').style.display='none';
@@ -1542,6 +1544,8 @@ el('btnResultadoMensal').style.display='none';
 el('btnDashboard').style.display='none';
 el('btnLista').style.display='none';
 el('btnCadastro').style.display='none';
+
+}
 el('voltarTratativa').onclick=()=>ir(1);
 el('voltarEnvio').onclick=()=>ir(2);
 el('voltarLista').onclick=()=>ir(1);
