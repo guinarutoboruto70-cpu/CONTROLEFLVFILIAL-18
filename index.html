@@ -55,6 +55,11 @@ box-shadow:0 2px 8px rgba(0,0,0,0.4);
 
 <h1>Controle FLV</h1>
 <button id="btnEntrar" class="btn">ENTRAR</button>
+<input id="codigoPremium" placeholder="Código premium" style="text-align:center;margin-top:15px;">
+
+<button id="btnAtivarPremium" class="btn">ATIVAR PREMIUM</button>
+
+<div id="msgPremium" class="status"></div>
 </div>
 
 <div id="tela1" class="screen">
@@ -1491,7 +1496,34 @@ card.appendChild(img);
 div.appendChild(card);
 });
 }
+function premiumAtivo(){
+const vencimento=localStorage.getItem('premiumVencimento');
 
+if(!vencimento){
+return false;
+}
+
+return new Date().getTime()<Number(vencimento);
+}
+
+function ativarPremium(){
+const codigo=el('codigoPremium').value.trim();
+
+if(codigo!=='FLV15'){
+el('msgPremium').textContent='Código inválido';
+return;
+}
+
+const dias31=31*24*60*60*1000;
+
+const vencimento=new Date().getTime()+dias31;
+
+localStorage.setItem('premiumVencimento',vencimento);
+
+el('msgPremium').textContent='Premium ativado por 31 dias';
+
+location.reload();
+}
 function bind(){
 el('btnEntrar').onclick=()=>ir(2);;
 el('btnTratativa').onclick=()=>ir(2);
