@@ -1113,7 +1113,30 @@ quebras.forEach(q=>{
 quebraBruta+=numeroBR(q.valorQuebra||0);
 quebraLiquida+=numeroBR(q.quebraLiquida||q.valorQuebra||0);
 });
+const ranking={};
 
+quebras.forEach(q=>{
+const nome=q.produto||'Produto sem nome';
+const valor=numeroBR(q.valorQuebra||0);
+
+if(!ranking[nome]){
+ranking[nome]=0;
+}
+
+ranking[nome]+=valor;
+});
+
+const topProdutos=Object.entries(ranking)
+.sort((a,b)=>b[1]-a[1])
+.slice(0,5);
+
+el('dashTopProdutos').innerHTML=topProdutos.length
+? topProdutos.map((p,i)=>`
+<div style="margin-top:8px;font-size:16px;">
+<b>${i+1}. ${p[0]}</b> - ${dinheiroBR(p[1])}
+</div>
+`).join('')
+:'Nenhuma quebra registrada.';
 const indice=vendaTotal>0
 ?((quebraLiquida/vendaTotal)*100)
 :0;
