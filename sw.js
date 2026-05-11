@@ -1,4 +1,4 @@
-const CACHE_NAME = "controle-flv-v3";
+const CACHE_NAME = "controle-flv-v4";
 
 const APP_FILES = [
   "/CONTROLEFLVFILIAL-18/",
@@ -6,6 +6,7 @@ const APP_FILES = [
   "/CONTROLEFLVFILIAL-18/manifest.json",
   "/CONTROLEFLVFILIAL-18/icons/icon-192.png",
   "/CONTROLEFLVFILIAL-18/icons/icon-512.png"
+  "/CONTROLEFLVFILIAL-18/icons/banner-flv.png",
 ];
 
 self.addEventListener("install", event => {
