@@ -1,4 +1,4 @@
-const CACHE_NAME = "controle-flv-v4";
+const CACHE_NAME = "controle-flv-v5";
 
 const APP_FILES = [
   "/CONTROLEFLVFILIAL-18/",
@@ -19,9 +19,13 @@ self.addEventListener("install", event => {
 self.addEventListener("activate", event => {
   event.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(keys.map(key => {
-        if (key !== CACHE_NAME) return caches.delete(key);
-      }))
+      Promise.all(
+        keys.map(key => {
+          if (key !== CACHE_NAME) {
+            return caches.delete(key);
+          }
+        })
+      )
     )
   );
   self.clients.claim();
