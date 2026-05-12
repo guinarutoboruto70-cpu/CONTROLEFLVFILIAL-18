@@ -9,12 +9,19 @@
 <meta name="theme-color" content="#ffcc00">
 
 <style>
+  :root{
+--gold:#ffcc00;
+--gold-soft:rgba(255,204,0,0.35);
+--bg-dark:#080808;
+--card-dark:rgba(25,25,25,0.78);
+--text-light:#ffffff;
+}
 body{
 margin:0;
 font-family:sans-serif;
 background:
-radial-gradient(circle at top,#2a2a2a 0%,#111 35%,#080808 100%);
-color:#fff;
+radial-gradient(circle at top,#2a2a2a 0%,#111 35%,var(--bg-dark) 100%);
+color:var(--text-light);
 min-height:100vh;
 }
 .screen{
@@ -63,9 +70,11 @@ padding:12px;
 margin-top:10px;
 border:none;
 border-radius:8px;
-background:#ffcc00;
+background:linear-gradient(135deg,#ffcc00,#ffdd55);
+box-shadow:0 6px 18px rgba(255,204,0,0.25);
+transition:all .25s ease;
 font-weight:bold;
-transition:transform .2s ease, box-shadow .2s ease, filter .2s ease;
+
 }
 .btn:hover{
 transform:translateY(-2px);
