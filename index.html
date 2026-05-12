@@ -25,7 +25,21 @@ transform:translateY(0);
 }
 }
 h1,h2{text-align:center;color:#ffcc00}
-.btn{width:100%;padding:12px;margin-top:10px;border:none;border-radius:8px;background:#ffcc00;font-weight:bold}
+.btn{
+width:100%;
+padding:12px;
+margin-top:10px;
+border:none;
+border-radius:8px;
+background:#ffcc00;
+font-weight:bold;
+transition:transform .2s ease, box-shadow .2s ease, filter .2s ease;
+}
+.btn:hover{
+transform:translateY(-2px);
+box-shadow:0 6px 18px rgba(255,204,0,0.35);
+filter:brightness(1.05);
+}
 .btn.enviado{background:#00c853;color:#000}
 .btn-icon{width:42px;height:42px;margin-top:8px;margin-right:8px;border:none;border-radius:10px;font-size:20px;font-weight:bold}
 .edit-icon{background:#ffe680;color:#000}
