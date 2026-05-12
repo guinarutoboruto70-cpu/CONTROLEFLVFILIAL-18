@@ -1957,7 +1957,7 @@ el('msgPremium').textContent='Premium ativado por 31 dias';
 location.reload();
 }
 function bind(){
-el('btnEntrar').onclick=()=>{
+el('btnEntrar').onclick=()=>{  
 showToast("Entrando no sistema...");
 ir(1);
 };
@@ -2007,6 +2007,7 @@ el('btnResultadoMensal').onclick=abrirResultadoMensal;
 el('btnDashboard').onclick=abrirDashboard;
 el('btnLista').onclick=()=>{atualizarLista();ir(7)};
 el('btnCadastro').onclick=abrirCadastro;
+el('btnVoltarInicio').onclick=()=>ir(0);
 if(!premiumAtivo()){
 
 el('btnQuebraDia').style.display='none';
