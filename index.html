@@ -178,6 +178,31 @@ to{
 opacity:1;
 }
 }
+#toast{
+position:fixed;
+bottom:20px;
+right:20px;
+background:rgba(20,20,20,0.92);
+color:#fff;
+padding:14px 18px;
+border-radius:14px;
+border:1px solid rgba(255,204,0,0.25);
+box-shadow:0 8px 25px rgba(0,0,0,0.35);
+backdrop-filter:blur(10px);
+-webkit-backdrop-filter:blur(10px);
+font-weight:bold;
+opacity:0;
+pointer-events:none;
+transform:translateY(20px);
+transition:all .35s ease;
+z-index:999999;
+max-width:320px;
+}
+
+#toast.show{
+opacity:1;
+transform:translateY(0);
+}
 pre{white-space:pre-wrap}
 </style>
 </head>
@@ -190,6 +215,7 @@ pre{white-space:pre-wrap}
     <p>Carregando Controle FLV...</p>
   </div>
 </div>  
+<div id="toast"></div>
 <button id="btnRefresh"
 style="
 position:fixed;
@@ -1836,6 +1862,20 @@ setTimeout(() => {
     }, 400);
   }
 }, 1500);
+function showToast(msg){
+const toast = document.getElementById("toast");
+
+if(!toast) return;
+
+toast.textContent = msg;
+toast.classList.add("show");
+
+clearTimeout(window.toastTimer);
+
+window.toastTimer = setTimeout(() => {
+  toast.classList.remove("show");
+}, 3000);
+}
 </script>
 </body>
 </html>
