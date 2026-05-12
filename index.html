@@ -1732,7 +1732,10 @@ el('msgPremium').textContent='Premium ativado por 31 dias';
 location.reload();
 }
 function bind(){
-el('btnEntrar').onclick=()=>ir(1);
+el('btnEntrar').onclick=()=>{
+showToast("Entrando no sistema...");
+ir(1);
+};
 el('btnAtivarPremium').onclick=ativarPremium;
 let cliquesAdmin=0;
 
