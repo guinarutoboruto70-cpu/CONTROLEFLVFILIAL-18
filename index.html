@@ -145,6 +145,44 @@ filter:brightness(1.05);
 .btn-icon{width:42px;height:42px;margin-top:8px;margin-right:8px;border:none;border-radius:10px;font-size:20px;font-weight:bold}
 .edit-icon{background:#ffe680;color:#000}
 .delete-icon{background:#ff4444;color:#fff}
+.dashboard-mini{
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:10px;
+margin:16px 0 18px 0;
+}
+
+.mini-card{
+background:rgba(25,25,25,0.82);
+border:1px solid rgba(255,204,0,0.18);
+border-radius:18px;
+padding:14px 10px;
+text-align:center;
+box-shadow:0 8px 22px rgba(0,0,0,0.35);
+backdrop-filter:blur(10px);
+-webkit-backdrop-filter:blur(10px);
+animation:cardEntry .45s ease;
+}
+.mini-card:hover{
+transform:translateY(-4px) scale(1.02);
+box-shadow:
+0 12px 28px rgba(0,0,0,0.42),
+0 0 18px rgba(255,204,0,0.12);
+border:1px solid rgba(255,204,0,0.28);
+}
+.mini-title{
+font-size:13px;
+color:#cccccc;
+font-weight:bold;
+}
+
+.mini-value{
+margin-top:8px;
+font-size:20px;
+font-weight:bold;
+color:#ffcc00;
+text-shadow:0 0 10px rgba(255,204,0,0.35);
+}
 .card{
 background:rgba(25,25,25,0.78);
 backdrop-filter:blur(10px);
@@ -364,6 +402,24 @@ box-shadow:0 4px 15px rgba(0,0,0,0.5);
 
 <div id="tela1" class="screen">
 <h2>Menu</h2>
+<div class="dashboard-mini">
+
+<div class="mini-card">
+<div class="mini-title">💰 Vendas</div>
+<div class="mini-value" id="miniVenda">R$ 0,00</div>
+</div>
+
+<div class="mini-card">
+<div class="mini-title">📦 Quebras</div>
+<div class="mini-value" id="miniQuebra">0</div>
+</div>
+
+<div class="mini-card">
+<div class="mini-title">📈 Produtividade</div>
+<div class="mini-value" id="miniProd">100%</div>
+</div>
+
+</div>
 <button id="btnTratativa" class="btn">Nova Tratativa</button>
 <button id="btnQuebraDia" class="btn">Quebra do Dia</button>
 <button id="btnVendaDia" class="btn">Venda do Dia</button>
