@@ -29,7 +29,62 @@ display:none;
 padding:20px;
 animation:fadeScreen .35s ease;
 }
+.topbar{
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:10px 14px;
+margin-bottom:18px;
+border-radius:16px;
+background:rgba(25,25,25,0.78);
+backdrop-filter:blur(10px);
+-webkit-backdrop-filter:blur(10px);
+border:1px solid rgba(255,204,0,0.15);
+box-shadow:0 4px 16px rgba(0,0,0,0.35);
+}
 
+.topbar-left{
+display:flex;
+align-items:center;
+gap:8px;
+}
+
+.premium-dot{
+width:10px;
+height:10px;
+border-radius:50%;
+background:#00ff88;
+box-shadow:0 0 10px rgba(0,255,136,0.7);
+animation:pulsePremium 1.5s infinite;
+}
+
+.premium-status{
+font-size:13px;
+font-weight:bold;
+color:#00ff88;
+}
+
+.topbar-right{
+font-size:14px;
+font-weight:bold;
+color:#ffcc00;
+letter-spacing:0.5px;
+}
+
+@keyframes pulsePremium{
+0%{
+transform:scale(1);
+opacity:1;
+}
+50%{
+transform:scale(1.25);
+opacity:0.7;
+}
+100%{
+transform:scale(1);
+opacity:1;
+}
+}
 @keyframes fadeScreen{
 from{
 opacity:0;
@@ -250,6 +305,16 @@ box-shadow:0 2px 8px rgba(0,0,0,0.4);
 ↻
 </button>
 <div id="tela0" class="screen active">
+<div class="topbar">
+  <div class="topbar-left">
+    <span class="premium-dot"></span>
+    <span class="premium-status">Premium Ativo</span>
+  </div>
+
+  <div class="topbar-right">
+    ⚡ Controle FLV
+  </div>
+</div>  
 <img id="iconLogo"
 src="./icons/banner-flv.jpg"
 style="
