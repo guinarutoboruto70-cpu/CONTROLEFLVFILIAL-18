@@ -372,7 +372,7 @@ box-shadow:0 2px 8px rgba(0,0,0,0.4);
 <div class="topbar">
   <div class="topbar-left">
     <span class="premium-dot"></span>
-    <span class="premium-status">Premium Ativo</span>
+    <span class="premium-status" id="statusPremiumTopo">Versão Gratuita</span>
   </div>
 
   <div class="topbar-right">
@@ -2076,6 +2076,9 @@ document.addEventListener('DOMContentLoaded',()=>{
 carregarBase();
 bind();
 registrarServiceWorker();
+if(premiumAtivo()){
+el('statusPremiumTopo').textContent='Premium Ativo';
+}
 });
 el('btnRefresh').onclick=()=>{
 location.reload();
