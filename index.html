@@ -1820,7 +1820,10 @@ el('filtroResultadoData').onchange=renderResultadoTratativa;
 el('mesResultado').onchange=calcularResultadoMensal;
 
 el('valorVenda').onblur=formatarCampoVenda;
-el('btnSalvarVenda').onclick=salvarVenda;
+el('btnSalvarVenda').onclick=()=>{
+showToast("Salvando venda...");
+salvarVenda();
+};
 
 el('fotoProd').onchange=e=>addFotos(e,'prod');
 el('fotoBal').onchange=e=>addFotos(e,'bal');
