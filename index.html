@@ -299,6 +299,16 @@ opacity:1;
 transform:translateY(0);
 }
 }
+@keyframes graficoPulse{
+from{
+filter:brightness(1);
+transform:scaleX(1);
+}
+to{
+filter:brightness(1.15);
+transform:scaleX(1.02);
+}
+}
 #toast{
 position:fixed;
 bottom:20px;
@@ -418,7 +428,41 @@ box-shadow:0 4px 15px rgba(0,0,0,0.5);
 <div class="mini-title">📈 Produtividade</div>
 <div class="mini-value" id="miniProd">100%</div>
 </div>
+<div class="card">
+<h3>📈 Desempenho</h3>
 
+<div style="
+height:12px;
+background:rgba(255,255,255,0.08);
+border-radius:999px;
+overflow:hidden;
+margin-top:14px;
+">
+
+<div id="graficoBarra" style="
+height:100%;
+width:72%;
+background:linear-gradient(90deg,#ffcc00,#00ff88);
+border-radius:999px;
+box-shadow:0 0 18px rgba(255,204,0,0.35);
+animation:graficoPulse 2s ease-in-out infinite alternate;
+">
+</div>
+
+</div>
+
+<div style="
+display:flex;
+justify-content:space-between;
+margin-top:10px;
+font-size:13px;
+color:#cccccc;
+">
+<span>Meta diária</span>
+<span id="graficoTexto">72%</span>
+</div>
+
+</div>
 </div>
 <button id="btnTratativa" class="btn">Nova Tratativa</button>
 <button id="btnQuebraDia" class="btn">Quebra do Dia</button>
