@@ -1664,6 +1664,7 @@ lista[index].valor=valor;
 setVendas(lista);
 limparCamposVenda();
 renderListaVendas();
+atualizarGrafico();
 el('msgVenda').textContent='Venda alterada com sucesso.';
 return;
 }
@@ -1673,6 +1674,7 @@ lista.push({id:Date.now().toString(),data,valor});
 setVendas(lista);
 limparCamposVenda();
 renderListaVendas();
+atualizarGrafico();
 el('msgVenda').textContent='Venda salva com sucesso.';
 }
 
@@ -1711,7 +1713,32 @@ card.appendChild(excluir);
 container.appendChild(card);
 });
 }
+function atualizarGrafico(){
+const vendas=getVendas();
 
+let total=0;
+
+vendas.forEach(v=>{
+total+=parseFloat(v.valor||0);
+});
+
+const meta=5000;
+
+let percentual=Math.min((total/meta)*100,100);
+
+if(isNaN(percentual)) percentual=0;
+
+const barra=el("graficoBarra");
+const texto=el("graficoTexto");
+
+if(barra){
+barra.style.width=percentual+"%";
+}
+
+if(texto){
+texto.textContent=Math.round(percentual)+"%";
+}
+}
 function editarVenda(id){
 const venda=getVendas().find(v=>v.id===id);
 if(!venda)return;
@@ -2079,6 +2106,11 @@ window.toastTimer = setTimeout(() => {
   toast.classList.remove("show");
 }, 3000);
 }
+atualizarGrafico();
+
+setInterval(()=>{
+atualizarGrafico();
+},3000);
 </script>
 </body>
 </html>
