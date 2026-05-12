@@ -27,10 +27,10 @@ min-height:100vh;
 .screen{
 display:none;
 padding:20px;
-animation:fadeTela .35s ease;
+animation:fadeScreen .35s ease;
 }
 
-@keyframes fadeTela{
+@keyframes fadeScreen{
 from{
 opacity:0;
 transform:translateY(8px);
@@ -63,7 +63,12 @@ to{
 filter:drop-shadow(0 0 14px rgba(255,204,0,0.35));
 }
 }
-h1,h2{text-align:center;color:#ffcc00}
+h1,h2{
+text-align:center;
+color:#ffcc00;
+text-shadow:0 0 12px rgba(255,204,0,0.35);
+letter-spacing:0.5px;
+}
 .btn{
 width:100%;
 padding:12px;
@@ -258,10 +263,10 @@ object-fit:contain;
 box-shadow:0 4px 15px rgba(0,0,0,0.5);
 ">
 
-<button id="btnEntrar" class="btn">ENTRAR</button>
+<button id="btnEntrar" class="btn">🔐 ENTRAR</button>
 <input id="codigoPremium" placeholder="Código premium" style="text-align:center;margin-top:15px;">
 
-<button id="btnAtivarPremium" class="btn">ATIVAR PREMIUM</button>
+<button id="btnAtivarPremium" class="btn">👑 ATIVAR PREMIUM</button>
 
 <div id="msgPremium" class="status"></div>
 <div style="text-align:center;margin-top:25px;color:#cccccc;font-size:16px;line-height:1.6;">
@@ -393,7 +398,7 @@ box-shadow:0 4px 15px rgba(0,0,0,0.5);
 
 <div id="tela11" class="screen">
 <button id="voltarVendaDia" class="btn">⬅ VOLTAR</button>
-<h2>Venda do Dia</h2>
+<h2>💰 Venda do Dia</h2>
 
 <input id="dataVenda" type="date">
 <input id="valorVenda" placeholder="Valor da venda FLV" inputmode="decimal">
@@ -407,7 +412,7 @@ box-shadow:0 4px 15px rgba(0,0,0,0.5);
 
 <div id="tela12" class="screen">
 <button id="voltarResultadoTratativa" class="btn">⬅ VOLTAR</button>
-<h2>Resultado Tratativa</h2>
+<h2>📊 Resultado Tratativa</h2>
 
 <input id="filtroResultadoData" type="date">
 <div id="listaResultadoTratativa"></div>
