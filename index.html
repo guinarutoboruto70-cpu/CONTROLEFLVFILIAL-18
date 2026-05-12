@@ -37,13 +37,23 @@ transform:translateY(0);
 #iconLogo{
 opacity:0;
 transform:translateY(-20px);
-animation:fadeBanner 1s ease forwards;
+animation:
+fadeBanner 1s ease forwards,
+glowBanner 2.5s ease-in-out infinite alternate;
 }
 
 @keyframes fadeBanner{
 to{
 opacity:1;
 transform:translateY(0);
+}
+}
+@keyframes glowBanner{
+from{
+filter:drop-shadow(0 0 0px rgba(255,204,0,0.0));
+}
+to{
+filter:drop-shadow(0 0 14px rgba(255,204,0,0.35));
 }
 }
 h1,h2{text-align:center;color:#ffcc00}
