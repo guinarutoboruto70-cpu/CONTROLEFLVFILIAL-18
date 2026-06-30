@@ -1462,7 +1462,7 @@ el('msgQuebra').textContent='Item excluído com sucesso.';
 }
 
 function abrirResultadoTratativa(){
-el('filtroResultadoData').value=hojeISO();
+el('filtroResultadoData').value='';
 renderResultadoTratativa();
 ir(12);
 }
@@ -1471,13 +1471,13 @@ function renderResultadoTratativa(){
 const container=el('listaResultadoTratativa');
 if(!container)return;
 
-const dataFiltro=el('filtroResultadoData').value||hojeISO();
-const lista=getQuebras().filter(q=>q.data===dataFiltro&&q.marcadoTratativa===true);
+const dataFiltro=el('filtroResultadoData').value;
+const lista=getQuebras().filter(q=>q.marcadoTratativa===true&&(!dataFiltro||q.data===dataFiltro));
 
 container.innerHTML='';
 
 if(lista.length===0){
-container.innerHTML='<div class="card">Nenhuma tratativa enviada nesta data.</div>';
+container.innerHTML='<div class="card">Nenhuma tratativa enviada'+(dataFiltro?' nesta data':'')+'.</div>';
 return;
 }
 
