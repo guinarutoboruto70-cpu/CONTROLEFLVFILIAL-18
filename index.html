@@ -579,7 +579,7 @@ color:#cccccc;
 <option value="UN">UN</option>
 </select>
 
-<input id="q_custo_unit" placeholder="Custo unitário" disabled>
+<input id="q_custo_unit" placeholder="Custo unitário (R$)" inputmode="decimal">
 <input id="q_valor_quebra" placeholder="Valor da quebra" disabled>
 
 <button id="btnAdicionarQuebra" class="btn">ADICIONAR QUEBRA</button>
@@ -732,6 +732,7 @@ const baseFLV=[
 let produtoSelecionadoId=null;
 let quebraEditandoId=null;
 let vendaEditandoId=null;
+let quebraVinculadaId=null;
 let textoFinal='';
 let fotos={prod:[],bal:[],eti:[]};
 function getBanco(){try{return JSON.parse(localStorage.getItem('tratativasFinalizadas')||'[]')}catch{return []}}
@@ -1304,8 +1305,7 @@ return;
 }
 
 if(isNaN(custoUnitario)||custoUnitario<=0){
-alert('Produto sem custo cadastrado. Atualize o cadastro do produto antes de lançar a quebra.');
-return;
+if(!confirm('Custo unitário não preenchido. Deseja salvar a quebra sem valor financeiro?'))return;
 }
 
 const lista=getQuebras();
@@ -1348,6 +1348,17 @@ quebraLiquida:valorQuebra
 });
 
 setQuebras(lista);
+
+// Se o custo foi digitado manualmente, salva no cadastro do produto para uso futuro
+if(custoUnitario>0 && cod){
+const prods=getProdutos();
+const pidx=prods.findIndex(p=>String(p.cod||'').trim()===String(cod).trim());
+if(pidx!==-1 && (!prods[pidx].custo || numeroBR(prods[pidx].custo)<=0)){
+prods[pidx].custo=custoUnitario.toFixed(3);
+setProdutos(prods);
+}
+}
+
 limparCamposQuebra();
 renderListaQuebraDia();
 el('msgQuebra').textContent='Quebra adicionada.';
@@ -1423,6 +1434,8 @@ const item=lista[index];
 lista[index].marcadoTratativa=true;
 if(!lista[index].statusTratativa)lista[index].statusTratativa='PENDENTE';
 setQuebras(lista);
+
+quebraVinculadaId=id;
 
 el('produto').value=item.produto;
 el('cod').value=item.cod||'';
@@ -1953,6 +1966,41 @@ setBanco(banco);
 
 atualizarLista();
 
+// Se a tratativa veio direto do menu (não pelo 📤 da quebra),
+// cria entrada nas quebras marcada como PENDENTE para aparecer no Resultado Tratativa
+const produto=el('produto').value.trim();
+const cod=el('cod').value.trim();
+const chegou=el('chegou').value.trim();
+const qtdQuebra=el('quebra').value.trim();
+
+if(produto && !quebraVinculadaId){
+const listaQ=getQuebras();
+const jaExiste=listaQ.find(q=>
+  q.produto===produto &&
+  q.data===hojeISO() &&
+  q.marcadoTratativa===true
+);
+if(!jaExiste){
+const novaQuebra={
+  id:'trat_'+Date.now(),
+  produto:produto,
+  cod:cod,
+  data:hojeISO(),
+  quantidade:parseFloat(qtdQuebra)||0,
+  tipo:'UN',
+  qtdChegou:parseFloat(chegou)||0,
+  valorQuebra:0,
+  quebraLiquida:0,
+  custoUnitario:0,
+  marcadoTratativa:true,
+  statusTratativa:'PENDENTE'
+};
+listaQ.push(novaQuebra);
+setQuebras(listaQ);
+}
+}
+quebraVinculadaId=null;
+
 fotos={prod:[],bal:[],eti:[]};
 
 ['prev_prod','prev_bal','prev_eti'].forEach(id=>{
@@ -2076,7 +2124,7 @@ el('adminStatus').textContent='Premium resetado';
 location.reload();
 
 };
-el('btnTratativa').onclick=()=>ir(2);
+el('btnTratativa').onclick=()=>{quebraVinculadaId=null;ir(2);};
 el('btnQuebraDia').onclick=abrirQuebraDia;
 el('btnVendaDia').onclick=abrirVendaDia;
 el('btnResultadoTratativa').onclick=abrirResultadoTratativa;
@@ -2127,6 +2175,7 @@ el('q_produto').onchange=preencherCustoQuebraPorProduto;
 el('q_cod').onchange=preencherCustoQuebraPorProduto;
 el('dataQuebra').onchange=renderListaQuebraDia;
 el('q_quantidade').oninput=calcularValorQuebra;
+el('q_custo_unit').oninput=()=>{formatarMoedaCentavosCampo(el('q_custo_unit'));calcularValorQuebra();};
 el('btnAdicionarQuebra').onclick=adicionarOuEditarQuebra;
 
 el('filtroResultadoData').onchange=renderResultadoTratativa;
