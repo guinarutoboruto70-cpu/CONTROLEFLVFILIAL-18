@@ -342,7 +342,7 @@ pre{white-space:pre-wrap}
 <body>
 <div id="loading">
   <div class="loading-card">
-    <img src="./icons/banner-flv.jpg" class="loading-logo" onerror="this.style.display='none'">
+    <img src="./icons/banner-flv.jpg" class="loading-logo">
     <div class="loader"></div>
     <p>Carregando Controle FLV...</p>
   </div>
@@ -352,7 +352,7 @@ pre{white-space:pre-wrap}
 style="
 position:fixed;
 bottom:18px;
-left:18px;
+right:18px;
 z-index:9999;
 width:38px;
 height:38px;
@@ -381,7 +381,6 @@ box-shadow:0 2px 8px rgba(0,0,0,0.4);
 </div>  
 <img id="iconLogo"
 src="./icons/banner-flv.jpg"
-onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22120%22><rect width=%22400%22 height=%22120%22 rx=%2218%22 fill=%22%23111%22/><text x=%22200%22 y=%2272%22 font-family=%22sans-serif%22 font-size=%2242%22 font-weight=%22bold%22 fill=%22%23ffcc00%22 text-anchor=%22middle%22>⚡ FLV</text></svg>'"
 style="
 width:100%;
 max-width:760px;
@@ -434,8 +433,6 @@ box-shadow:0 4px 15px rgba(0,0,0,0.5);
 <div class="mini-title">📈 Produtividade</div>
 <div class="mini-value" id="miniProd">100%</div>
 </div>
-
-</div>
 <div class="card">
 <h3>📈 Desempenho</h3>
 
@@ -470,6 +467,7 @@ color:#cccccc;
 <span id="graficoTexto">72%</span>
 </div>
 
+</div>
 </div>
 <button id="btnTratativa" class="btn">Nova Tratativa</button>
 <button id="btnQuebraDia" class="btn">Quebra do Dia</button>
@@ -533,13 +531,9 @@ color:#cccccc;
 <button id="voltarCadastro" class="btn">⬅ VOLTAR</button>
 <h2>Cadastro de Produtos</h2>
 
-<input id="p_busca" placeholder="🔍 Buscar produto existente...">
+<input id="p_nome" placeholder="Digite para buscar produto...">
 <div id="autoCadastroLista" class="autocomplete"></div>
 
-<div class="card" style="margin-top:14px;border-left:4px solid #ffcc00;">
-<div style="font-weight:bold;color:#ffcc00;margin-bottom:8px;" id="labelModoEdicao">📝 Preencha os dados do produto</div>
-
-<input id="p_nome" placeholder="Nome do produto">
 <input id="p_cod" placeholder="Código" inputmode="numeric">
 
 <select id="p_tipo">
@@ -554,10 +548,7 @@ color:#cccccc;
 <input id="p_qtd_emb" placeholder="Qtd dentro da embalagem" inputmode="decimal">
 <input id="p_custo_calc" placeholder="Custo calculado" disabled>
 
-<button id="btnSalvarProduto" class="btn">💾 SALVAR ALTERAÇÃO</button>
-<button id="btnNovoProduto" class="btn" style="background:#222;color:#ffcc00;border:1px solid #ffcc00;margin-top:6px;">➕ CADASTRAR COMO NOVO PRODUTO</button>
-</div>
-
+<button id="btnSalvarProduto" class="btn">SALVAR ALTERAÇÃO</button>
 <div id="msgProduto" class="status"></div>
 <div id="listaProdutos"></div>
 </div>
@@ -579,7 +570,7 @@ color:#cccccc;
 <option value="UN">UN</option>
 </select>
 
-<input id="q_custo_unit" placeholder="Custo unitário (R$)" inputmode="decimal">
+<input id="q_custo_unit" placeholder="Custo unitário" disabled>
 <input id="q_valor_quebra" placeholder="Valor da quebra" disabled>
 
 <button id="btnAdicionarQuebra" class="btn">ADICIONAR QUEBRA</button>
@@ -732,7 +723,6 @@ const baseFLV=[
 let produtoSelecionadoId=null;
 let quebraEditandoId=null;
 let vendaEditandoId=null;
-let quebraVinculadaId=null;
 let textoFinal='';
 let fotos={prod:[],bal:[],eti:[]};
 function getBanco(){try{return JSON.parse(localStorage.getItem('tratativasFinalizadas')||'[]')}catch{return []}}
@@ -979,30 +969,25 @@ ir(8);
 function selecionarProdutoCadastro(p){
 if(!p)return;
 produtoSelecionadoId=p.id;
-if(el('p_busca'))el('p_busca').value='';
-el('autoCadastroLista').innerHTML='';
 el('p_nome').value=p.nome;
 el('p_cod').value=p.cod||'';
 el('p_tipo').value=p.tipo||'KG';
 el('p_valor_emb').value=p.valorEmbalagem||'';
 el('p_qtd_emb').value=p.qtdEmbalagem||p.fator||'';
 el('p_custo_calc').value=p.custo?formatarNumeroBR(Number(p.custo),3):'';
-const lbl=el('labelModoEdicao');
-if(lbl)lbl.textContent='✏️ Editando: '+p.nome;
-const btn=el('btnSalvarProduto');
-if(btn)btn.textContent='💾 SALVAR ALTERAÇÃO';
-el('msgProduto').textContent='Produto selecionado. Edite e salve.';
+el('autoCadastroLista').innerHTML='';
+el('msgProduto').textContent='Produto selecionado para alteração.';
 calcularCustoProduto();
-window.scrollTo({top:0,behavior:'smooth'});
 }
 
 function autoCadastroProduto(){
-const campo=el('p_busca');
+const campo=el('p_nome');
 const listaAuto=el('autoCadastroLista');
 if(!campo||!listaAuto)return;
 
 const texto=campo.value.toUpperCase().trim();
 listaAuto.innerHTML='';
+produtoSelecionadoId=null;
 
 if(!texto)return;
 
@@ -1109,43 +1094,6 @@ setProdutos(lista.sort((a,b)=>a.nome.localeCompare(b.nome)));
 renderListaProdutos();
 el('msgProduto').textContent='Produto salvo com custo atualizado!';
 }
-function novoProducto(){
-limparCamposProduto();
-produtoSelecionadoId=null;
-const lbl=el('labelModoEdicao');
-if(lbl)lbl.textContent='➕ Novo produto';
-const btn=el('btnSalvarProduto');
-if(btn)btn.textContent='💾 CADASTRAR PRODUTO';
-el('p_nome').focus();
-el('msgProduto').textContent='Digite o nome e os dados do novo produto.';
-}
-
-function salvarNovoProduto(){
-const nome=el('p_nome').value.toUpperCase().trim();
-if(!nome){alert('Digite o nome do produto.');return;}
-const lista=getProdutos();
-const novoId=gerarId(nome);
-if(lista.some(p=>gerarId(p.nome)===novoId)){
-alert('Já existe um produto com esse nome.');
-return;
-}
-const custoCalc=calcularCustoProduto();
-lista.push({
-id:novoId,
-nome,
-cod:el('p_cod').value.trim(),
-tipo:el('p_tipo').value,
-fator:el('p_qtd_emb').value.trim()||'',
-valorEmbalagem:el('p_valor_emb').value.trim(),
-qtdEmbalagem:el('p_qtd_emb').value.trim(),
-custo:custoCalc
-});
-setProdutos(lista.sort((a,b)=>a.nome.localeCompare(b.nome)));
-renderListaProdutos();
-limparCamposProduto();
-el('msgProduto').textContent='✅ Novo produto cadastrado: '+nome;
-}
-
 
 function excluirProduto(id){
 const lista=getProdutos();
@@ -1164,7 +1112,6 @@ el('msgProduto').textContent='Produto excluído.';
 
 function limparCamposProduto(){
 produtoSelecionadoId=null;
-if(el('p_busca'))el('p_busca').value='';
 el('p_nome').value='';
 el('p_cod').value='';
 el('p_tipo').value='KG';
@@ -1173,11 +1120,7 @@ el('p_qtd_emb').value='';
 el('p_custo_calc').value='';
 el('autoCadastroLista').innerHTML='';
 el('msgProduto').textContent='';
-const lbl=el('labelModoEdicao');
-if(lbl)lbl.textContent='📝 Preencha os dados do produto';
-const btn=el('btnSalvarProduto');
-if(btn)btn.textContent='💾 SALVAR ALTERAÇÃO';
-}
+  }  
  function autoProduto(){
 const campo=el('buscaProduto');
 const listaAuto=el('autoLista');
@@ -1305,7 +1248,8 @@ return;
 }
 
 if(isNaN(custoUnitario)||custoUnitario<=0){
-if(!confirm('Custo unitário não preenchido. Deseja salvar a quebra sem valor financeiro?'))return;
+alert('Produto sem custo cadastrado. Atualize o cadastro do produto antes de lançar a quebra.');
+return;
 }
 
 const lista=getQuebras();
@@ -1348,17 +1292,6 @@ quebraLiquida:valorQuebra
 });
 
 setQuebras(lista);
-
-// Se o custo foi digitado manualmente, salva no cadastro do produto para uso futuro
-if(custoUnitario>0 && cod){
-const prods=getProdutos();
-const pidx=prods.findIndex(p=>String(p.cod||'').trim()===String(cod).trim());
-if(pidx!==-1 && (!prods[pidx].custo || numeroBR(prods[pidx].custo)<=0)){
-prods[pidx].custo=custoUnitario.toFixed(3);
-setProdutos(prods);
-}
-}
-
 limparCamposQuebra();
 renderListaQuebraDia();
 el('msgQuebra').textContent='Quebra adicionada.';
@@ -1435,8 +1368,6 @@ lista[index].marcadoTratativa=true;
 if(!lista[index].statusTratativa)lista[index].statusTratativa='PENDENTE';
 setQuebras(lista);
 
-quebraVinculadaId=id;
-
 el('produto').value=item.produto;
 el('cod').value=item.cod||'';
 el('chegou').value='';
@@ -1462,7 +1393,7 @@ el('msgQuebra').textContent='Item excluído com sucesso.';
 }
 
 function abrirResultadoTratativa(){
-el('filtroResultadoData').value='';
+el('filtroResultadoData').value=hojeISO();
 renderResultadoTratativa();
 ir(12);
 }
@@ -1471,13 +1402,13 @@ function renderResultadoTratativa(){
 const container=el('listaResultadoTratativa');
 if(!container)return;
 
-const dataFiltro=el('filtroResultadoData').value;
-const lista=getQuebras().filter(q=>q.marcadoTratativa===true&&(!dataFiltro||q.data===dataFiltro));
+const dataFiltro=el('filtroResultadoData').value||hojeISO();
+const lista=getQuebras().filter(q=>q.data===dataFiltro&&q.marcadoTratativa===true);
 
 container.innerHTML='';
 
 if(lista.length===0){
-container.innerHTML='<div class="card">Nenhuma tratativa enviada'+(dataFiltro?' nesta data':'')+'.</div>';
+container.innerHTML='<div class="card">Nenhuma tratativa enviada nesta data.</div>';
 return;
 }
 
@@ -1693,7 +1624,7 @@ const quebras=getQuebras().filter(q=>mesmoMes(q.data,mes));
 const vendaTotal=vendas.reduce((s,v)=>s+numeroBR(v.valor),0);
 const quebraBruta=quebras.reduce((s,q)=>s+numeroBR(q.valorQuebra||0),0);
 const tratativas=quebras.reduce((s,q)=>s+numeroBR(q.valorConciliado||0),0);
-const quebraLiquida=quebras.reduce((s,q)=>s+numeroBR(q.quebraLiquida||q.valorQuebra||0),0);
+const quebraLiquida=quebraBruta-tratativas;
 const indice=vendaTotal>0?(quebraLiquida/vendaTotal)*100:0;
 
 el('resVendaTotal').textContent=dinheiroBR(vendaTotal);
@@ -1853,49 +1784,6 @@ renderListaVendas();
 el('msgVenda').textContent='Venda excluída.';
 }
 
-function renderPreviewFotos(tipo){
-const preview=el('prev_'+tipo);
-if(!preview)return;
-
-preview.innerHTML='';
-
-fotos[tipo].forEach((obj,index)=>{
-const box=document.createElement('div');
-box.style.position='relative';
-box.style.display='inline-block';
-box.style.margin='4px';
-
-const img=document.createElement('img');
-img.src=obj.url;
-
-const delBtn=document.createElement('button');
-delBtn.textContent='✕';
-delBtn.type='button';
-delBtn.style.position='absolute';
-delBtn.style.top='2px';
-delBtn.style.right='2px';
-delBtn.style.background='#ff4444';
-delBtn.style.color='#fff';
-delBtn.style.border='none';
-delBtn.style.borderRadius='50%';
-delBtn.style.width='22px';
-delBtn.style.height='22px';
-delBtn.style.cursor='pointer';
-delBtn.style.fontWeight='bold';
-delBtn.style.lineHeight='1';
-delBtn.onclick=()=>{
-if(!confirm('Excluir esta foto?'))return;
-try{URL.revokeObjectURL(obj.url);}catch(e){}
-fotos[tipo].splice(index,1);
-renderPreviewFotos(tipo);
-};
-
-box.appendChild(img);
-box.appendChild(delBtn);
-preview.appendChild(box);
-});
-}
-
 function addFotos(evento,tipo){
 const preview=el('prev_'+tipo);
 if(!preview)return;
@@ -1903,9 +1791,11 @@ if(!preview)return;
 Array.from(evento.target.files||[]).forEach(file=>{
 const url=URL.createObjectURL(file);
 fotos[tipo].push({file,url,enviado:false});
-});
 
-renderPreviewFotos(tipo);
+const img=document.createElement('img');
+img.src=url;
+preview.appendChild(img);
+});
 
 evento.target.value='';
 }
@@ -1940,22 +1830,8 @@ btn.disabled=true;
 btn.onclick=()=>compartilharFoto(tipo,index,btn);
 }
 
-const delBtn=document.createElement('button');
-delBtn.className='btn';
-delBtn.textContent='🗑 EXCLUIR';
-delBtn.style.background='#ff4444';
-delBtn.style.color='#fff';
-delBtn.onclick=()=>{
-if(!confirm('Excluir esta foto?'))return;
-try{URL.revokeObjectURL(obj.url);}catch(e){}
-fotos[tipo].splice(index,1);
-montarFotosEnvio();
-renderPreviewFotos(tipo);
-};
-
 box.appendChild(img);
 box.appendChild(btn);
-box.appendChild(delBtn);
 div.appendChild(box);
 });
 }
@@ -2015,66 +1891,12 @@ window.open('https://wa.me/?text='+encodeURIComponent(textoFinal),'_blank');
 function finalizarTratativa(){
 banco.push({
 texto:textoFinal,
+fotos:JSON.parse(JSON.stringify(fotos)),
 data:new Date().toLocaleDateString()
 });
 setBanco(banco);
 
 atualizarLista();
-
-// Se a tratativa veio direto do menu (não pelo 📤 da quebra),
-// cria entrada nas quebras marcada como PENDENTE para aparecer no Resultado Tratativa
-const produto=el('produto').value.trim();
-const cod=el('cod').value.trim();
-const chegou=el('chegou').value.trim();
-const qtdQuebra=el('quebra').value.trim();
-
-if(quebraVinculadaId){
-const listaQ=getQuebras();
-const idx=listaQ.findIndex(q=>q.id===quebraVinculadaId);
-if(idx!==-1){
-listaQ[idx].marcadoTratativa=true;
-if(!listaQ[idx].statusTratativa)listaQ[idx].statusTratativa='PENDENTE';
-setQuebras(listaQ);
-}
-}else if(produto){
-const listaQ=getQuebras();
-const codNorm=String(cod).trim();
-const produtoNorm=produto.toUpperCase().trim();
-
-const jaExiste=listaQ.find(q=>
-  q.data===hojeISO() &&
-  (
-    (codNorm && String(q.cod||'').trim()===codNorm) ||
-    String(q.produto||'').toUpperCase().trim()===produtoNorm
-  )
-);
-
-if(jaExiste){
-// já existe uma quebra de hoje pra esse produto: apenas garante que está marcada
-const idx=listaQ.findIndex(q=>q.id===jaExiste.id);
-listaQ[idx].marcadoTratativa=true;
-if(!listaQ[idx].statusTratativa)listaQ[idx].statusTratativa='PENDENTE';
-setQuebras(listaQ);
-}else{
-const novaQuebra={
-  id:'trat_'+Date.now(),
-  produto:produtoNorm,
-  cod:codNorm,
-  data:hojeISO(),
-  quantidade:parseFloat(qtdQuebra)||0,
-  tipo:'UN',
-  qtdChegou:parseFloat(chegou)||0,
-  valorQuebra:0,
-  quebraLiquida:0,
-  custoUnitario:0,
-  marcadoTratativa:true,
-  statusTratativa:'PENDENTE'
-};
-listaQ.push(novaQuebra);
-setQuebras(listaQ);
-}
-}
-quebraVinculadaId=null;
 
 fotos={prod:[],bal:[],eti:[]};
 
@@ -2105,45 +1927,47 @@ const pre=document.createElement('pre');
 pre.textContent=item.texto;
 card.appendChild(pre);
 
-const nota=document.createElement('div');
-nota.style.cssText='margin-top:6px;font-size:12px;color:#aaa;';
-nota.textContent='📷 Fotos enviadas via WhatsApp na época do registro.';
-card.appendChild(nota);
+['prod','bal','eti'].forEach(tipo=>{
+if(item.fotos&&item.fotos[tipo]&&item.fotos[tipo].length){
+const title=document.createElement('b');
+title.textContent=tipo.toUpperCase();
+card.appendChild(title);
+
+item.fotos[tipo].forEach(obj=>{
+const img=document.createElement('img');
+img.src=obj.url;
+img.className='mini';
+card.appendChild(img);
+});
+}
+});
 
 div.appendChild(card);
 });
 }
-function hashSimples(str){
-let h=0;
-for(let i=0;i<str.length;i++){h=(Math.imul(31,h)+str.charCodeAt(i))|0;}
-return Math.abs(h).toString(36);
-}
-
-const CODIGO_HASH=hashSimples('FLV15');
-
 function premiumAtivo(){
 const vencimento=localStorage.getItem('premiumVencimento');
-const hash=localStorage.getItem('premiumHash');
-if(!vencimento||!hash)return false;
-const esperado=hashSimples('flv-ok-'+vencimento);
-if(hash!==esperado)return false;
+
+if(!vencimento){
+return false;
+}
+
 return new Date().getTime()<Number(vencimento);
 }
 
 function ativarPremium(){
 const codigo=el('codigoPremium').value.trim();
 
-if(hashSimples(codigo)!==CODIGO_HASH){
+if(codigo!=='FLV15'){
 el('msgPremium').textContent='Código inválido';
 return;
 }
 
 const dias31=31*24*60*60*1000;
+
 const vencimento=new Date().getTime()+dias31;
-const hash=hashSimples('flv-ok-'+vencimento);
 
 localStorage.setItem('premiumVencimento',vencimento);
-localStorage.setItem('premiumHash',hash);
 
 el('msgPremium').textContent='Premium ativado por 31 dias';
 
@@ -2163,14 +1987,11 @@ el('iconLogo').onclick=()=>{
 cliquesAdmin++;
 
 if(cliquesAdmin>=5){
-cliquesAdmin=0;
-const senha=prompt('Código de administrador:');
-if(senha && hashSimples(senha)===hashSimples('FLV-ADMIN-2026')){
+
 el('painelAdmin').style.display='block';
+
 el('adminStatus').textContent='Painel admin liberado';
-}else if(senha!==null){
-alert('Código incorreto.');
-}
+
 }
 
 };
@@ -2180,10 +2001,8 @@ el('adminLiberar').onclick=()=>{
 const dias31=31*24*60*60*1000;
 
 const vencimento=new Date().getTime()+dias31;
-const hash=hashSimples('flv-ok-'+vencimento);
 
 localStorage.setItem('premiumVencimento',vencimento);
-localStorage.setItem('premiumHash',hash);
 
 el('adminStatus').textContent='Premium liberado por 31 dias';
 location.reload();
@@ -2193,13 +2012,12 @@ location.reload();
 el('adminResetar').onclick=()=>{
 
 localStorage.removeItem('premiumVencimento');
-localStorage.removeItem('premiumHash');
 
 el('adminStatus').textContent='Premium resetado';
 location.reload();
 
 };
-el('btnTratativa').onclick=()=>{quebraVinculadaId=null;ir(2);};
+el('btnTratativa').onclick=()=>ir(2);
 el('btnQuebraDia').onclick=abrirQuebraDia;
 el('btnVendaDia').onclick=abrirVendaDia;
 el('btnResultadoTratativa').onclick=abrirResultadoTratativa;
@@ -2220,27 +2038,20 @@ el('btnLista').style.display='none';
 
 }
 el('voltarTratativa').onclick=()=>ir(1);
-el('voltarEnvio').onclick=()=>{fotos={prod:[],bal:[],eti:[]};['prev_prod','prev_bal','prev_eti'].forEach(id=>{const d=el(id);if(d)d.innerHTML='';});ir(2);};
-el('voltarLista').onclick=()=>{atualizarMiniDashboard();ir(1);};
-el('voltarCadastro').onclick=()=>{atualizarMiniDashboard();ir(1);};
-el('voltarQuebraDia').onclick=()=>{atualizarMiniDashboard();ir(1);};
-el('voltarVendaDia').onclick=()=>{atualizarMiniDashboard();ir(1);};
-el('voltarResultadoTratativa').onclick=()=>{atualizarMiniDashboard();ir(1);};
-el('voltarResultadoMensal').onclick=()=>{atualizarMiniDashboard();ir(1);};
-el('voltarDashboard').onclick=()=>{atualizarMiniDashboard();ir(1);};
+el('voltarEnvio').onclick=()=>ir(2);
+el('voltarLista').onclick=()=>ir(1);
+el('voltarCadastro').onclick=()=>ir(1);
+el('voltarQuebraDia').onclick=()=>ir(1);
+el('voltarVendaDia').onclick=()=>ir(1);
+el('voltarResultadoTratativa').onclick=()=>ir(1);
+el('voltarResultadoMensal').onclick=()=>ir(1);
+el('voltarDashboard').onclick=()=>ir(1);
 el('dashMes').onchange=renderDashboard;
 el('buscaProduto').oninput=autoProduto;
 el('produto').oninput=autoPorNome;
 el('cod').oninput=autoPorCodigo;
 
-el('p_busca').oninput=autoCadastroProduto;
-el('btnNovoProduto').onclick=()=>{
-if(!produtoSelecionadoId){
-salvarNovoProduto();
-}else{
-novoProducto();
-}
-};
+el('p_nome').oninput=autoCadastroProduto;
 el('p_valor_emb').oninput=()=>{formatarMoedaCentavosCampo(el('p_valor_emb'));calcularCustoProduto();};
 el('p_qtd_emb').oninput=calcularCustoProduto;
 el('p_calc_tipo').onchange=calcularCustoProduto;
@@ -2250,7 +2061,6 @@ el('q_produto').onchange=preencherCustoQuebraPorProduto;
 el('q_cod').onchange=preencherCustoQuebraPorProduto;
 el('dataQuebra').onchange=renderListaQuebraDia;
 el('q_quantidade').oninput=calcularValorQuebra;
-el('q_custo_unit').oninput=()=>{formatarMoedaCentavosCampo(el('q_custo_unit'));calcularValorQuebra();};
 el('btnAdicionarQuebra').onclick=adicionarOuEditarQuebra;
 
 el('filtroResultadoData').onchange=renderResultadoTratativa;
@@ -2277,46 +2087,13 @@ el('btnFinalizar').onclick=finalizarTratativa;
 el('btnSalvarProduto').onclick=salvarProduto;
 }
 
-function showToast(msg){
-const toast=document.getElementById('toast');
-if(!toast)return;
-toast.textContent=msg;
-toast.classList.add('show');
-clearTimeout(window._toastTimer);
-window._toastTimer=setTimeout(()=>toast.classList.remove('show'),3000);
-}
-
-
-// PWA Install Prompt
-let _deferredInstallPrompt = null;
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  _deferredInstallPrompt = e;
-});
-window.showToast=showToast;
-window.atualizarGrafico=atualizarGrafico;
+window.showToast = showToast;
+window.atualizarGrafico = atualizarGrafico;
 
 function registrarServiceWorker(){
-if(!("serviceWorker" in navigator)) return;
-const proto=location.protocol;
-const host=location.hostname;
-const ehLocal=proto==='file:';
-const ehClaudeAI=host.includes('claude');
-if(ehLocal||ehClaudeAI) return;
-navigator.serviceWorker.register("./sw.js",{scope:"./"})
-.then(reg=>{
-reg.addEventListener('updatefound',()=>{
-const novo=reg.installing;
-if(novo){
-novo.addEventListener('statechange',()=>{
-if(novo.state==='installed'&&navigator.serviceWorker.controller){
-showToast('Nova versão disponível! Clique em ↻ para atualizar.');
+if("serviceWorker" in navigator){
+navigator.serviceWorker.register("sw.js").catch(err=>console.log("Erro ao registrar Service Worker:",err));
 }
-});
-}
-});
-})
-.catch(err=>console.warn("SW:",err));
 }
 
 document.addEventListener('DOMContentLoaded',()=>{
@@ -2328,45 +2105,44 @@ el('statusPremiumTopo').textContent='Premium Ativo';
 }
 });
 el('btnRefresh').onclick=()=>{
-if('serviceWorker' in navigator){
-navigator.serviceWorker.getRegistration().then(reg=>{
-if(reg){
-reg.update().then(()=>{
-const sw=reg.installing||reg.waiting;
-if(sw){
-sw.postMessage({type:'SKIP_WAITING'});
-navigator.serviceWorker.addEventListener('controllerchange',()=>location.reload(),{once:true});
-}else{
 location.reload();
-}
-});
-}else{
-location.reload();
-}
-});
-}else{
-location.reload();
-}
 };
 })();
 </script>
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-  setTimeout(() => {
-    const loading = document.getElementById("loading");
-    if (loading) {
-      loading.style.opacity = "0";
-      setTimeout(() => { loading.style.display = "none"; }, 400);
-    }
-  }, 1500);
-  setTimeout(() => {
-    if(typeof showToast==='function') showToast("Controle FLV carregado com sucesso!");
-  }, 1900);
-  if(typeof atualizarGrafico==='function') atualizarGrafico();
-  setInterval(()=>{
-    if(typeof atualizarGrafico==='function') atualizarGrafico();
-  },3000);
-});
+setTimeout(() => {
+  const loading = document.getElementById("loading");
+
+  if (loading) {
+    loading.style.opacity = "0";
+
+    setTimeout(() => {
+      loading.style.display = "none";
+    }, 400);
+  }
+}, 1500);
+setTimeout(() => {
+  showToast("Controle FLV carregado com sucesso!");
+}, 1900);
+function showToast(msg){
+const toast = document.getElementById("toast");
+
+if(!toast) return;
+
+toast.textContent = msg;
+toast.classList.add("show");
+
+clearTimeout(window.toastTimer);
+
+window.toastTimer = setTimeout(() => {
+  toast.classList.remove("show");
+}, 3000);
+}
+atualizarGrafico();
+
+setInterval(()=>{
+atualizarGrafico();
+},3000);
 </script>
 </body>
 </html>
