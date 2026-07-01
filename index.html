@@ -352,7 +352,7 @@ pre{white-space:pre-wrap}
 style="
 position:fixed;
 bottom:18px;
-right:18px;
+left:18px;
 z-index:9999;
 width:38px;
 height:38px;
@@ -433,6 +433,8 @@ box-shadow:0 4px 15px rgba(0,0,0,0.5);
 <div class="mini-title">📈 Produtividade</div>
 <div class="mini-value" id="miniProd">100%</div>
 </div>
+
+</div>
 <div class="card">
 <h3>📈 Desempenho</h3>
 
@@ -468,7 +470,6 @@ color:#cccccc;
 </div>
 
 </div>
-</div>
 <button id="btnTratativa" class="btn">Nova Tratativa</button>
 <button id="btnQuebraDia" class="btn">Quebra do Dia</button>
 <button id="btnVendaDia" class="btn">Venda do Dia</button>
@@ -477,6 +478,12 @@ color:#cccccc;
 <button id="btnDashboard" class="btn">Dashboard</button>
 <button id="btnLista" class="btn">Lista</button>
 <button id="btnCadastro" class="btn">Cadastro de Produtos</button>
+
+<div class="card" style="margin-top:18px;">
+<div style="font-weight:bold;color:#ffcc00;margin-bottom:6px;">🎯 Meta Mensal de Vendas</div>
+<input id="inputMeta" placeholder="Ex: 50000" inputmode="decimal" style="margin-top:4px;">
+<button id="btnSalvarMeta" class="btn" style="margin-top:8px;">SALVAR META</button>
+</div>
 </div>
 
 <div id="tela2" class="screen">
@@ -531,9 +538,13 @@ color:#cccccc;
 <button id="voltarCadastro" class="btn">⬅ VOLTAR</button>
 <h2>Cadastro de Produtos</h2>
 
-<input id="p_nome" placeholder="Digite para buscar produto...">
+<input id="p_busca" placeholder="🔍 Buscar produto existente...">
 <div id="autoCadastroLista" class="autocomplete"></div>
 
+<div class="card" style="margin-top:14px;border-left:4px solid #ffcc00;">
+<div style="font-weight:bold;color:#ffcc00;margin-bottom:8px;" id="labelModoEdicao">📝 Preencha os dados do produto</div>
+
+<input id="p_nome" placeholder="Nome do produto">
 <input id="p_cod" placeholder="Código" inputmode="numeric">
 
 <select id="p_tipo">
@@ -548,7 +559,10 @@ color:#cccccc;
 <input id="p_qtd_emb" placeholder="Qtd dentro da embalagem" inputmode="decimal">
 <input id="p_custo_calc" placeholder="Custo calculado" disabled>
 
-<button id="btnSalvarProduto" class="btn">SALVAR ALTERAÇÃO</button>
+<button id="btnSalvarProduto" class="btn">💾 SALVAR ALTERAÇÃO</button>
+<button id="btnNovoProduto" class="btn" style="background:#222;color:#ffcc00;border:1px solid #ffcc00;margin-top:6px;">➕ CADASTRAR COMO NOVO PRODUTO</button>
+</div>
+
 <div id="msgProduto" class="status"></div>
 <div id="listaProdutos"></div>
 </div>
@@ -629,6 +643,11 @@ color:#cccccc;
 <div class="card" style="border-left:6px solid #ff4444;">
 <div style="font-size:18px;">Quebra Bruta</div>
 <h1 id="dashQuebra">R$ 0,00</h1>
+</div>
+
+<div class="card" style="border-left:6px solid #00c853;">
+<div style="font-size:18px;">Tratativas Aprovadas</div>
+<h1 id="dashTratativas">R$ 0,00</h1>
 </div>
 
 <div class="card" style="border-left:6px solid #ffcc00;">
@@ -735,12 +754,15 @@ function atualizarMiniDashboard(){
 const vendas=getVendas();
 const quebras=getQuebras();
 const hoje=hojeISO();
+const mes=mesAtualISO();
 
 const vendaHoje=vendas.filter(v=>v.data===hoje).reduce((s,v)=>s+numeroBR(v.valor||0),0);
 const quebraHoje=quebras.filter(q=>q.data===hoje).reduce((s,q)=>s+numeroBR(q.valorQuebra||0),0);
 
-const vendaTotal=vendas.reduce((s,v)=>s+numeroBR(v.valor||0),0);
-const quebraLiquidaTotal=quebras.reduce((s,q)=>s+numeroBR(q.quebraLiquida||q.valorQuebra||0),0);
+const vendasMes=vendas.filter(v=>mesmoMes(v.data,mes));
+const quebrasMes=quebras.filter(q=>mesmoMes(q.data,mes));
+const vendaTotal=vendasMes.reduce((s,v)=>s+numeroBR(v.valor||0),0);
+const quebraLiquidaTotal=quebrasMes.reduce((s,q)=>s+numeroBR(q.quebraLiquida||q.valorQuebra||0),0);
 const indice=vendaTotal>0?((quebraLiquidaTotal/vendaTotal)*100):0;
 
 const mEl=el('miniVenda');
@@ -969,25 +991,30 @@ ir(8);
 function selecionarProdutoCadastro(p){
 if(!p)return;
 produtoSelecionadoId=p.id;
+if(el('p_busca'))el('p_busca').value='';
+el('autoCadastroLista').innerHTML='';
 el('p_nome').value=p.nome;
 el('p_cod').value=p.cod||'';
 el('p_tipo').value=p.tipo||'KG';
 el('p_valor_emb').value=p.valorEmbalagem||'';
 el('p_qtd_emb').value=p.qtdEmbalagem||p.fator||'';
 el('p_custo_calc').value=p.custo?formatarNumeroBR(Number(p.custo),3):'';
-el('autoCadastroLista').innerHTML='';
-el('msgProduto').textContent='Produto selecionado para alteração.';
+const lbl=el('labelModoEdicao');
+if(lbl)lbl.textContent='✏️ Editando: '+p.nome;
+const btn=el('btnSalvarProduto');
+if(btn)btn.textContent='💾 SALVAR ALTERAÇÃO';
+el('msgProduto').textContent='Produto selecionado. Edite e salve.';
 calcularCustoProduto();
+window.scrollTo({top:0,behavior:'smooth'});
 }
 
 function autoCadastroProduto(){
-const campo=el('p_nome');
+const campo=el('p_busca');
 const listaAuto=el('autoCadastroLista');
 if(!campo||!listaAuto)return;
 
 const texto=campo.value.toUpperCase().trim();
 listaAuto.innerHTML='';
-produtoSelecionadoId=null;
 
 if(!texto)return;
 
@@ -1094,6 +1121,43 @@ setProdutos(lista.sort((a,b)=>a.nome.localeCompare(b.nome)));
 renderListaProdutos();
 el('msgProduto').textContent='Produto salvo com custo atualizado!';
 }
+function novoProducto(){
+limparCamposProduto();
+produtoSelecionadoId=null;
+const lbl=el('labelModoEdicao');
+if(lbl)lbl.textContent='➕ Novo produto';
+const btn=el('btnSalvarProduto');
+if(btn)btn.textContent='💾 CADASTRAR PRODUTO';
+el('p_nome').focus();
+el('msgProduto').textContent='Digite o nome e os dados do novo produto.';
+}
+
+function salvarNovoProduto(){
+const nome=el('p_nome').value.toUpperCase().trim();
+if(!nome){alert('Digite o nome do produto.');return;}
+const lista=getProdutos();
+const novoId=gerarId(nome);
+if(lista.some(p=>gerarId(p.nome)===novoId)){
+alert('Já existe um produto com esse nome.');
+return;
+}
+const custoCalc=calcularCustoProduto();
+lista.push({
+id:novoId,
+nome,
+cod:el('p_cod').value.trim(),
+tipo:el('p_tipo').value,
+fator:el('p_qtd_emb').value.trim()||'',
+valorEmbalagem:el('p_valor_emb').value.trim(),
+qtdEmbalagem:el('p_qtd_emb').value.trim(),
+custo:custoCalc
+});
+setProdutos(lista.sort((a,b)=>a.nome.localeCompare(b.nome)));
+renderListaProdutos();
+limparCamposProduto();
+el('msgProduto').textContent='✅ Novo produto cadastrado: '+nome;
+}
+
 
 function excluirProduto(id){
 const lista=getProdutos();
@@ -1112,6 +1176,7 @@ el('msgProduto').textContent='Produto excluído.';
 
 function limparCamposProduto(){
 produtoSelecionadoId=null;
+if(el('p_busca'))el('p_busca').value='';
 el('p_nome').value='';
 el('p_cod').value='';
 el('p_tipo').value='KG';
@@ -1120,7 +1185,11 @@ el('p_qtd_emb').value='';
 el('p_custo_calc').value='';
 el('autoCadastroLista').innerHTML='';
 el('msgProduto').textContent='';
-  }  
+const lbl=el('labelModoEdicao');
+if(lbl)lbl.textContent='📝 Preencha os dados do produto';
+const btn=el('btnSalvarProduto');
+if(btn)btn.textContent='💾 SALVAR ALTERAÇÃO';
+}
  function autoProduto(){
 const campo=el('buscaProduto');
 const listaAuto=el('autoLista');
@@ -1590,8 +1659,10 @@ el('dashTopProdutos').innerHTML=topProdutos.length
 
 const indice=vendaTotal>0?((quebraLiquida/vendaTotal)*100):0;
 
+const dashTrat=quebras.reduce((s,q)=>s+numeroBR(q.valorConciliado||0),0);
 el('dashVenda').textContent=dinheiroBR(vendaTotal);
 el('dashQuebra').textContent=dinheiroBR(quebraBruta);
+const dashTrEl=el('dashTratativas');if(dashTrEl)dashTrEl.textContent=dinheiroBR(dashTrat);
 el('dashLiquida').textContent=dinheiroBR(quebraLiquida);
 el('dashIndice').textContent=formatarNumeroBR(indice,2)+'%';
 
@@ -1624,7 +1695,7 @@ const quebras=getQuebras().filter(q=>mesmoMes(q.data,mes));
 const vendaTotal=vendas.reduce((s,v)=>s+numeroBR(v.valor),0);
 const quebraBruta=quebras.reduce((s,q)=>s+numeroBR(q.valorQuebra||0),0);
 const tratativas=quebras.reduce((s,q)=>s+numeroBR(q.valorConciliado||0),0);
-const quebraLiquida=quebraBruta-tratativas;
+const quebraLiquida=quebras.reduce((s,q)=>s+numeroBR(q.quebraLiquida||q.valorQuebra||0),0);
 const indice=vendaTotal>0?(quebraLiquida/vendaTotal)*100:0;
 
 el('resVendaTotal').textContent=dinheiroBR(vendaTotal);
@@ -1891,7 +1962,6 @@ window.open('https://wa.me/?text='+encodeURIComponent(textoFinal),'_blank');
 function finalizarTratativa(){
 banco.push({
 texto:textoFinal,
-fotos:JSON.parse(JSON.stringify(fotos)),
 data:new Date().toLocaleDateString()
 });
 setBanco(banco);
@@ -1913,61 +1983,88 @@ if(c)c.value='';
 ir(7);
 }
 
+function excluirDaLista(idx){
+if(!confirm('Excluir esta tratativa da lista?'))return;
+const lista=getBanco();
+lista.splice(idx,1);
+setBanco(lista);
+banco=lista;
+atualizarLista();
+showToast('Tratativa excluída da lista.');
+}
+
 function atualizarLista(){
 const div=el('lista');
 if(!div)return;
 
+banco=getBanco();
 div.innerHTML='';
 
-banco.forEach(item=>{
+if(banco.length===0){
+div.innerHTML='<div class="card" style="text-align:center;color:#aaa;">Nenhuma tratativa finalizada.</div>';
+return;
+}
+
+banco.forEach(function(item,idx){
 const card=document.createElement('div');
 card.className='card';
+card.style.cssText='position:relative;margin-top:12px;';
+
+const dataDiv=document.createElement('div');
+dataDiv.style.cssText='font-size:12px;color:#ffcc00;font-weight:bold;margin-bottom:6px;';
+dataDiv.textContent='\uD83D\uDCC5 '+(item.data||'');
+card.appendChild(dataDiv);
 
 const pre=document.createElement('pre');
-pre.textContent=item.texto;
+pre.style.cssText='margin:0;white-space:pre-wrap;word-break:break-word;';
+pre.textContent=item.texto||'';
 card.appendChild(pre);
 
-['prod','bal','eti'].forEach(tipo=>{
-if(item.fotos&&item.fotos[tipo]&&item.fotos[tipo].length){
-const title=document.createElement('b');
-title.textContent=tipo.toUpperCase();
-card.appendChild(title);
+const nota=document.createElement('div');
+nota.style.cssText='margin-top:6px;font-size:12px;color:#aaa;';
+nota.textContent='\uD83D\uDCF7 Fotos enviadas via WhatsApp na \u00E9poca do registro.';
+card.appendChild(nota);
 
-item.fotos[tipo].forEach(obj=>{
-const img=document.createElement('img');
-img.src=obj.url;
-img.className='mini';
-card.appendChild(img);
-});
-}
-});
+const btnDel=document.createElement('button');
+btnDel.style.cssText='margin-top:12px;width:100%;padding:10px;border:none;border-radius:8px;background:#c0392b;color:#fff;font-size:15px;font-weight:bold;cursor:pointer;';
+btnDel.textContent='\uD83D\uDDD1\uFE0F Excluir tratativa';
+(function(i){btnDel.onclick=function(){excluirDaLista(i);};})(idx);
+card.appendChild(btnDel);
 
 div.appendChild(card);
 });
 }
-function premiumAtivo(){
-const vencimento=localStorage.getItem('premiumVencimento');
-
-if(!vencimento){
-return false;
+function hashSimples(str){
+let h=0;
+for(let i=0;i<str.length;i++){h=(Math.imul(31,h)+str.charCodeAt(i))|0;}
+return Math.abs(h).toString(36);
 }
 
+const CODIGO_HASH=hashSimples('FLV15');
+
+function premiumAtivo(){
+const vencimento=localStorage.getItem('premiumVencimento');
+const hash=localStorage.getItem('premiumHash');
+if(!vencimento||!hash)return false;
+const esperado=hashSimples('flv-ok-'+vencimento);
+if(hash!==esperado)return false;
 return new Date().getTime()<Number(vencimento);
 }
 
 function ativarPremium(){
 const codigo=el('codigoPremium').value.trim();
 
-if(codigo!=='FLV15'){
+if(hashSimples(codigo)!==CODIGO_HASH){
 el('msgPremium').textContent='Código inválido';
 return;
 }
 
 const dias31=31*24*60*60*1000;
-
 const vencimento=new Date().getTime()+dias31;
+const hash=hashSimples('flv-ok-'+vencimento);
 
 localStorage.setItem('premiumVencimento',vencimento);
+localStorage.setItem('premiumHash',hash);
 
 el('msgPremium').textContent='Premium ativado por 31 dias';
 
@@ -2001,8 +2098,10 @@ el('adminLiberar').onclick=()=>{
 const dias31=31*24*60*60*1000;
 
 const vencimento=new Date().getTime()+dias31;
+const hash=hashSimples('flv-ok-'+vencimento);
 
 localStorage.setItem('premiumVencimento',vencimento);
+localStorage.setItem('premiumHash',hash);
 
 el('adminStatus').textContent='Premium liberado por 31 dias';
 location.reload();
@@ -2012,6 +2111,7 @@ location.reload();
 el('adminResetar').onclick=()=>{
 
 localStorage.removeItem('premiumVencimento');
+localStorage.removeItem('premiumHash');
 
 el('adminStatus').textContent='Premium resetado';
 location.reload();
@@ -2025,6 +2125,15 @@ el('btnResultadoMensal').onclick=abrirResultadoMensal;
 el('btnDashboard').onclick=abrirDashboard;
 el('btnLista').onclick=()=>{atualizarLista();ir(7)};
 el('btnCadastro').onclick=abrirCadastro;
+const metaSalva=localStorage.getItem('metaMensal');
+if(el('inputMeta'))el('inputMeta').value=metaSalva||'50000';
+el('btnSalvarMeta').onclick=()=>{
+const v=el('inputMeta').value.replace(/[^\d]/g,'');
+if(!v||Number(v)<=0){alert('Digite uma meta válida.');return;}
+localStorage.setItem('metaMensal',v);
+showToast('Meta salva: '+dinheiroBR(v));
+atualizarGrafico();
+};
 el('btnVoltarInicio').onclick=()=>{atualizarMiniDashboard();ir(0);};
 if(!premiumAtivo()){
 
@@ -2038,7 +2147,7 @@ el('btnLista').style.display='none';
 
 }
 el('voltarTratativa').onclick=()=>ir(1);
-el('voltarEnvio').onclick=()=>ir(2);
+el('voltarEnvio').onclick=()=>{fotos={prod:[],bal:[],eti:[]};['prev_prod','prev_bal','prev_eti'].forEach(id=>{const d=el(id);if(d)d.innerHTML='';});ir(2);};
 el('voltarLista').onclick=()=>ir(1);
 el('voltarCadastro').onclick=()=>ir(1);
 el('voltarQuebraDia').onclick=()=>ir(1);
@@ -2051,7 +2160,14 @@ el('buscaProduto').oninput=autoProduto;
 el('produto').oninput=autoPorNome;
 el('cod').oninput=autoPorCodigo;
 
-el('p_nome').oninput=autoCadastroProduto;
+el('p_busca').oninput=autoCadastroProduto;
+el('btnNovoProduto').onclick=()=>{
+if(!produtoSelecionadoId){
+salvarNovoProduto();
+}else{
+novoProducto();
+}
+};
 el('p_valor_emb').oninput=()=>{formatarMoedaCentavosCampo(el('p_valor_emb'));calcularCustoProduto();};
 el('p_qtd_emb').oninput=calcularCustoProduto;
 el('p_calc_tipo').onchange=calcularCustoProduto;
@@ -2083,17 +2199,53 @@ el('galEtiqueta').onchange=e=>addFotos(e,'eti');
 
 el('btnContinuar').onclick=salvarTratativa;
 el('btnEnviarTexto').onclick=enviarTexto;
-el('btnFinalizar').onclick=finalizarTratativa;
+el('btnFinalizar').onclick=()=>{
+if(!confirm('Finalizar e salvar esta tratativa na lista?'))return;
+finalizarTratativa();
+};
 el('btnSalvarProduto').onclick=salvarProduto;
 }
 
-window.showToast = showToast;
-window.atualizarGrafico = atualizarGrafico;
+function showToast(msg){
+const toast=document.getElementById('toast');
+if(!toast)return;
+toast.textContent=msg;
+toast.classList.add('show');
+clearTimeout(window._toastTimer);
+window._toastTimer=setTimeout(()=>toast.classList.remove('show'),3000);
+}
+
+
+// PWA Install Prompt
+let _deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  _deferredInstallPrompt = e;
+});
+window.showToast=showToast;
+window.atualizarGrafico=atualizarGrafico;
 
 function registrarServiceWorker(){
-if("serviceWorker" in navigator){
-navigator.serviceWorker.register("sw.js").catch(err=>console.log("Erro ao registrar Service Worker:",err));
+if(!("serviceWorker" in navigator)) return;
+const proto=location.protocol;
+const host=location.hostname;
+const ehLocal=proto==='file:';
+const ehClaudeAI=host.includes('claude');
+if(ehLocal||ehClaudeAI) return;
+navigator.serviceWorker.register("./sw.js",{scope:"./"})
+.then(reg=>{
+reg.addEventListener('updatefound',()=>{
+const novo=reg.installing;
+if(novo){
+novo.addEventListener('statechange',()=>{
+if(novo.state==='installed'&&navigator.serviceWorker.controller){
+showToast('Nova versão disponível! Clique em ↻ para atualizar.');
 }
+});
+}
+});
+})
+.catch(err=>console.warn("SW:",err));
 }
 
 document.addEventListener('DOMContentLoaded',()=>{
@@ -2105,44 +2257,45 @@ el('statusPremiumTopo').textContent='Premium Ativo';
 }
 });
 el('btnRefresh').onclick=()=>{
+if('serviceWorker' in navigator){
+navigator.serviceWorker.getRegistration().then(reg=>{
+if(reg){
+reg.update().then(()=>{
+const sw=reg.installing||reg.waiting;
+if(sw){
+sw.postMessage({type:'SKIP_WAITING'});
+navigator.serviceWorker.addEventListener('controllerchange',()=>location.reload(),{once:true});
+}else{
 location.reload();
+}
+});
+}else{
+location.reload();
+}
+});
+}else{
+location.reload();
+}
 };
 })();
 </script>
 <script>
-setTimeout(() => {
-  const loading = document.getElementById("loading");
-
-  if (loading) {
-    loading.style.opacity = "0";
-
-    setTimeout(() => {
-      loading.style.display = "none";
-    }, 400);
-  }
-}, 1500);
-setTimeout(() => {
-  showToast("Controle FLV carregado com sucesso!");
-}, 1900);
-function showToast(msg){
-const toast = document.getElementById("toast");
-
-if(!toast) return;
-
-toast.textContent = msg;
-toast.classList.add("show");
-
-clearTimeout(window.toastTimer);
-
-window.toastTimer = setTimeout(() => {
-  toast.classList.remove("show");
-}, 3000);
-}
-atualizarGrafico();
-
-setInterval(()=>{
-atualizarGrafico();
-},3000);
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => {
+    const loading = document.getElementById("loading");
+    if (loading) {
+      loading.style.opacity = "0";
+      setTimeout(() => { loading.style.display = "none"; }, 400);
+    }
+  }, 1500);
+  setTimeout(() => {
+    if(typeof showToast==='function') showToast("Controle FLV carregado com sucesso!");
+  }, 1900);
+  if(typeof atualizarGrafico==='function') atualizarGrafico();
+  setInterval(()=>{
+    if(typeof atualizarGrafico==='function') atualizarGrafico();
+  },3000);
+});
 </script>
 </body>
 </html>
