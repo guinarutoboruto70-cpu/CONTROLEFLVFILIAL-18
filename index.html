@@ -530,6 +530,7 @@ color:#cccccc;
 
 <div id="tela7" class="screen">
 <h2>Lista</h2>
+<button id="btnLimparLista" style="width:100%;padding:12px;border:none;border-radius:8px;background:#7b241c;color:#fff;font-size:15px;font-weight:bold;cursor:pointer;margin-bottom:14px;">🗑️ APAGAR LISTA COMPLETA</button>
 <div id="lista"></div>
 <button id="voltarLista" class="btn">⬅ VOLTAR</button>
 </div>
@@ -2104,6 +2105,13 @@ el('btnResultadoTratativa').onclick=abrirResultadoTratativa;
 el('btnResultadoMensal').onclick=abrirResultadoMensal;
 el('btnDashboard').onclick=abrirDashboard;
 el('btnLista').onclick=()=>{atualizarLista();ir(7)};
+el('btnLimparLista').onclick=()=>{
+if(!confirm('Apagar TODAS as tratativas da lista? Esta ação não pode ser desfeita.'))return;
+setBanco([]);
+banco=[];
+atualizarLista();
+showToast('Lista apagada.');
+};
 el('btnCadastro').onclick=abrirCadastro;
 const metaSalva=localStorage.getItem('metaMensal');
 if(el('inputMeta'))el('inputMeta').value=metaSalva||'50000';
