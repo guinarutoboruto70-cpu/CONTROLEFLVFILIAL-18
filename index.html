@@ -812,6 +812,21 @@ if(!s)return NaN;
 const temVirgula=s.includes(',');
 const temPonto=s.includes('.');
 
+if(temVirgula){
+const primeiraVirgula=s.indexOf(',');
+const ultimaVirgula=s.lastIndexOf(',');
+
+if(primeiraVirgula!==ultimaVirgula){
+const decimal=s.slice(ultimaVirgula+1);
+const inteiro=s.slice(0,ultimaVirgula).replace(/[.,]/g,'');
+
+if(decimal.length===2){
+const n=Number(inteiro+'.'+decimal);
+return negativo?-n:n;
+}
+}
+}
+
 if(temVirgula && temPonto){
 const ultimaVirgula=s.lastIndexOf(',');
 const ultimoPonto=s.lastIndexOf('.');
