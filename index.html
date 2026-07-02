@@ -892,6 +892,22 @@ const n=Number(s);
 return negativo?-n:n;
 }
 
+function numeroMoedaBR(valor){
+let s=String(valor ?? '').trim();
+if(!s)return NaN;
+
+const limpo=s.replace(/[^\d.,-]/g,'');
+const negativo=limpo.startsWith('-');
+const semSinal=limpo.replace(/-/g,'');
+
+if(/^\d{3,}$/.test(semSinal)){
+const n=Number(semSinal)/100;
+return negativo?-n:n;
+}
+
+return numeroBR(valor);
+}
+
 function dinheiroBR(valor){
 const numero=numeroBR(valor);
 if(isNaN(numero))return 'R$ 0,00';
@@ -969,7 +985,7 @@ return Number(numero).toLocaleString('pt-BR',{minimumFractionDigits:casas,maximu
 
 function formatarCampoVenda(){
 const campo=el('valorVenda');
-const numero=numeroBR(campo.value);
+const numero=numeroMoedaBR(campo.value);
 if(!isNaN(numero)){
 campo.value=formatarNumeroBR(numero,2);
 }
@@ -1931,7 +1947,7 @@ el('msgVenda').textContent='';
 
 function salvarVenda(){
 const data=el('dataVenda').value||hojeISO();
-const numero=numeroBR(el('valorVenda').value);
+const numero=numeroMoedaBR(el('valorVenda').value);
 
 if(isNaN(numero)||numero<=0){
 showToast('Preencha o valor da venda corretamente.');
@@ -2508,6 +2524,7 @@ el('btnAdicionarQuebra').onclick=adicionarOuEditarQuebra;
 el('filtroResultadoData').onchange=renderResultadoTratativa;
 el('mesResultado').onchange=calcularResultadoMensal;
 
+el('valorVenda').oninput=()=>formatarMoedaCentavosCampo(el('valorVenda'));
 el('valorVenda').onblur=formatarCampoVenda;
 el('btnSalvarVenda').onclick=()=>{
 showToast("Salvando venda...");
