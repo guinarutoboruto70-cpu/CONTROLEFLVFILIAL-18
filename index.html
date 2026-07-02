@@ -1985,54 +1985,34 @@ ir(7);
 
 function excluirDaLista(idx){
 if(!confirm('Excluir esta tratativa da lista?'))return;
-const lista=getBanco();
+var lista=getBanco();
 lista.splice(idx,1);
 setBanco(lista);
 banco=lista;
 atualizarLista();
-showToast('Tratativa excluída da lista.');
+showToast('Tratativa excluida.');
 }
+window.excluirDaLista=excluirDaLista;
 
 function atualizarLista(){
-const div=el('lista');
+var div=el('lista');
 if(!div)return;
-
 banco=getBanco();
-div.innerHTML='';
-
+var html='';
 if(banco.length===0){
-div.innerHTML='<div class="card" style="text-align:center;color:#aaa;">Nenhuma tratativa finalizada.</div>';
-return;
+html='<div class="card" style="text-align:center;color:#aaa;padding:20px;">Nenhuma tratativa finalizada.</div>';
+}else{
+for(var i=0;i<banco.length;i++){
+var item=banco[i];
+html+='<div class="card" style="margin-top:12px;">';
+html+='<div style="font-size:12px;color:#ffcc00;font-weight:bold;margin-bottom:6px;">Data: '+(item.data||'')+'</div>';
+html+='<pre style="margin:0;white-space:pre-wrap;word-break:break-word;">'+(item.texto||'')+'</pre>';
+html+='<div style="margin-top:6px;font-size:12px;color:#aaa;">Fotos enviadas via WhatsApp.</div>';
+html+='<button onclick="excluirDaLista('+i+')" style="margin-top:12px;width:100%;padding:12px;border:none;border-radius:8px;background:#c0392b;color:#fff;font-size:16px;font-weight:bold;cursor:pointer;letter-spacing:0.5px;">EXCLUIR ESTA TRATATIVA</button>';
+html+='</div>';
 }
-
-banco.forEach(function(item,idx){
-const card=document.createElement('div');
-card.className='card';
-card.style.cssText='position:relative;margin-top:12px;';
-
-const dataDiv=document.createElement('div');
-dataDiv.style.cssText='font-size:12px;color:#ffcc00;font-weight:bold;margin-bottom:6px;';
-dataDiv.textContent='\uD83D\uDCC5 '+(item.data||'');
-card.appendChild(dataDiv);
-
-const pre=document.createElement('pre');
-pre.style.cssText='margin:0;white-space:pre-wrap;word-break:break-word;';
-pre.textContent=item.texto||'';
-card.appendChild(pre);
-
-const nota=document.createElement('div');
-nota.style.cssText='margin-top:6px;font-size:12px;color:#aaa;';
-nota.textContent='\uD83D\uDCF7 Fotos enviadas via WhatsApp na \u00E9poca do registro.';
-card.appendChild(nota);
-
-const btnDel=document.createElement('button');
-btnDel.style.cssText='margin-top:12px;width:100%;padding:10px;border:none;border-radius:8px;background:#c0392b;color:#fff;font-size:15px;font-weight:bold;cursor:pointer;';
-btnDel.textContent='\uD83D\uDDD1\uFE0F Excluir tratativa';
-(function(i){btnDel.onclick=function(){excluirDaLista(i);};})(idx);
-card.appendChild(btnDel);
-
-div.appendChild(card);
-});
+}
+div.innerHTML=html;
 }
 function hashSimples(str){
 let h=0;
