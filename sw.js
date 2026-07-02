@@ -1,9 +1,10 @@
-const CACHE_NAME = "controle-flv-v33";
+const CACHE_NAME = "controle-flv-v34";
 
 const APP_FILES = [
   "./",
   "./index.html",
   "./manifest.json",
+  "./icons/banner-flv.jpg",
   "./icons/icon-192.png",
   "./icons/icon-512.png"
 ];
@@ -39,6 +40,13 @@ self.addEventListener("activate", event => {
 });
 
 self.addEventListener("fetch", event => {
+  if (event.request.mode === "navigate") {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match("./index.html"))
+    );
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request).then(cached => {
       return cached || fetch(event.request).catch(() => {

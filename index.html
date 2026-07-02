@@ -560,8 +560,8 @@ color:#cccccc;
 <input id="p_qtd_emb" placeholder="Qtd dentro da embalagem" inputmode="decimal">
 <input id="p_custo_calc" placeholder="Custo calculado" disabled>
 
-<button id="btnSalvarProduto" class="btn">💾 SALVAR ALTERAÇÃO</button>
-<button id="btnNovoProduto" class="btn" style="background:#222;color:#ffcc00;border:1px solid #ffcc00;margin-top:6px;">➕ CADASTRAR COMO NOVO PRODUTO</button>
+<button id="btnSalvarProduto" class="btn">💾 CADASTRAR PRODUTO</button>
+<button id="btnNovoProduto" class="btn" style="background:#222;color:#ffcc00;border:1px solid #ffcc00;margin-top:6px;">🧹 LIMPAR CAMPOS / NOVO PRODUTO</button>
 </div>
 
 <div id="msgProduto" class="status"></div>
@@ -743,6 +743,7 @@ const baseFLV=[
 let produtoSelecionadoId=null;
 let quebraEditandoId=null;
 let vendaEditandoId=null;
+let tratativaOrigemQuebraId=null;
 let textoFinal='';
 let fotos={prod:[],bal:[],eti:[]};
 function getBanco(){try{return JSON.parse(localStorage.getItem('tratativasFinalizadas')||'[]')}catch{return []}}
@@ -763,7 +764,7 @@ const quebraHoje=quebras.filter(q=>q.data===hoje).reduce((s,q)=>s+numeroBR(q.val
 const vendasMes=vendas.filter(v=>mesmoMes(v.data,mes));
 const quebrasMes=quebras.filter(q=>mesmoMes(q.data,mes));
 const vendaTotal=vendasMes.reduce((s,v)=>s+numeroBR(v.valor||0),0);
-const quebraLiquidaTotal=quebrasMes.reduce((s,q)=>s+numeroBR(q.quebraLiquida||q.valorQuebra||0),0);
+const quebraLiquidaTotal=quebrasMes.reduce((s,q)=>s+valorQuebraLiquida(q),0);
 const indice=vendaTotal>0?((quebraLiquidaTotal/vendaTotal)*100):0;
 
 const mEl=el('miniVenda');
@@ -882,6 +883,70 @@ if(isNaN(numero))return 'R$ 0,00';
 return numero.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 }
 
+function valorQuebraLiquida(item){
+if(!item)return 0;
+const valor=item.quebraLiquida;
+if(valor!==undefined&&valor!==null&&String(valor).trim()!==''){
+const numero=numeroBR(valor);
+return isNaN(numero)?0:numero;
+}
+const fallback=numeroBR(item.valorQuebra||0);
+return isNaN(fallback)?0:fallback;
+}
+
+function quantidadeBR(valor,tipo){
+const numero=typeof valor==='number'?valor:numeroBR(valor);
+if(isNaN(numero))return '0';
+const casas=tipo==='UN'?0:3;
+return numero.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:casas});
+}
+
+function quantidadeOriginalQuebra(item){
+const numero=numeroBR(item?.quantidade||0);
+return isNaN(numero)?0:numero;
+}
+
+function quantidadeAprovadaQuebra(item){
+const numero=numeroBR(item?.qtdAprovada||0);
+return isNaN(numero)?0:numero;
+}
+
+function quantidadeRestanteQuebra(item){
+if(!item)return 0;
+if(item.statusTratativa==='APROVADO')return 0;
+const original=quantidadeOriginalQuebra(item);
+const aprovada=quantidadeAprovadaQuebra(item);
+return Math.max(original-aprovada,0);
+}
+
+function valorRestanteQuebra(item){
+if(!item)return 0;
+if(item.statusTratativa==='APROVADO')return 0;
+const liquida=valorQuebraLiquida(item);
+if(!isNaN(liquida))return liquida;
+const custo=numeroBR(item.custoUnitario||0);
+const restante=quantidadeRestanteQuebra(item);
+return !isNaN(custo)&&custo>0?restante*custo:0;
+}
+
+function tratativaFinalizada(item){
+return item?.tratativaFinalizada===true||!!item?.dataHora;
+}
+
+function saiuDaQuebra(item){
+return item?.statusTratativa==='APROVADO'||quantidadeRestanteQuebra(item)<=0||valorRestanteQuebra(item)<=0;
+}
+
+function statusQuebraTexto(item){
+const status=item?.statusTratativa||'';
+if(status==='APROVADO')return'APROVADO - SAIU DA QUEBRA';
+if(status==='PARCIAL')return'PARCIAL - SALDO CONTINUA NA QUEBRA';
+if(status==='REPROVADO')return'REPROVADO - CONTINUA NA QUEBRA';
+if(item?.marcadoTratativa&&tratativaFinalizada(item))return'AGUARDANDO RESULTADO';
+if(item?.marcadoTratativa)return'EM TRATATIVA - NÃO FINALIZADA';
+return'NA QUEBRA';
+}
+
 function formatarNumeroBR(numero,casas=2){
 if(isNaN(numero))return '';
 return Number(numero).toLocaleString('pt-BR',{minimumFractionDigits:casas,maximumFractionDigits:casas});
@@ -961,7 +1026,7 @@ const versaoAtual=localStorage.getItem("baseFLVVersao");
 const listaAntiga=getProdutos();
 
 if(versaoAtual!==BASE_VERSION){
-const novaLista=baseFLV.map(item=>{
+const produtosBase=baseFLV.map(item=>{
 const antigo=listaAntiga.find(p=>p.cod===item.cod||gerarId(p.nome)===gerarId(item.nome));
 return{
 id:gerarId(item.nome),
@@ -974,7 +1039,27 @@ qtdEmbalagem:antigo?.qtdEmbalagem||item.fator||'',
 custo:antigo?.custo||''
 };
 });
-setProdutos(novaLista);
+
+const idsBase=new Set(produtosBase.map(p=>p.id));
+const codigosBase=new Set(baseFLV.map(item=>String(item.cod||'').trim()).filter(Boolean));
+const personalizados=listaAntiga
+.filter(p=>{
+const nomeId=gerarId(p.nome);
+const codigo=String(p.cod||'').trim();
+return nomeId&&!idsBase.has(nomeId)&&(!codigo||!codigosBase.has(codigo));
+})
+.map(p=>({
+id:p.id||gerarId(p.nome),
+nome:String(p.nome||'').toUpperCase().trim(),
+cod:p.cod||'',
+tipo:p.tipo||'KG',
+fator:p.fator||p.qtdEmbalagem||'',
+valorEmbalagem:p.valorEmbalagem||'',
+qtdEmbalagem:p.qtdEmbalagem||p.fator||'',
+custo:p.custo||''
+}));
+
+setProdutos([...produtosBase,...personalizados].sort((a,b)=>a.nome.localeCompare(b.nome)));
 localStorage.setItem("baseFLVVersao",BASE_VERSION);
 return;
 }
@@ -1004,6 +1089,8 @@ const lbl=el('labelModoEdicao');
 if(lbl)lbl.textContent='✏️ Editando: '+p.nome;
 const btn=el('btnSalvarProduto');
 if(btn)btn.textContent='💾 SALVAR ALTERAÇÃO';
+const btnNovo=el('btnNovoProduto');
+if(btnNovo)btnNovo.textContent='🧹 LIMPAR CAMPOS / NOVO PRODUTO';
 el('msgProduto').textContent='Produto selecionado. Edite e salve.';
 calcularCustoProduto();
 window.scrollTo({top:0,behavior:'smooth'});
@@ -1077,7 +1164,7 @@ container.appendChild(card);
 
 function salvarProduto(){
 if(!produtoSelecionadoId){
-showToast('Selecione um produto na lista para alterar.');
+salvarNovoProduto();
 return;
 }
 
@@ -1129,6 +1216,8 @@ const lbl=el('labelModoEdicao');
 if(lbl)lbl.textContent='➕ Novo produto';
 const btn=el('btnSalvarProduto');
 if(btn)btn.textContent='💾 CADASTRAR PRODUTO';
+const btnNovo=el('btnNovoProduto');
+if(btnNovo)btnNovo.textContent='🧹 LIMPAR CAMPOS / NOVO PRODUTO';
 el('p_nome').focus();
 el('msgProduto').textContent='Digite o nome e os dados do novo produto.';
 }
@@ -1189,7 +1278,9 @@ el('msgProduto').textContent='';
 const lbl=el('labelModoEdicao');
 if(lbl)lbl.textContent='📝 Preencha os dados do produto';
 const btn=el('btnSalvarProduto');
-if(btn)btn.textContent='💾 SALVAR ALTERAÇÃO';
+if(btn)btn.textContent='💾 CADASTRAR PRODUTO';
+const btnNovo=el('btnNovoProduto');
+if(btnNovo)btnNovo.textContent='🧹 LIMPAR CAMPOS / NOVO PRODUTO';
 }
  function autoProduto(){
 const campo=el('buscaProduto');
@@ -1240,6 +1331,22 @@ calcularValorQuebra();
 
 el('buscaQuebraProduto').value='';
 el('autoQuebraLista').innerHTML='';
+}
+
+function limparCamposTratativa(){
+tratativaOrigemQuebraId=null;
+textoFinal='';
+fotos={prod:[],bal:[],eti:[]};
+['buscaProduto','produto','cod','chegou','quebra'].forEach(function(rid){
+const campo=el(rid);
+if(campo)campo.value='';
+});
+['prev_prod','prev_bal','prev_eti','autoLista','fotosEnvio'].forEach(function(rid){
+const div=el(rid);
+if(div)div.innerHTML='';
+});
+const texto=el('texto');
+if(texto)texto.innerText='';
 }
 
 function preencherCustoQuebraPorProduto(){
@@ -1370,12 +1477,14 @@ const container=el('listaQuebraDia');
 if(!container)return;
 
 const dataFiltro=el('dataQuebra').value||hojeISO();
-const lista=getQuebras().filter(q=>q.data===dataFiltro);
+const todas=getQuebras().filter(q=>q.data===dataFiltro);
+const lista=todas.filter(q=>!saiuDaQuebra(q));
 
 container.innerHTML='';
 
 if(lista.length===0){
-container.innerHTML='<div class="card">Nenhuma quebra lançada para esta data.</div>';
+const aprovadas=todas.filter(q=>saiuDaQuebra(q)).length;
+container.innerHTML='<div class="card">Nenhuma quebra em aberto para esta data.'+(aprovadas?' '+aprovadas+' item(ns) já saíram da quebra por aprovação.':'')+'</div>';
 return;
 }
 
@@ -1384,12 +1493,21 @@ const card=document.createElement('div');
 card.className='card';
 
 const info=document.createElement('div');
-info.innerHTML=`<b>${item.cod||'-'} - ${item.produto}</b><br>Quebra: ${item.quantidade} ${item.tipo}<br>Custo: ${dinheiroBR(item.custoUnitario||0)} / ${item.tipo}<br>Valor: ${dinheiroBR(item.valorQuebra||0)}<br>Status: ${item.marcadoTratativa?'ENVIADO PARA TRATATIVA':'NA QUEBRA'}`;
+const restante=quantidadeRestanteQuebra(item);
+const valorRestante=valorRestanteQuebra(item);
+info.innerHTML=`<b>${item.cod||'-'} - ${item.produto}</b><br>Quebra lançada: ${quantidadeBR(item.quantidade,item.tipo)} ${item.tipo}<br>Saldo na quebra: ${quantidadeBR(restante,item.tipo)} ${item.tipo}<br>Custo: ${dinheiroBR(item.custoUnitario||0)} / ${item.tipo}<br>Valor original: ${dinheiroBR(item.valorQuebra||0)}<br>Valor atual na quebra: ${dinheiroBR(valorRestante)}<br>Status: ${statusQuebraTexto(item)}`;
 
 const tratar=document.createElement('button');
 tratar.className='btn-icon edit-icon';
-tratar.innerHTML=item.marcadoTratativa?'✅':'📤';
+tratar.innerHTML=item.marcadoTratativa?(tratativaFinalizada(item)?'🕒':'✅'):'📤';
+tratar.title=item.marcadoTratativa?(tratativaFinalizada(item)?'Tratativa já enviada':'Continuar tratativa'):'Enviar para tratativa';
+if(tratativaFinalizada(item)){
+tratar.disabled=true;
+tratar.style.opacity='0.55';
+tratar.style.cursor='not-allowed';
+}else{
 tratar.onclick=()=>enviarQuebraParaTratativa(item.id);
+}
 
 const editar=document.createElement('button');
 editar.className='btn-icon edit-icon';
@@ -1417,10 +1535,10 @@ quebraEditandoId=id;
 el('dataQuebra').value=item.data;
 el('q_produto').value=item.produto;
 el('q_cod').value=item.cod;
-el('q_quantidade').value=item.quantidade;
+el('q_quantidade').value=quantidadeRestanteQuebra(item)||item.quantidade;
 el('q_tipo').value=item.tipo||'KG';
 el('q_custo_unit').value=item.custoUnitario?formatarNumeroBR(Number(item.custoUnitario),3):'';
-el('q_valor_quebra').value=item.valorQuebra?dinheiroBR(item.valorQuebra):'';
+el('q_valor_quebra').value=dinheiroBR(valorRestanteQuebra(item)||item.valorQuebra||0);
 el('btnAdicionarQuebra').textContent='SALVAR ALTERAÇÃO';
 el('msgQuebra').textContent='Editando item da quebra.';
 window.scrollTo({top:0,behavior:'smooth'});
@@ -1432,6 +1550,7 @@ const index=lista.findIndex(q=>q.id===id);
 if(index===-1)return;
 
 const item=lista[index];
+tratativaOrigemQuebraId=id;
 lista[index].marcadoTratativa=true;
 if(!lista[index].statusTratativa)lista[index].statusTratativa='PENDENTE';
 setQuebras(lista);
@@ -1439,7 +1558,7 @@ setQuebras(lista);
 el('produto').value=item.produto;
 el('cod').value=item.cod||'';
 el('chegou').value='';
-el('quebra').value=item.quantidade||'';
+el('quebra').value=quantidadeRestanteQuebra(item)||item.quantidade||'';
 
 renderListaQuebraDia();
 ir(2);
@@ -1478,9 +1597,8 @@ const container=el('listaResultadoTratativa');
 if(!container)return;
 
 const dataFiltro=el('filtroResultadoData').value||hojeISO();
-// Busca quebras marcadas como tratativa na data filtrada
 const lista=getQuebras().filter(function(q){
-return q.marcadoTratativa===true&&q.data===dataFiltro;
+return q.marcadoTratativa===true&&tratativaFinalizada(q)&&q.data===dataFiltro;
 });
 
 container.innerHTML='';
@@ -1500,7 +1618,7 @@ const hora=item.dataHora||item.data||'';
 const qtdChegou=item.qtdChegou||'-';
 const qtdQuebra=item.quantidade||'0';
 const qtdAprov=item.qtdAprovada||'0';
-const qtdRest=(numeroBR(qtdQuebra)-numeroBR(qtdAprov)).toFixed(0);
+const qtdRest=quantidadeRestanteQuebra(item);
 
 card.innerHTML=
 '<div style="font-size:17px;font-weight:bold;margin-bottom:6px;">'+
@@ -1508,13 +1626,13 @@ card.innerHTML=
 '</div>'+
 '<div style="font-size:12px;color:#aaa;margin-bottom:8px;">'+hora+'</div>'+
 '<div>Qtd Chegou: <b>'+qtdChegou+'</b></div>'+
-'<div>Qtd Quebra: <b>'+qtdQuebra+' '+(item.tipo||'KG')+'</b></div>'+
+'<div>Qtd Quebra lançada: <b>'+quantidadeBR(qtdQuebra,item.tipo)+' '+(item.tipo||'KG')+'</b></div>'+
 '<div>Valor Quebra: <b>'+dinheiroBR(item.valorQuebra||0)+'</b></div>'+
 (status!=='PENDENTE'?
-'<div>Qtd Aprovada: <b>'+(qtdAprov||'0')+' '+(item.tipo||'KG')+'</b></div>'+
-'<div>Qtd Restante: <b>'+qtdRest+' '+(item.tipo||'KG')+'</b></div>'+
+'<div>Qtd Aprovada: <b>'+quantidadeBR(qtdAprov,item.tipo)+' '+(item.tipo||'KG')+'</b></div>'+
+'<div>Qtd Restante na quebra: <b>'+quantidadeBR(qtdRest,item.tipo)+' '+(item.tipo||'KG')+'</b></div>'+
 '<div>Valor Aprovado: <b>'+dinheiroBR(item.valorConciliado||0)+'</b></div>'+
-'<div>Quebra Restante: <b>'+dinheiroBR(item.quebraLiquida||item.valorQuebra||0)+'</b></div>'
+'<div>Quebra Restante: <b>'+dinheiroBR(valorRestanteQuebra(item))+'</b></div>'
 :'')+
 '<div style="margin-top:10px;font-size:16px;font-weight:bold;color:'+
 corStatusTratativa(status)+'">● STATUS: '+status+'</div>';
@@ -1549,17 +1667,38 @@ container.appendChild(card);
 });
 }
 
-function aprovarTratativa(id){
+function atualizarItemTratativa(id,atualizar){
 const lista=getQuebras();
 const index=lista.findIndex(q=>q.id===id);
-if(index===-1)return;
+if(index===-1)return null;
 
-lista[index].statusTratativa='APROVADO';
-lista[index].aprovado=true;
-lista[index].valorConciliado=lista[index].valorQuebra||'0';
-lista[index].quebraLiquida='0';
+const item={...lista[index]};
+atualizar(item);
 
+const original=quantidadeOriginalQuebra(item);
+const aprovada=quantidadeAprovadaQuebra(item);
+const custoUnitario=numeroBR(item.custoUnitario||0);
+const restante=Math.max(original-aprovada,0);
+const valorAprovado=!isNaN(custoUnitario)&&custoUnitario>0?aprovada*custoUnitario:numeroBR(item.valorConciliado||0);
+const valorRestante=!isNaN(custoUnitario)&&custoUnitario>0?restante*custoUnitario:valorQuebraLiquida(item);
+
+item.qtdAprovada=aprovada.toFixed(3);
+item.valorConciliado=isNaN(valorAprovado)?'0':valorAprovado.toFixed(2);
+item.quebraLiquida=restante<=0?'0':(isNaN(valorRestante)?'0':valorRestante.toFixed(2));
+
+lista[index]=item;
 setQuebras(lista);
+return item;
+}
+
+function aprovarTratativa(id){
+atualizarItemTratativa(id,function(item){
+item.statusTratativa='APROVADO';
+item.aprovado=true;
+item.qtdAprovada=quantidadeOriginalQuebra(item).toFixed(3);
+});
+showToast('Tratativa aprovada. Item saiu da quebra.');
+renderListaQuebraDia();
 renderResultadoTratativa();
 }
 
@@ -1606,36 +1745,31 @@ showToast('Qtd aprovada não pode ser maior que a quantidade da quebra.');
 return;
 }
 const custoUnitario=numeroBR(item.custoUnitario||0);
-const valorAprovado=qtdAprovada*custoUnitario;
-const qtdRestante=qtdOriginal-qtdAprovada;
-const valorRestante=qtdRestante*custoUnitario;
+if(isNaN(custoUnitario)||custoUnitario<=0){
+showToast('Produto sem custo cadastrado.');
+return;
+}
 
-const ls=getQuebras();
-const idx=ls.findIndex(function(q){return q.id===id;});
-if(idx===-1){document.body.removeChild(overlay);return;}
-ls[idx].statusTratativa='PARCIAL';
-ls[idx].aprovado=true;
-ls[idx].qtdAprovada=qtdAprovada.toFixed(3);
-ls[idx].valorConciliado=valorAprovado.toFixed(2);
-ls[idx].quebraLiquida=valorRestante.toFixed(2);
-setQuebras(ls);
+atualizarItemTratativa(id,function(itemAtualizado){
+itemAtualizado.statusTratativa=qtdAprovada>=qtdOriginal?'APROVADO':'PARCIAL';
+itemAtualizado.aprovado=true;
+itemAtualizado.qtdAprovada=qtdAprovada.toFixed(3);
+});
 document.body.removeChild(overlay);
-showToast('Aprovação parcial registrada.');
+showToast(qtdAprovada>=qtdOriginal?'Tratativa aprovada. Item saiu da quebra.':'Aprovação parcial registrada. Saldo continua na quebra.');
+renderListaQuebraDia();
 renderResultadoTratativa();
 };
 }
 
 function reprovarTratativa(id){
-const lista=getQuebras();
-const index=lista.findIndex(q=>q.id===id);
-if(index===-1)return;
-
-lista[index].statusTratativa='REPROVADO';
-lista[index].aprovado=false;
-lista[index].valorConciliado='0';
-lista[index].quebraLiquida=lista[index].valorQuebra||'0';
-
-setQuebras(lista);
+atualizarItemTratativa(id,function(item){
+item.statusTratativa='REPROVADO';
+item.aprovado=false;
+item.qtdAprovada='0';
+});
+showToast('Tratativa reprovada. Item continua na quebra.');
+renderListaQuebraDia();
 renderResultadoTratativa();
 }
 
@@ -1668,7 +1802,7 @@ vendaTotal+=numeroBR(v.valor||v.valorTotal||0);
 
 quebras.forEach(q=>{
 quebraBruta+=numeroBR(q.valorQuebra||0);
-quebraLiquida+=numeroBR(q.quebraLiquida||q.valorQuebra||0);
+quebraLiquida+=valorQuebraLiquida(q);
 });
 
 const ranking={};
@@ -1700,19 +1834,34 @@ const dashTrEl=el('dashTratativas');if(dashTrEl)dashTrEl.textContent=dinheiroBR(
 el('dashLiquida').textContent=dinheiroBR(quebraLiquida);
 el('dashIndice').textContent=formatarNumeroBR(indice,2)+'%';
 
+const resumoTratativas=resumirTratativasMes(quebras);
+const statusResumo='Pendentes: '+resumoTratativas.pendentes+' | Aprovadas: '+resumoTratativas.aprovadas+' | Parciais: '+resumoTratativas.parciais+' | Reprovadas: '+resumoTratativas.reprovadas;
+
 if(vendaTotal<=0){
-el('dashStatus').textContent='SEM VENDAS';
+el('dashStatus').textContent='SEM VENDAS | '+statusResumo;
 el('dashStatus').style.color='#cccccc';
 }else if(indice<=3.5){
-el('dashStatus').textContent='META ATINGIDA';
+el('dashStatus').textContent='META ATINGIDA | '+statusResumo;
 el('dashStatus').style.color='#00ff88';
 }else if(indice<=5){
-el('dashStatus').textContent='ATENÇÃO';
+el('dashStatus').textContent='ATENÇÃO | '+statusResumo;
 el('dashStatus').style.color='#ffcc00';
 }else{
-el('dashStatus').textContent='CRÍTICO';
+el('dashStatus').textContent='CRÍTICO | '+statusResumo;
 el('dashStatus').style.color='#ff4444';
 }
+}
+
+function resumirTratativasMes(quebras){
+const resumo={pendentes:0,aprovadas:0,parciais:0,reprovadas:0};
+quebras.forEach(function(q){
+if(!q.marcadoTratativa)return;
+if(q.statusTratativa==='APROVADO')resumo.aprovadas++;
+else if(q.statusTratativa==='PARCIAL')resumo.parciais++;
+else if(q.statusTratativa==='REPROVADO')resumo.reprovadas++;
+else if(tratativaFinalizada(q))resumo.pendentes++;
+});
+return resumo;
 }
 
 function abrirDashboard(){
@@ -1729,7 +1878,7 @@ const quebras=getQuebras().filter(q=>mesmoMes(q.data,mes));
 const vendaTotal=vendas.reduce((s,v)=>s+numeroBR(v.valor),0);
 const quebraBruta=quebras.reduce((s,q)=>s+numeroBR(q.valorQuebra||0),0);
 const tratativas=quebras.reduce((s,q)=>s+numeroBR(q.valorConciliado||0),0);
-const quebraLiquida=quebras.reduce((s,q)=>s+numeroBR(q.quebraLiquida||q.valorQuebra||0),0);
+const quebraLiquida=quebras.reduce((s,q)=>s+valorQuebraLiquida(q),0);
 const indice=vendaTotal>0?(quebraLiquida/vendaTotal)*100:0;
 
 el('resVendaTotal').textContent=dinheiroBR(vendaTotal);
@@ -1838,16 +1987,17 @@ container.appendChild(card);
 }
 function atualizarGrafico(){
 const vendas=getVendas();
-const hoje=hojeISO();
 const mes=mesAtualISO();
 
 let total=0;
 vendas.filter(v=>mesmoMes(v.data,mes)).forEach(v=>{
-total+=parseFloat(v.valor||0);
+const valor=numeroBR(v.valor||0);
+total+=isNaN(valor)?0:valor;
 });
 
 const metaSalva=localStorage.getItem('metaMensal');
-const meta=metaSalva?Number(metaSalva):50000;
+const metaNumero=metaSalva?numeroBR(metaSalva):50000;
+const meta=!isNaN(metaNumero)&&metaNumero>0?metaNumero:50000;
 
 let percentual=Math.min((total/meta)*100,100);
 if(isNaN(percentual)) percentual=0;
@@ -2021,21 +2171,25 @@ const quebraLinha=(linhas[4]||'').replace('Qtd Quebra:','').trim();
 // Buscar produto para pegar custo
 const produtos=getProdutos();
 const prod=produtos.find(p=>p.cod===codLinha||p.nome===nomeProduto)||{};
-const custoUnit=numeroBR(prod.custo||0);
+const quebras=getQuebras();
+const indexOrigem=tratativaOrigemQuebraId?quebras.findIndex(q=>q.id===tratativaOrigemQuebraId):-1;
+const registroAtual=indexOrigem!==-1?quebras[indexOrigem]:{};
+const custoUnit=numeroBR(prod.custo||registroAtual.custoUnitario||0);
 const qtdQuebra=numeroBR(quebraLinha||0);
 const valorQuebra=(!isNaN(custoUnit)&&!isNaN(qtdQuebra)&&custoUnit>0)
   ?(qtdQuebra*custoUnit).toFixed(2)
   :'0';
 
 // Criar registro de quebra vinculado à tratativa
-const id='trat-'+Date.now().toString();
+const id=tratativaOrigemQuebraId||'trat-'+Date.now().toString();
 const quebraItem={
+...registroAtual,
 id,
-data:dataISO,
+data:registroAtual.data||dataISO,
 produto:nomeProduto,
 cod:codLinha,
 quantidade:quebraLinha,
-tipo:prod.tipo||'KG',
+tipo:prod.tipo||registroAtual.tipo||'KG',
 custoUnitario:isNaN(custoUnit)?'0':custoUnit.toFixed(3),
 valorQuebra,
 marcadoTratativa:true,
@@ -2044,26 +2198,34 @@ statusTratativa:'PENDENTE',
 valorConciliado:'0',
 quebraLiquida:valorQuebra,
 dataHora:dataFormatada+' '+horaFormatada,
-qtdChegou:chegouLinha
+qtdChegou:chegouLinha,
+tratativaFinalizada:true
 };
 
-const quebras=getQuebras();
-// Só adiciona se não existir quebra com o mesmo id
-if(!quebras.find(q=>q.id===id)){
+if(indexOrigem!==-1){
+quebras[indexOrigem]=quebraItem;
+setQuebras(quebras);
+}else if(!quebras.find(q=>q.id===id)){
 quebras.push(quebraItem);
 setQuebras(quebras);
 }
 
 // Salvar na Lista (banco)
 var listaAtual=getBanco();
-listaAtual.push({
+var itemBanco={
 id,
 texto:textoFinal,
 data:dataFormatada,
 hora:horaFormatada,
 produto:nomeProduto,
 cod:codLinha
-});
+};
+var idxBanco=listaAtual.findIndex(function(item){return item.id===id;});
+if(idxBanco!==-1){
+listaAtual[idxBanco]=itemBanco;
+}else{
+listaAtual.push(itemBanco);
+}
 setBanco(listaAtual);
 banco=listaAtual;
 
@@ -2076,6 +2238,7 @@ var d=el(rid);if(d)d.innerHTML='';
 var c=el(rid);if(c)c.value='';
 });
 textoFinal='';
+tratativaOrigemQuebraId=null;
 el('texto').innerText='';
 
 atualizarLista();
@@ -2113,6 +2276,19 @@ var pre=document.createElement('pre');
 pre.style.cssText='margin:0;white-space:pre-wrap;word-break:break-word;';
 pre.textContent=item.texto||'';
 card.appendChild(pre);
+
+var quebraVinculada=getQuebras().find(function(q){return q.id===item.id;});
+if(quebraVinculada){
+var statusEl=document.createElement('div');
+statusEl.style.cssText='margin-top:8px;font-size:13px;font-weight:bold;color:'+corStatusTratativa(quebraVinculada.statusTratativa||'PENDENTE')+';';
+statusEl.textContent='Status: '+statusQuebraTexto(quebraVinculada);
+card.appendChild(statusEl);
+
+var saldoEl=document.createElement('div');
+saldoEl.style.cssText='margin-top:4px;font-size:12px;color:#ccc;';
+saldoEl.textContent='Saldo atual na quebra: '+quantidadeBR(quantidadeRestanteQuebra(quebraVinculada),quebraVinculada.tipo)+' '+(quebraVinculada.tipo||'KG')+' / '+dinheiroBR(valorRestanteQuebra(quebraVinculada));
+card.appendChild(saldoEl);
+}
 
 var nota=document.createElement('div');
 nota.style.cssText='margin-top:6px;font-size:12px;color:#aaa;';
@@ -2231,7 +2407,7 @@ el('adminStatus').textContent='Premium resetado';
 location.reload();
 
 };
-el('btnTratativa').onclick=()=>ir(2);
+el('btnTratativa').onclick=()=>{limparCamposTratativa();ir(2);};
 el('btnQuebraDia').onclick=abrirQuebraDia;
 el('btnVendaDia').onclick=abrirVendaDia;
 el('btnResultadoTratativa').onclick=abrirResultadoTratativa;
@@ -2266,9 +2442,10 @@ el('btnCadastro').onclick=abrirCadastro;
 const metaSalva=localStorage.getItem('metaMensal');
 if(el('inputMeta'))el('inputMeta').value=metaSalva||'50000';
 el('btnSalvarMeta').onclick=()=>{
-const v=el('inputMeta').value.replace(/[^\d]/g,'');
-if(!v||Number(v)<=0){showToast('Digite uma meta válida.');return;}
-localStorage.setItem('metaMensal',v);
+const v=numeroBR(el('inputMeta').value);
+if(isNaN(v)||v<=0){showToast('Digite uma meta válida.');return;}
+localStorage.setItem('metaMensal',v.toFixed(2));
+el('inputMeta').value=formatarNumeroBR(v,2);
 showToast('Meta salva: '+dinheiroBR(v));
 atualizarGrafico();
 };
@@ -2300,11 +2477,7 @@ el('cod').oninput=autoPorCodigo;
 
 el('p_busca').oninput=autoCadastroProduto;
 el('btnNovoProduto').onclick=()=>{
-if(!produtoSelecionadoId){
-salvarNovoProduto();
-}else{
 novoProducto();
-}
 };
 el('p_valor_emb').oninput=()=>{formatarMoedaCentavosCampo(el('p_valor_emb'));calcularCustoProduto();};
 el('p_qtd_emb').oninput=calcularCustoProduto;
