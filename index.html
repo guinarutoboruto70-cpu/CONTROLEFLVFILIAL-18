@@ -1077,7 +1077,7 @@ container.appendChild(card);
 
 function salvarProduto(){
 if(!produtoSelecionadoId){
-alert('Selecione um produto na lista/autocomplete para alterar.');
+showToast('Selecione um produto na lista para alterar.');
 return;
 }
 
@@ -1085,7 +1085,7 @@ let lista=getProdutos();
 const index=lista.findIndex(p=>p.id===produtoSelecionadoId);
 
 if(index===-1){
-alert('Produto não encontrado.');
+showToast('Produto não encontrado.');
 return;
 }
 
@@ -1093,14 +1093,14 @@ const novoNome=el('p_nome').value.toUpperCase().trim();
 const novoId=gerarId(novoNome);
 
 if(!novoNome){
-alert('O nome do produto não pode ficar vazio.');
+showToast('O nome do produto não pode ficar vazio.');
 return;
 }
 
 const duplicado=lista.some(p=>p.id!==produtoSelecionadoId&&gerarId(p.nome)===novoId);
 
 if(duplicado){
-alert('Já existe um produto com esse nome.');
+showToast('Já existe um produto com esse nome.');
 return;
 }
 
@@ -1135,11 +1135,11 @@ el('msgProduto').textContent='Digite o nome e os dados do novo produto.';
 
 function salvarNovoProduto(){
 const nome=el('p_nome').value.toUpperCase().trim();
-if(!nome){alert('Digite o nome do produto.');return;}
+if(!nome){showToast('Digite o nome do produto.');return;}
 const lista=getProdutos();
 const novoId=gerarId(nome);
 if(lista.some(p=>gerarId(p.nome)===novoId)){
-alert('Já existe um produto com esse nome.');
+showToast('Já existe um produto com esse nome.');
 return;
 }
 const custoCalc=calcularCustoProduto();
@@ -1313,13 +1313,11 @@ const custoUnitario=numeroBR(el('q_custo_unit').value);
 const valorQuebra=calcularValorQuebra();
 
 if(!produto||!quantidade){
-alert('Preencha produto e quantidade da quebra.');
-return;
+showToast('Preencha produto e quantidade da quebra.');return;
 }
 
 if(isNaN(custoUnitario)||custoUnitario<=0){
-alert('Produto sem custo cadastrado. Atualize o cadastro do produto antes de lançar a quebra.');
-return;
+showToast('Produto sem custo cadastrado. Cadastre o custo primeiro.');return;
 }
 
 const lista=getQuebras();
@@ -1468,69 +1466,85 @@ renderResultadoTratativa();
 ir(12);
 }
 
+function corStatusTratativa(status){
+if(status==='APROVADO')return'#00c853';
+if(status==='PARCIAL')return'#ffcc00';
+if(status==='REPROVADO')return'#ff4444';
+return'#aaa';
+}
+
 function renderResultadoTratativa(){
 const container=el('listaResultadoTratativa');
 if(!container)return;
 
 const dataFiltro=el('filtroResultadoData').value||hojeISO();
-const lista=getQuebras().filter(q=>q.data===dataFiltro&&q.marcadoTratativa===true);
+// Busca quebras marcadas como tratativa na data filtrada
+const lista=getQuebras().filter(function(q){
+return q.marcadoTratativa===true&&q.data===dataFiltro;
+});
 
 container.innerHTML='';
 
 if(lista.length===0){
-container.innerHTML='<div class="card">Nenhuma tratativa enviada nesta data.</div>';
+container.innerHTML='<div class="card" style="text-align:center;color:#aaa;padding:20px;">Nenhuma tratativa nesta data.</div>';
 return;
 }
 
-lista.forEach(item=>{
+lista.forEach(function(item){
 const card=document.createElement('div');
 card.className='card';
+card.style.borderLeft='4px solid '+corStatusTratativa(item.statusTratativa||'PENDENTE');
 
 const status=item.statusTratativa||'PENDENTE';
+const hora=item.dataHora||item.data||'';
+const qtdChegou=item.qtdChegou||'-';
+const qtdQuebra=item.quantidade||'0';
+const qtdAprov=item.qtdAprovada||'0';
+const qtdRest=(numeroBR(qtdQuebra)-numeroBR(qtdAprov)).toFixed(0);
 
-card.innerHTML=`
+card.innerHTML=
+'<div style="font-size:17px;font-weight:bold;margin-bottom:6px;">'+
+(item.cod||'-')+' - '+(item.produto||'-')+
+'</div>'+
+'<div style="font-size:12px;color:#aaa;margin-bottom:8px;">'+hora+'</div>'+
+'<div>Qtd Chegou: <b>'+qtdChegou+'</b></div>'+
+'<div>Qtd Quebra: <b>'+qtdQuebra+' '+(item.tipo||'KG')+'</b></div>'+
+'<div>Valor Quebra: <b>'+dinheiroBR(item.valorQuebra||0)+'</b></div>'+
+(status!=='PENDENTE'?
+'<div>Qtd Aprovada: <b>'+(qtdAprov||'0')+' '+(item.tipo||'KG')+'</b></div>'+
+'<div>Qtd Restante: <b>'+qtdRest+' '+(item.tipo||'KG')+'</b></div>'+
+'<div>Valor Aprovado: <b>'+dinheiroBR(item.valorConciliado||0)+'</b></div>'+
+'<div>Quebra Restante: <b>'+dinheiroBR(item.quebraLiquida||item.valorQuebra||0)+'</b></div>'
+:'')+
+'<div style="margin-top:10px;font-size:16px;font-weight:bold;color:'+
+corStatusTratativa(status)+'">● STATUS: '+status+'</div>';
 
-<div style="font-size:18px;font-weight:bold;margin-bottom:8px;">${item.cod||'-'} - ${item.produto}</div>
-<div>Quantidade enviada: ${item.quantidade} ${item.tipo}</div>
-<div>Valor original: ${dinheiroBR(item.valorQuebra||0)}</div>
-<div>Quantidade aprovada: ${formatarNumeroBR(Number(item.qtdAprovada||0),0)} ${item.tipo}</div>
+// Botões de ação — só mostra se ainda não aprovado total
+if(status!=='APROVADO'){
+var row=document.createElement('div');
+row.style.cssText='display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;';
 
-<div>Quantidade restante: ${formatarNumeroBR((Number(item.quantidade||0)-Number(item.qtdAprovada||0)),0)} ${item.tipo}</div>
-<div>Valor aprovado: ${dinheiroBR(item.valorConciliado||0)}</div>
-<div>Quebra restante: ${dinheiroBR(item.quebraLiquida||item.valorQuebra||0)}</div>
-<div style="margin-top:10px;">Status: <b>${status}</b></div>
-`;
+var btnAp=document.createElement('button');
+btnAp.textContent='✅ APROVADO';
+btnAp.style.cssText='flex:1;padding:10px;border:none;border-radius:8px;background:#00c853;color:#000;font-weight:bold;cursor:pointer;min-width:80px;';
+btnAp.onclick=function(){aprovarTratativa(item.id);};
 
-const btnAprovado=document.createElement('button');
-btnAprovado.className='btn';
-btnAprovado.style.background='#00c853';
-btnAprovado.style.color='#000';
-btnAprovado.textContent='APROVADO';
-btnAprovado.onclick=()=>aprovarTratativa(item.id);
-const btnExcluir=document.createElement('button');
-btnExcluir.className='btn';
-btnExcluir.style.background='#b71c1c';
-btnExcluir.style.color='#fff';
-btnExcluir.textContent='EXCLUIR';
-btnExcluir.onclick=()=>excluirTratativa(item.id);
-const btnParcial=document.createElement('button');
-btnParcial.className='btn';
-btnParcial.style.background='#ffcc00';
-btnParcial.style.color='#000';
-btnParcial.textContent='PARCIAL';
-btnParcial.onclick=()=>aprovarParcial(item.id);
+var btnPa=document.createElement('button');
+btnPa.textContent='⚡ PARCIAL';
+btnPa.style.cssText='flex:1;padding:10px;border:none;border-radius:8px;background:#ffcc00;color:#000;font-weight:bold;cursor:pointer;min-width:80px;';
+btnPa.onclick=function(){aprovarParcial(item.id);};
 
-const btnReprovado=document.createElement('button');
-btnReprovado.className='btn';
-btnReprovado.style.background='#ff4444';
-btnReprovado.style.color='#fff';
-btnReprovado.textContent='REPROVADO';
-btnReprovado.onclick=()=>reprovarTratativa(item.id);
+var btnRp=document.createElement('button');
+btnRp.textContent='❌ REPROVADO';
+btnRp.style.cssText='flex:1;padding:10px;border:none;border-radius:8px;background:#ff4444;color:#fff;font-weight:bold;cursor:pointer;min-width:80px;';
+btnRp.onclick=function(){reprovarTratativa(item.id);};
 
-card.appendChild(btnAprovado);
-card.appendChild(btnParcial);
-card.appendChild(btnReprovado);
-card.appendChild(btnExcluir);
+row.appendChild(btnAp);
+row.appendChild(btnPa);
+row.appendChild(btnRp);
+card.appendChild(row);
+}
+
 container.appendChild(card);
 });
 }
@@ -1550,46 +1564,65 @@ renderResultadoTratativa();
 }
 
 function aprovarParcial(id){
-
 const lista=getQuebras();
-const index=lista.findIndex(q=>q.id===id);
+const index=lista.findIndex(function(q){return q.id===id;});
 if(index===-1)return;
-
 const item=lista[index];
 
-const qtdAprovadaTexto=prompt('Digite a quantidade aprovada em '+(item.tipo||'KG')+':');
-if(qtdAprovadaTexto===null)return;
+// Criar modal inline na tela (sem prompt)
+var overlay=document.createElement('div');
+overlay.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;';
 
-const qtdAprovada=numeroBR(qtdAprovadaTexto);
+var box=document.createElement('div');
+box.style.cssText='background:#1a1a1a;border:1px solid #ffcc00;border-radius:16px;padding:24px;width:100%;max-width:360px;';
+box.innerHTML=
+'<div style="font-size:16px;font-weight:bold;color:#ffcc00;margin-bottom:12px;">⚡ Aprovação Parcial</div>'+
+'<div style="color:#fff;margin-bottom:6px;">'+(item.produto||'')+'</div>'+
+'<div style="color:#aaa;font-size:13px;margin-bottom:14px;">Qtd total: '+(item.quantidade||0)+' '+(item.tipo||'KG')+'</div>'+
+'<input id="inputQtdParcial" type="number" step="0.001" min="0.001" placeholder="Quantidade aprovada" style="width:100%;padding:12px;border-radius:8px;border:1px solid #ffcc00;background:#111;color:#fff;font-size:16px;box-sizing:border-box;margin-bottom:14px;">'+
+'<div style="display:flex;gap:8px;">'+
+'<button id="btnCancelarParcial" style="flex:1;padding:12px;border:none;border-radius:8px;background:#333;color:#fff;font-size:15px;font-weight:bold;cursor:pointer;">CANCELAR</button>'+
+'<button id="btnConfirmarParcial" style="flex:1;padding:12px;border:none;border-radius:8px;background:#ffcc00;color:#000;font-size:15px;font-weight:bold;cursor:pointer;">CONFIRMAR</button>'+
+'</div>';
+
+overlay.appendChild(box);
+document.body.appendChild(overlay);
+
+document.getElementById('inputQtdParcial').focus();
+
+document.getElementById('btnCancelarParcial').onclick=function(){
+document.body.removeChild(overlay);
+};
+
+document.getElementById('btnConfirmarParcial').onclick=function(){
+const qtdAprovada=numeroBR(document.getElementById('inputQtdParcial').value);
 if(isNaN(qtdAprovada)||qtdAprovada<=0){
-alert('Quantidade inválida.');
+showToast('Digite uma quantidade válida.');
 return;
 }
-
 const qtdOriginal=numeroBR(item.quantidade||0);
 if(qtdAprovada>qtdOriginal){
-alert('A quantidade aprovada não pode ser maior que a quantidade original da quebra.');
+showToast('Qtd aprovada não pode ser maior que a quantidade da quebra.');
 return;
 }
-
 const custoUnitario=numeroBR(item.custoUnitario||0);
-if(isNaN(custoUnitario)||custoUnitario<=0){
-alert('Custo unitário inválido para calcular a tratativa.');
-return;
-}
-
 const valorAprovado=qtdAprovada*custoUnitario;
 const qtdRestante=qtdOriginal-qtdAprovada;
 const valorRestante=qtdRestante*custoUnitario;
 
-lista[index].statusTratativa='PARCIAL';
-lista[index].aprovado=true;
-lista[index].qtdAprovada=qtdAprovada.toFixed(3);
-lista[index].valorConciliado=valorAprovado.toFixed(2);
-lista[index].quebraLiquida=valorRestante.toFixed(2);
-
-setQuebras(lista);
+const ls=getQuebras();
+const idx=ls.findIndex(function(q){return q.id===id;});
+if(idx===-1){document.body.removeChild(overlay);return;}
+ls[idx].statusTratativa='PARCIAL';
+ls[idx].aprovado=true;
+ls[idx].qtdAprovada=qtdAprovada.toFixed(3);
+ls[idx].valorConciliado=valorAprovado.toFixed(2);
+ls[idx].quebraLiquida=valorRestante.toFixed(2);
+setQuebras(ls);
+document.body.removeChild(overlay);
+showToast('Aprovação parcial registrada.');
 renderResultadoTratativa();
+};
 }
 
 function reprovarTratativa(id){
@@ -1737,7 +1770,7 @@ const data=el('dataVenda').value||hojeISO();
 const numero=numeroBR(el('valorVenda').value);
 
 if(isNaN(numero)||numero<=0){
-alert('Preencha o valor da venda corretamente.');
+showToast('Preencha o valor da venda corretamente.');
 return;
 }
 
@@ -1922,10 +1955,10 @@ btn.textContent='ENVIADO ✔';
 btn.classList.add('enviado');
 btn.disabled=true;
 }else{
-alert('Seu celular não suporta envio direto.');
+showToast('Seu celular não suporta envio direto.');
 }
 }catch{
-alert('Erro ao compartilhar.');
+showToast('Erro ao compartilhar.');
 }
 }
 
@@ -1933,19 +1966,26 @@ function salvarTratativa(){
 const produto=el('produto').value.trim();
 const cod=el('cod').value.trim();
 const chegou=el('chegou').value.trim();
-const quebra=el('quebra').value.trim();
-const data=new Date().toLocaleDateString();
+const quebraQtd=el('quebra').value.trim();
 
 if(!produto||!cod){
-alert('Preencha produto e código.');
+showToast('Preencha produto e código.');
+return;
+}
+if(!chegou||!quebraQtd){
+showToast('Preencha Qtd Chegou e Qtd Quebra.');
 return;
 }
 
+const agora=new Date();
+const dataFormatada=agora.toLocaleDateString('pt-BR');
+const horaFormatada=agora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+
 textoFinal=`Cód: ${cod}
 ${produto}
-Data: ${data}
+Data: ${dataFormatada} ${horaFormatada}
 Qtd Chegou: ${chegou}
-Qtd Quebra: ${quebra}`;
+Qtd Quebra: ${quebraQtd}`;
 
 el('texto').innerText=textoFinal;
 montarFotosEnvio();
@@ -1954,66 +1994,159 @@ ir(3);
 
 function enviarTexto(){
 if(!textoFinal){
-alert('Nenhum texto para enviar.');
+showToast('Nenhum texto para enviar.');
 return;
 }
 window.open('https://wa.me/?text='+encodeURIComponent(textoFinal),'_blank');
 }
 
 function finalizarTratativa(){
-banco.push({
+if(!textoFinal){
+showToast('Nenhuma tratativa para finalizar.');
+return;
+}
+
+// Montar objeto completo da tratativa
+const agora=new Date();
+const dataISO=agora.toISOString().split('T')[0];
+const dataFormatada=agora.toLocaleDateString('pt-BR');
+const horaFormatada=agora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+
+const linhas=textoFinal.split('\n');
+const codLinha=(linhas[0]||'').replace('Cód:','').trim();
+const nomeProduto=(linhas[1]||'').trim();
+const chegouLinha=(linhas[3]||'').replace('Qtd Chegou:','').trim();
+const quebraLinha=(linhas[4]||'').replace('Qtd Quebra:','').trim();
+
+// Buscar produto para pegar custo
+const produtos=getProdutos();
+const prod=produtos.find(p=>p.cod===codLinha||p.nome===nomeProduto)||{};
+const custoUnit=numeroBR(prod.custo||0);
+const qtdQuebra=numeroBR(quebraLinha||0);
+const valorQuebra=(!isNaN(custoUnit)&&!isNaN(qtdQuebra)&&custoUnit>0)
+  ?(qtdQuebra*custoUnit).toFixed(2)
+  :'0';
+
+// Criar registro de quebra vinculado à tratativa
+const id='trat-'+Date.now().toString();
+const quebraItem={
+id,
+data:dataISO,
+produto:nomeProduto,
+cod:codLinha,
+quantidade:quebraLinha,
+tipo:prod.tipo||'KG',
+custoUnitario:isNaN(custoUnit)?'0':custoUnit.toFixed(3),
+valorQuebra,
+marcadoTratativa:true,
+aprovado:false,
+statusTratativa:'PENDENTE',
+valorConciliado:'0',
+quebraLiquida:valorQuebra,
+dataHora:dataFormatada+' '+horaFormatada,
+qtdChegou:chegouLinha
+};
+
+const quebras=getQuebras();
+// Só adiciona se não existir quebra com o mesmo id
+if(!quebras.find(q=>q.id===id)){
+quebras.push(quebraItem);
+setQuebras(quebras);
+}
+
+// Salvar na Lista (banco)
+var listaAtual=getBanco();
+listaAtual.push({
+id,
 texto:textoFinal,
-data:new Date().toLocaleDateString()
+data:dataFormatada,
+hora:horaFormatada,
+produto:nomeProduto,
+cod:codLinha
 });
-setBanco(banco);
+setBanco(listaAtual);
+banco=listaAtual;
+
+// Limpar tela
+fotos={prod:[],bal:[],eti:[]};
+['prev_prod','prev_bal','prev_eti'].forEach(function(rid){
+var d=el(rid);if(d)d.innerHTML='';
+});
+['buscaProduto','produto','cod','chegou','quebra'].forEach(function(rid){
+var c=el(rid);if(c)c.value='';
+});
+textoFinal='';
+el('texto').innerText='';
 
 atualizarLista();
-
-fotos={prod:[],bal:[],eti:[]};
-
-['prev_prod','prev_bal','prev_eti'].forEach(id=>{
-const d=el(id);
-if(d)d.innerHTML='';
-});
-
-['buscaProduto','produto','cod','chegou','quebra'].forEach(id=>{
-const c=el(id);
-if(c)c.value='';
-});
-
+showToast('Tratativa salva! Status: PENDENTE');
 ir(7);
 }
 
-function excluirDaLista(idx){
-if(!confirm('Excluir esta tratativa da lista?'))return;
+function atualizarLista(){
+var div=el('lista');
+if(!div)return;
+banco=getBanco();
+
+div.innerHTML='';
+
+if(banco.length===0){
+var vazio=document.createElement('div');
+vazio.className='card';
+vazio.style.cssText='text-align:center;color:#aaa;padding:20px;';
+vazio.textContent='Nenhuma tratativa finalizada.';
+div.appendChild(vazio);
+return;
+}
+
+banco.forEach(function(item,idx){
+var card=document.createElement('div');
+card.className='card';
+card.style.marginTop='12px';
+
+var dataEl=document.createElement('div');
+dataEl.style.cssText='font-size:12px;color:#ffcc00;font-weight:bold;margin-bottom:6px;';
+dataEl.textContent='Data: '+(item.data||'');
+card.appendChild(dataEl);
+
+var pre=document.createElement('pre');
+pre.style.cssText='margin:0;white-space:pre-wrap;word-break:break-word;';
+pre.textContent=item.texto||'';
+card.appendChild(pre);
+
+var nota=document.createElement('div');
+nota.style.cssText='margin-top:6px;font-size:12px;color:#aaa;';
+nota.textContent='Fotos enviadas via WhatsApp.';
+card.appendChild(nota);
+
+var btn=document.createElement('button');
+btn.textContent='EXCLUIR ESTA TRATATIVA';
+btn.style.cssText='display:block;margin-top:12px;width:100%;padding:14px;border:none;border-radius:8px;background:#c0392b;color:#fff;font-size:16px;font-weight:bold;cursor:pointer;';
+btn.setAttribute('data-idx',String(idx));
+card.appendChild(btn);
+
+div.appendChild(card);
+});
+
+div.onclick=function(e){
+var btn=e.target;
+if(btn.tagName!=='BUTTON')return;
+var idx=parseInt(btn.getAttribute('data-idx'),10);
+if(isNaN(idx))return;
+btn.textContent='Tem certeza? Toque novamente para confirmar.';
+btn.style.background='#922b21';
+btn.setAttribute('data-idx',String(idx));
+btn.setAttribute('data-confirming','1');
+btn.onclick=function(ev){
+ev.stopPropagation();
 var lista=getBanco();
 lista.splice(idx,1);
 setBanco(lista);
 banco=lista;
 atualizarLista();
 showToast('Tratativa excluida.');
-}
-window.excluirDaLista=excluirDaLista;
-
-function atualizarLista(){
-var div=el('lista');
-if(!div)return;
-banco=getBanco();
-var html='';
-if(banco.length===0){
-html='<div class="card" style="text-align:center;color:#aaa;padding:20px;">Nenhuma tratativa finalizada.</div>';
-}else{
-for(var i=0;i<banco.length;i++){
-var item=banco[i];
-html+='<div class="card" style="margin-top:12px;">';
-html+='<div style="font-size:12px;color:#ffcc00;font-weight:bold;margin-bottom:6px;">Data: '+(item.data||'')+'</div>';
-html+='<pre style="margin:0;white-space:pre-wrap;word-break:break-word;">'+(item.texto||'')+'</pre>';
-html+='<div style="margin-top:6px;font-size:12px;color:#aaa;">Fotos enviadas via WhatsApp.</div>';
-html+='<button onclick="excluirDaLista('+i+')" style="margin-top:12px;width:100%;padding:12px;border:none;border-radius:8px;background:#c0392b;color:#fff;font-size:16px;font-weight:bold;cursor:pointer;letter-spacing:0.5px;">EXCLUIR ESTA TRATATIVA</button>';
-html+='</div>';
-}
-}
-div.innerHTML=html;
+};
+};
 }
 function hashSimples(str){
 let h=0;
@@ -2105,19 +2238,36 @@ el('btnResultadoTratativa').onclick=abrirResultadoTratativa;
 el('btnResultadoMensal').onclick=abrirResultadoMensal;
 el('btnDashboard').onclick=abrirDashboard;
 el('btnLista').onclick=()=>{atualizarLista();ir(7)};
-el('btnLimparLista').onclick=()=>{
-if(!confirm('Apagar TODAS as tratativas da lista? Esta ação não pode ser desfeita.'))return;
+(function(){
+var confirmando=false,timer=null;
+el('btnLimparLista').onclick=function(){
+if(!confirmando){
+confirmando=true;
+el('btnLimparLista').textContent='Tem certeza? Toque novamente para apagar tudo.';
+el('btnLimparLista').style.background='#922b21';
+timer=setTimeout(function(){
+confirmando=false;
+el('btnLimparLista').textContent='🗑️ APAGAR LISTA COMPLETA';
+el('btnLimparLista').style.background='#7b241c';
+},3000);
+}else{
+clearTimeout(timer);
 setBanco([]);
 banco=[];
 atualizarLista();
+el('btnLimparLista').textContent='🗑️ APAGAR LISTA COMPLETA';
+el('btnLimparLista').style.background='#7b241c';
+confirmando=false;
 showToast('Lista apagada.');
+}
 };
+})();
 el('btnCadastro').onclick=abrirCadastro;
 const metaSalva=localStorage.getItem('metaMensal');
 if(el('inputMeta'))el('inputMeta').value=metaSalva||'50000';
 el('btnSalvarMeta').onclick=()=>{
 const v=el('inputMeta').value.replace(/[^\d]/g,'');
-if(!v||Number(v)<=0){alert('Digite uma meta válida.');return;}
+if(!v||Number(v)<=0){showToast('Digite uma meta válida.');return;}
 localStorage.setItem('metaMensal',v);
 showToast('Meta salva: '+dinheiroBR(v));
 atualizarGrafico();
@@ -2187,10 +2337,24 @@ el('galEtiqueta').onchange=e=>addFotos(e,'eti');
 
 el('btnContinuar').onclick=salvarTratativa;
 el('btnEnviarTexto').onclick=enviarTexto;
-el('btnFinalizar').onclick=()=>{
-if(!confirm('Finalizar e salvar esta tratativa na lista?'))return;
+(function(){
+var conf=false,t=null;
+el('btnFinalizar').onclick=function(){
+if(!conf){
+conf=true;
+el('btnFinalizar').textContent='Confirmar? Toque novamente para finalizar.';
+t=setTimeout(function(){
+conf=false;
+el('btnFinalizar').textContent='FINALIZAR';
+},3000);
+}else{
+clearTimeout(t);
+conf=false;
+el('btnFinalizar').textContent='FINALIZAR';
 finalizarTratativa();
+}
 };
+})();
 el('btnSalvarProduto').onclick=salvarProduto;
 }
 
