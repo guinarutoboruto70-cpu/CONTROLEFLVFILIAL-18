@@ -394,6 +394,10 @@ box-shadow:0 4px 15px rgba(0,0,0,0.5);
 
 <button id="btnEntrar" class="btn">🔐 ENTRAR</button>
 <input id="codigoPremium" placeholder="Código premium" style="text-align:center;margin-top:15px;">
+<div id="clientePremiumBox" class="card" style="text-align:center;margin-top:10px;font-size:13px;color:#cccccc;">
+<div>Seu ID de cliente</div>
+<div id="clientePremiumId" style="font-size:18px;color:#ffcc00;font-weight:bold;margin-top:6px;"></div>
+</div>
 
 <button id="btnAtivarPremium" class="btn">👑 ATIVAR PREMIUM</button>
 
@@ -406,6 +410,9 @@ box-shadow:0 4px 15px rgba(0,0,0,0.5);
 <h3>Painel Admin</h3>
 
 <button id="adminLiberar" class="btn">LIBERAR PREMIUM 31 DIAS</button>
+<input id="adminClienteId" placeholder="ID do cliente para gerar código" style="text-align:center;">
+<button id="adminGerarCodigo" class="btn">GERAR CÓDIGO PREMIUM DO CLIENTE</button>
+<button id="adminSimularDia" class="btn" style="background:#00aaff;color:#000;">🧪 SIMULAR DIA DE TESTE</button>
 <button id="adminResetar" class="btn" style="background:#ff4444;color:#fff;">RESETAR PREMIUM</button>
 
 <div id="adminStatus" class="status"></div>
@@ -478,6 +485,7 @@ color:#cccccc;
 <button id="btnDashboard" class="btn">Dashboard</button>
 <button id="btnLista" class="btn">Lista</button>
 <button id="btnCadastro" class="btn">Cadastro de Produtos</button>
+<button id="btnSimularDia" class="btn" style="background:#00aaff;color:#000;">🧪 Simular Venda e Quebra do Dia</button>
 
 <div class="card" style="margin-top:18px;">
 <div style="font-weight:bold;color:#ffcc00;margin-bottom:6px;">🎯 Meta Mensal de Vendas</div>
@@ -1052,6 +1060,50 @@ function setQuebras(lista){localStorage.setItem('quebrasDia',JSON.stringify(list
 function getVendas(){try{return JSON.parse(localStorage.getItem('vendasFLV')||'[]')}catch{return []}}
 function setVendas(lista){localStorage.setItem('vendasFLV',JSON.stringify(lista))}
 
+function simularDiaTeste(){
+carregarBase();
+const data=hojeISO();
+const produtosTeste=[
+{nome:'BANANA PRATA',custo:'3.200',valorEmbalagem:'51,20',qtdEmbalagem:'16'},
+{nome:'TOMATE',custo:'4.500',valorEmbalagem:'90,00',qtdEmbalagem:'20'},
+{nome:'LARANJA PERA',custo:'2.800',valorEmbalagem:'56,00',qtdEmbalagem:'20'}
+];
+
+let produtos=getProdutos();
+produtosTeste.forEach(item=>{
+const index=produtos.findIndex(p=>gerarId(p.nome)===gerarId(item.nome));
+if(index!==-1){
+produtos[index]={...produtos[index],custo:item.custo,valorEmbalagem:item.valorEmbalagem,qtdEmbalagem:item.qtdEmbalagem,fator:item.qtdEmbalagem};
+}
+});
+setProdutos(produtos.sort((a,b)=>a.nome.localeCompare(b.nome)));
+
+const vendas=getVendas().filter(v=>v.id!=='SIM-VENDA-DIA');
+vendas.push({id:'SIM-VENDA-DIA',data,valor:'12500.00',simulacao:true});
+setVendas(vendas);
+
+const quebras=getQuebras().filter(q=>!String(q.id||'').startsWith('SIM-QUEBRA-'));
+quebras.push(
+{id:'SIM-QUEBRA-1',data,produto:'BANANA PRATA',cod:'541',quantidade:'8',tipo:'KG',custoUnitario:'3.200',valorQuebra:'25.60',marcadoTratativa:true,tratativaFinalizada:true,dataHora:data+' 09:15',qtdChegou:'16',statusTratativa:'APROVADO',aprovado:true,qtdAprovada:'8.000',valorConciliado:'25.60',quebraLiquida:'0'},
+{id:'SIM-QUEBRA-2',data,produto:'TOMATE',cod:'7028',quantidade:'12',tipo:'KG',custoUnitario:'4.500',valorQuebra:'54.00',marcadoTratativa:true,tratativaFinalizada:true,dataHora:data+' 10:40',qtdChegou:'20',statusTratativa:'PARCIAL',aprovado:true,qtdAprovada:'5.000',valorConciliado:'22.50',quebraLiquida:'31.50'},
+{id:'SIM-QUEBRA-3',data,produto:'LARANJA PERA',cod:'5558',quantidade:'6',tipo:'KG',custoUnitario:'2.800',valorQuebra:'16.80',marcadoTratativa:false,aprovado:false,statusTratativa:'PENDENTE',valorConciliado:'0',quebraLiquida:'16.80'}
+);
+setQuebras(quebras);
+
+if(el('dataVenda'))el('dataVenda').value=data;
+if(el('dataQuebra'))el('dataQuebra').value=data;
+if(el('filtroResultadoData'))el('filtroResultadoData').value=data;
+if(el('dashMes'))el('dashMes').value=mesAtualISO();
+renderListaVendas();
+renderListaQuebraDia();
+renderResultadoTratativa();
+renderDashboard();
+calcularResultadoMensal();
+atualizarMiniDashboard();
+atualizarGrafico();
+showToast('Simulação criada: venda, quebras e tratativas do dia.');
+}
+
 function carregarBase(){
 const versaoAtual=localStorage.getItem("baseFLVVersao");
 const listaAntiga=getProdutos();
@@ -1607,6 +1659,8 @@ setQuebras(lista.filter(q=>q.id!==id));
 if(quebraEditandoId===id)limparCamposQuebra();
 
 renderListaQuebraDia();
+atualizarMiniDashboard();
+renderDashboard();
 el('msgQuebra').textContent='Item excluído com sucesso.';
 }
 
@@ -1693,6 +1747,12 @@ row.appendChild(btnPa);
 row.appendChild(btnRp);
 card.appendChild(row);
 }
+
+var excluir=document.createElement('button');
+excluir.textContent='🗑️ EXCLUIR TRATATIVA';
+excluir.style.cssText='display:block;margin-top:10px;width:100%;padding:10px;border:none;border-radius:8px;background:#7b241c;color:#fff;font-weight:bold;cursor:pointer;';
+excluir.onclick=function(){excluirTratativa(item.id);};
+card.appendChild(excluir);
 
 container.appendChild(card);
 });
@@ -1806,12 +1866,33 @@ renderResultadoTratativa();
 
 function excluirTratativa(id){
 const lista=getQuebras();
+const item=lista.find(q=>q.id===id);
+if(!item)return;
 
-const novaLista=lista.filter(q=>q.id!==id);
+if(!confirm('Excluir tratativa de '+(item.produto||'produto')+'?'))return;
+
+const novaLista=lista.map(q=>{
+if(q.id!==id)return q;
+return{
+...q,
+marcadoTratativa:false,
+tratativaFinalizada:false,
+dataHora:'',
+qtdChegou:'',
+statusTratativa:'PENDENTE',
+aprovado:false,
+qtdAprovada:'0',
+valorConciliado:'0',
+quebraLiquida:q.valorQuebra||'0'
+};
+});
 
 setQuebras(novaLista);
 
 renderResultadoTratativa();
+renderListaQuebraDia();
+renderDashboard();
+showToast('Tratativa excluída. A quebra voltou para pendente.');
 }
 function abrirResultadoMensal(){
 el('mesResultado').value=mesAtualISO();
@@ -2067,6 +2148,9 @@ setVendas(getVendas().filter(v=>v.id!==id));
 if(vendaEditandoId===id)limparCamposVenda();
 
 renderListaVendas();
+atualizarGrafico();
+atualizarMiniDashboard();
+renderDashboard();
 el('msgVenda').textContent='Venda excluída.';
 }
 
@@ -2361,28 +2445,51 @@ for(let i=0;i<str.length;i++){h=(Math.imul(31,h)+str.charCodeAt(i))|0;}
 return Math.abs(h).toString(36);
 }
 
-const CODIGO_HASH=hashSimples('FLV15');
+function obterClientePremiumId(){
+let id=localStorage.getItem('clientePremiumId');
+if(!id){
+const parteTempo=Date.now().toString(36).slice(-4).toUpperCase();
+const parteAleatoria=Math.random().toString(36).slice(2,6).toUpperCase();
+id='FLV-'+parteTempo+'-'+parteAleatoria;
+localStorage.setItem('clientePremiumId',id);
+}
+return id;
+}
+
+function normalizarCodigoPremium(codigo){
+return String(codigo||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+}
+
+function gerarCodigoPremiumCliente(clienteId){
+const id=normalizarCodigoPremium(clienteId);
+if(!id)return'';
+const base=hashSimples('premium-cliente-'+id+'-31dias').toUpperCase().padStart(8,'0').slice(-8);
+return 'FLV-'+base.slice(0,4)+'-'+base.slice(4);
+}
 
 function premiumAtivo(){
 const vencimento=localStorage.getItem('premiumVencimento');
 const hash=localStorage.getItem('premiumHash');
+const clienteId=obterClientePremiumId();
 if(!vencimento||!hash)return false;
-const esperado=hashSimples('flv-ok-'+vencimento);
+const esperado=hashSimples('flv-ok-'+clienteId+'-'+vencimento);
 if(hash!==esperado)return false;
 return new Date().getTime()<Number(vencimento);
 }
 
 function ativarPremium(){
 const codigo=el('codigoPremium').value.trim();
+const clienteId=obterClientePremiumId();
+const codigoEsperado=gerarCodigoPremiumCliente(clienteId);
 
-if(hashSimples(codigo)!==CODIGO_HASH){
-el('msgPremium').textContent='Código inválido';
+if(normalizarCodigoPremium(codigo)!==normalizarCodigoPremium(codigoEsperado)){
+el('msgPremium').textContent='Código inválido para este cliente';
 return;
 }
 
 const dias31=31*24*60*60*1000;
 const vencimento=new Date().getTime()+dias31;
-const hash=hashSimples('flv-ok-'+vencimento);
+const hash=hashSimples('flv-ok-'+clienteId+'-'+vencimento);
 
 localStorage.setItem('premiumVencimento',vencimento);
 localStorage.setItem('premiumHash',hash);
@@ -2392,6 +2499,8 @@ el('msgPremium').textContent='Premium ativado por 31 dias';
 location.reload();
 }
 function bind(){
+const clienteId=obterClientePremiumId();
+if(el('clientePremiumId'))el('clientePremiumId').textContent=clienteId;
 el('btnEntrar').onclick=()=>{  
 showToast("Entrando no sistema...");
 atualizarMiniDashboard();
@@ -2419,7 +2528,8 @@ el('adminLiberar').onclick=()=>{
 const dias31=31*24*60*60*1000;
 
 const vencimento=new Date().getTime()+dias31;
-const hash=hashSimples('flv-ok-'+vencimento);
+const clienteId=obterClientePremiumId();
+const hash=hashSimples('flv-ok-'+clienteId+'-'+vencimento);
 
 localStorage.setItem('premiumVencimento',vencimento);
 localStorage.setItem('premiumHash',hash);
@@ -2428,6 +2538,18 @@ el('adminStatus').textContent='Premium liberado por 31 dias';
 location.reload();
 
 };
+
+el('adminGerarCodigo').onclick=()=>{
+const id=(el('adminClienteId').value||obterClientePremiumId()).trim();
+if(!id){
+el('adminStatus').textContent='Informe o ID do cliente.';
+return;
+}
+const codigo=gerarCodigoPremiumCliente(id);
+el('adminStatus').textContent='Código premium para '+id+': '+codigo;
+};
+
+el('adminSimularDia').onclick=simularDiaTeste;
 
 el('adminResetar').onclick=()=>{
 
@@ -2445,6 +2567,7 @@ el('btnResultadoTratativa').onclick=abrirResultadoTratativa;
 el('btnResultadoMensal').onclick=abrirResultadoMensal;
 el('btnDashboard').onclick=abrirDashboard;
 el('btnLista').onclick=()=>{atualizarLista();ir(7)};
+el('btnSimularDia').onclick=simularDiaTeste;
 (function(){
 var confirmando=false,timer=null;
 el('btnLimparLista').onclick=function(){
@@ -2489,6 +2612,7 @@ el('btnResultadoTratativa').style.display='none';
 el('btnResultadoMensal').style.display='none';
 el('btnDashboard').style.display='none';
 el('btnLista').style.display='none';
+el('btnSimularDia').style.display='none';
 
 
 }
