@@ -766,12 +766,12 @@ const quebras=getQuebras();
 const hoje=hojeISO();
 const mes=mesAtualISO();
 
-const vendaHoje=vendas.filter(v=>v.data===hoje).reduce((s,v)=>s+numeroBR(v.valor||0),0);
-const quebraHoje=quebras.filter(q=>q.data===hoje).reduce((s,q)=>s+numeroBR(q.valorQuebra||0),0);
+const vendaHoje=vendas.filter(v=>v.data===hoje).reduce((s,v)=>s+numeroDecimalBR(v.valor||0),0);
+const quebraHoje=quebras.filter(q=>q.data===hoje).reduce((s,q)=>s+valorQuebraBruta(q),0);
 
 const vendasMes=vendas.filter(v=>mesmoMes(v.data,mes));
 const quebrasMes=quebras.filter(q=>mesmoMes(q.data,mes));
-const vendaTotal=vendasMes.reduce((s,v)=>s+numeroBR(v.valor||0),0);
+const vendaTotal=vendasMes.reduce((s,v)=>s+numeroDecimalBR(v.valor||0),0);
 const quebraLiquidaTotal=quebrasMes.reduce((s,q)=>s+valorQuebraLiquida(q),0);
 const indice=vendaTotal>0?((quebraLiquidaTotal/vendaTotal)*100):0;
 
@@ -916,37 +916,83 @@ return negativo?-n:n;
 return numeroBR(valor);
 }
 
+function numeroDecimalBR(valor){
+if(typeof valor==='number')return valor;
+const original=String(valor ?? '').trim();
+if(!original)return NaN;
+const limpo=original.replace(/[^\d.,-]/g,'');
+if(/^-?\d+(\.\d+)?$/.test(limpo))return Number(limpo);
+return numeroBR(valor);
+}
+
 function dinheiroBR(valor){
 const numero=numeroBR(valor);
 if(isNaN(numero))return 'R$ 0,00';
 return numero.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 }
 
+function dinheiroSeguroBR(valor){
+const numero=numeroDecimalBR(valor);
+if(isNaN(numero))return 'R$ 0,00';
+return numero.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+}
+
+function valorTratativaAprovada(item){
+if(!item)return 0;
+const status=item.statusTratativa||'';
+if(status!=='APROVADO'&&status!=='PARCIAL')return 0;
+const quantidadeAprovada=quantidadeAprovadaQuebra(item);
+const custoUnitario=numeroDecimalBR(item.custoUnitario||0);
+if(!isNaN(quantidadeAprovada)&&quantidadeAprovada>0&&!isNaN(custoUnitario)&&custoUnitario>0){
+return quantidadeAprovada*custoUnitario;
+}
+const conciliado=numeroDecimalBR(item.valorConciliado||0);
+return isNaN(conciliado)?0:conciliado;
+}
+
+function valorQuebraBruta(item){
+if(!item)return 0;
+const quantidade=quantidadeOriginalQuebra(item);
+const custoUnitario=numeroDecimalBR(item.custoUnitario||0);
+if(!isNaN(quantidade)&&quantidade>0&&!isNaN(custoUnitario)&&custoUnitario>0){
+return quantidade*custoUnitario;
+}
+const valor=numeroDecimalBR(item.valorQuebra||0);
+return isNaN(valor)?0:valor;
+}
+
 function valorQuebraLiquida(item){
 if(!item)return 0;
+const status=item.statusTratativa||'';
+if(status==='APROVADO')return 0;
+if(status==='PARCIAL'){
+const bruta=valorQuebraBruta(item);
+const aprovada=valorTratativaAprovada(item);
+return Math.max((isNaN(bruta)?0:bruta)-aprovada,0);
+}
 const valor=item.quebraLiquida;
 if(valor!==undefined&&valor!==null&&String(valor).trim()!==''){
-const numero=numeroBR(valor);
+const numero=numeroDecimalBR(valor);
 return isNaN(numero)?0:numero;
 }
-const fallback=numeroBR(item.valorQuebra||0);
+const fallback=numeroDecimalBR(item.valorQuebra||0);
 return isNaN(fallback)?0:fallback;
 }
 
 function quantidadeBR(valor,tipo){
-const numero=typeof valor==='number'?valor:numeroBR(valor);
+const numero=typeof valor==='number'?valor:numeroDecimalBR(valor);
 if(isNaN(numero))return '0';
 const casas=tipo==='UN'?0:3;
 return numero.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:casas});
 }
 
 function quantidadeOriginalQuebra(item){
-const numero=numeroBR(item?.quantidade||0);
+const numero=numeroDecimalBR(item?.quantidade||0);
 return isNaN(numero)?0:numero;
 }
 
 function quantidadeAprovadaQuebra(item){
-const numero=numeroBR(item?.qtdAprovada||0);
+const numero=numeroDecimalBR(item?.qtdAprovada||0);
 return isNaN(numero)?0:numero;
 }
 
@@ -963,7 +1009,7 @@ if(!item)return 0;
 if(item.statusTratativa==='APROVADO')return 0;
 const liquida=valorQuebraLiquida(item);
 if(!isNaN(liquida))return liquida;
-const custo=numeroBR(item.custoUnitario||0);
+const custo=numeroDecimalBR(item.custoUnitario||0);
 const restante=quantidadeRestanteQuebra(item);
 return !isNaN(custo)&&custo>0?restante*custo:0;
 }
@@ -1041,7 +1087,7 @@ return '';
 }
 function calcularValorQuebra(){
 const qtd=numeroBR(el('q_quantidade').value);
-const custo=numeroBR(el('q_custo_unit').value);
+const custo=numeroDecimalBR(el('q_custo_unit').value);
 
 if(!isNaN(qtd)&&qtd>0&&!isNaN(custo)&&custo>0){
 const valor=qtd*custo;
@@ -1235,7 +1281,7 @@ if(p.custo){
 const custo=document.createElement('div');
 custo.style.marginTop='5px';
 custo.style.fontSize='13px';
-custo.textContent=`Custo: ${dinheiroBR(p.custo)} / ${p.tipo||'KG'}`;
+custo.textContent=`Custo: ${dinheiroSeguroBR(p.custo)} / ${p.tipo||'KG'}`;
 card.appendChild(custo);
 }
 
@@ -1499,7 +1545,7 @@ const produto=el('q_produto').value.trim().toUpperCase();
 const cod=el('q_cod').value.trim();
 const quantidade=el('q_quantidade').value.trim();
 const tipo=el('q_tipo').value;
-const custoUnitario=numeroBR(el('q_custo_unit').value);
+const custoUnitario=numeroDecimalBR(el('q_custo_unit').value);
 const valorQuebra=calcularValorQuebra();
 
 if(!produto||!quantidade){
@@ -1578,7 +1624,7 @@ card.className='card';
 const info=document.createElement('div');
 const restante=quantidadeRestanteQuebra(item);
 const valorRestante=valorRestanteQuebra(item);
-info.innerHTML=`<b>${item.cod||'-'} - ${item.produto}</b><br>Quebra lançada: ${quantidadeBR(item.quantidade,item.tipo)} ${item.tipo}<br>Saldo na quebra: ${quantidadeBR(restante,item.tipo)} ${item.tipo}<br>Custo: ${dinheiroBR(item.custoUnitario||0)} / ${item.tipo}<br>Valor original: ${dinheiroBR(item.valorQuebra||0)}<br>Valor atual na quebra: ${dinheiroBR(valorRestante)}<br>Status: ${statusQuebraTexto(item)}`;
+info.innerHTML=`<b>${item.cod||'-'} - ${item.produto}</b><br>Quebra lançada: ${quantidadeBR(item.quantidade,item.tipo)} ${item.tipo}<br>Saldo na quebra: ${quantidadeBR(restante,item.tipo)} ${item.tipo}<br>Custo: ${dinheiroSeguroBR(item.custoUnitario||0)} / ${item.tipo}<br>Valor original: ${dinheiroSeguroBR(valorQuebraBruta(item))}<br>Valor atual na quebra: ${dinheiroSeguroBR(valorRestante)}<br>Status: ${statusQuebraTexto(item)}`;
 
 const tratar=document.createElement('button');
 tratar.className='btn-icon edit-icon';
@@ -1621,7 +1667,7 @@ el('q_cod').value=item.cod;
 el('q_quantidade').value=quantidadeRestanteQuebra(item)||item.quantidade;
 el('q_tipo').value=item.tipo||'KG';
 el('q_custo_unit').value=item.custoUnitario?formatarNumeroBR(Number(item.custoUnitario),3):'';
-el('q_valor_quebra').value=dinheiroBR(valorRestanteQuebra(item)||item.valorQuebra||0);
+el('q_valor_quebra').value=dinheiroSeguroBR(valorRestanteQuebra(item)||valorQuebraBruta(item));
 el('btnAdicionarQuebra').textContent='SALVAR ALTERAÇÃO';
 el('msgQuebra').textContent='Editando item da quebra.';
 window.scrollTo({top:0,behavior:'smooth'});
@@ -1712,12 +1758,12 @@ card.innerHTML=
 '<div style="font-size:12px;color:#aaa;margin-bottom:8px;">'+hora+'</div>'+
 '<div>Qtd Chegou: <b>'+qtdChegou+'</b></div>'+
 '<div>Qtd Quebra lançada: <b>'+quantidadeBR(qtdQuebra,item.tipo)+' '+(item.tipo||'KG')+'</b></div>'+
-'<div>Valor Quebra: <b>'+dinheiroBR(item.valorQuebra||0)+'</b></div>'+
+'<div>Valor Quebra: <b>'+dinheiroSeguroBR(valorQuebraBruta(item))+'</b></div>'+
 (status!=='PENDENTE'?
 '<div>Qtd Aprovada: <b>'+quantidadeBR(qtdAprov,item.tipo)+' '+(item.tipo||'KG')+'</b></div>'+
 '<div>Qtd Restante na quebra: <b>'+quantidadeBR(qtdRest,item.tipo)+' '+(item.tipo||'KG')+'</b></div>'+
-'<div>Valor Aprovado: <b>'+dinheiroBR(item.valorConciliado||0)+'</b></div>'+
-'<div>Quebra Restante: <b>'+dinheiroBR(valorRestanteQuebra(item))+'</b></div>'
+'<div>Valor Aprovado: <b>'+dinheiroSeguroBR(valorTratativaAprovada(item))+'</b></div>'+
+'<div>Quebra Restante: <b>'+dinheiroSeguroBR(valorRestanteQuebra(item))+'</b></div>'
 :'')+
 '<div style="margin-top:10px;font-size:16px;font-weight:bold;color:'+
 corStatusTratativa(status)+'">● STATUS: '+status+'</div>';
@@ -1768,9 +1814,9 @@ atualizar(item);
 
 const original=quantidadeOriginalQuebra(item);
 const aprovada=quantidadeAprovadaQuebra(item);
-const custoUnitario=numeroBR(item.custoUnitario||0);
+const custoUnitario=numeroDecimalBR(item.custoUnitario||0);
 const restante=Math.max(original-aprovada,0);
-const valorAprovado=!isNaN(custoUnitario)&&custoUnitario>0?aprovada*custoUnitario:numeroBR(item.valorConciliado||0);
+const valorAprovado=!isNaN(custoUnitario)&&custoUnitario>0?aprovada*custoUnitario:numeroDecimalBR(item.valorConciliado||0);
 const valorRestante=!isNaN(custoUnitario)&&custoUnitario>0?restante*custoUnitario:valorQuebraLiquida(item);
 
 item.qtdAprovada=aprovada.toFixed(3);
@@ -1830,12 +1876,12 @@ if(isNaN(qtdAprovada)||qtdAprovada<=0){
 showToast('Digite uma quantidade válida.');
 return;
 }
-const qtdOriginal=numeroBR(item.quantidade||0);
+const qtdOriginal=numeroDecimalBR(item.quantidade||0);
 if(qtdAprovada>qtdOriginal){
 showToast('Qtd aprovada não pode ser maior que a quantidade da quebra.');
 return;
 }
-const custoUnitario=numeroBR(item.custoUnitario||0);
+const custoUnitario=numeroDecimalBR(item.custoUnitario||0);
 if(isNaN(custoUnitario)||custoUnitario<=0){
 showToast('Produto sem custo cadastrado.');
 return;
@@ -1909,18 +1955,18 @@ let quebraBruta=0;
 let quebraLiquida=0;
 
 vendas.forEach(v=>{
-vendaTotal+=numeroBR(v.valor||v.valorTotal||0);
+vendaTotal+=numeroDecimalBR(v.valor||v.valorTotal||0);
 });
 
 quebras.forEach(q=>{
-quebraBruta+=numeroBR(q.valorQuebra||0);
+quebraBruta+=valorQuebraBruta(q);
 quebraLiquida+=valorQuebraLiquida(q);
 });
 
 const ranking={};
 quebras.forEach(q=>{
 const nome=q.produto||'Produto sem nome';
-const valor=numeroBR(q.valorQuebra||0);
+const valor=valorQuebraBruta(q);
 if(!ranking[nome])ranking[nome]=0;
 ranking[nome]+=valor;
 });
@@ -1932,18 +1978,18 @@ const topProdutos=Object.entries(ranking)
 el('dashTopProdutos').innerHTML=topProdutos.length
 ? topProdutos.map((p,i)=>`
 <div style="margin-top:8px;font-size:16px;">
-<b>${i+1}. ${p[0]}</b> - ${dinheiroBR(p[1])}
+<b>${i+1}. ${p[0]}</b> - ${dinheiroSeguroBR(p[1])}
 </div>
 `).join('')
 :'Nenhuma quebra registrada.';
 
 const indice=vendaTotal>0?((quebraLiquida/vendaTotal)*100):0;
 
-const dashTrat=quebras.reduce((s,q)=>s+numeroBR(q.valorConciliado||0),0);
-el('dashVenda').textContent=dinheiroBR(vendaTotal);
-el('dashQuebra').textContent=dinheiroBR(quebraBruta);
-const dashTrEl=el('dashTratativas');if(dashTrEl)dashTrEl.textContent=dinheiroBR(dashTrat);
-el('dashLiquida').textContent=dinheiroBR(quebraLiquida);
+const dashTrat=quebras.reduce((s,q)=>s+valorTratativaAprovada(q),0);
+el('dashVenda').textContent=dinheiroSeguroBR(vendaTotal);
+el('dashQuebra').textContent=dinheiroSeguroBR(quebraBruta);
+const dashTrEl=el('dashTratativas');if(dashTrEl)dashTrEl.textContent=dinheiroSeguroBR(dashTrat);
+el('dashLiquida').textContent=dinheiroSeguroBR(quebraLiquida);
 el('dashIndice').textContent=formatarNumeroBR(indice,2)+'%';
 
 const resumoTratativas=resumirTratativasMes(quebras);
@@ -1987,16 +2033,16 @@ const mes=el('mesResultado').value||mesAtualISO();
 const vendas=getVendas().filter(v=>mesmoMes(v.data,mes));
 const quebras=getQuebras().filter(q=>mesmoMes(q.data,mes));
 
-const vendaTotal=vendas.reduce((s,v)=>s+numeroBR(v.valor),0);
-const quebraBruta=quebras.reduce((s,q)=>s+numeroBR(q.valorQuebra||0),0);
-const tratativas=quebras.reduce((s,q)=>s+numeroBR(q.valorConciliado||0),0);
+const vendaTotal=vendas.reduce((s,v)=>s+numeroDecimalBR(v.valor),0);
+const quebraBruta=quebras.reduce((s,q)=>s+valorQuebraBruta(q),0);
+const tratativas=quebras.reduce((s,q)=>s+valorTratativaAprovada(q),0);
 const quebraLiquida=quebras.reduce((s,q)=>s+valorQuebraLiquida(q),0);
 const indice=vendaTotal>0?(quebraLiquida/vendaTotal)*100:0;
 
-el('resVendaTotal').textContent=dinheiroBR(vendaTotal);
-el('resQuebraBruta').textContent=dinheiroBR(quebraBruta);
-el('resTratativas').textContent=dinheiroBR(tratativas);
-el('resQuebraLiquida').textContent=dinheiroBR(quebraLiquida);
+el('resVendaTotal').textContent=dinheiroSeguroBR(vendaTotal);
+el('resQuebraBruta').textContent=dinheiroSeguroBR(quebraBruta);
+el('resTratativas').textContent=dinheiroSeguroBR(tratativas);
+el('resQuebraLiquida').textContent=dinheiroSeguroBR(quebraLiquida);
 el('resIndice').textContent=indice.toFixed(2).replace('.',',')+'%';
 
 let status='---';
@@ -2079,7 +2125,7 @@ const card=document.createElement('div');
 card.className='card';
 
 const info=document.createElement('div');
-info.innerHTML=`<b>${venda.data}</b><br>Venda FLV: ${dinheiroBR(venda.valor)}`;
+info.innerHTML=`<b>${venda.data}</b><br>Venda FLV: ${dinheiroSeguroBR(venda.valor)}`;
 
 const editar=document.createElement('button');
 editar.className='btn-icon edit-icon';
@@ -2103,7 +2149,7 @@ const mes=mesAtualISO();
 
 let total=0;
 vendas.filter(v=>mesmoMes(v.data,mes)).forEach(v=>{
-const valor=numeroBR(v.valor||0);
+const valor=numeroDecimalBR(v.valor||0);
 total+=isNaN(valor)?0:valor;
 });
 
@@ -2131,7 +2177,7 @@ if(!venda)return;
 
 vendaEditandoId=id;
 el('dataVenda').value=venda.data;
-el('valorVenda').value=dinheiroBR(venda.valor).replace('R$','').trim();
+el('valorVenda').value=dinheiroSeguroBR(venda.valor).replace('R$','').trim();
 el('btnSalvarVenda').textContent='SALVAR ALTERAÇÃO';
 el('msgVenda').textContent='Editando venda.';
 window.scrollTo({top:0,behavior:'smooth'});
@@ -2401,7 +2447,7 @@ card.appendChild(statusEl);
 
 var saldoEl=document.createElement('div');
 saldoEl.style.cssText='margin-top:4px;font-size:12px;color:#ccc;';
-saldoEl.textContent='Saldo atual na quebra: '+quantidadeBR(quantidadeRestanteQuebra(quebraVinculada),quebraVinculada.tipo)+' '+(quebraVinculada.tipo||'KG')+' / '+dinheiroBR(valorRestanteQuebra(quebraVinculada));
+saldoEl.textContent='Saldo atual na quebra: '+quantidadeBR(quantidadeRestanteQuebra(quebraVinculada),quebraVinculada.tipo)+' '+(quebraVinculada.tipo||'KG')+' / '+dinheiroSeguroBR(valorRestanteQuebra(quebraVinculada));
 card.appendChild(saldoEl);
 }
 

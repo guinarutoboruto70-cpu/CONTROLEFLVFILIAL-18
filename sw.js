@@ -1,4 +1,4 @@
-const CACHE_NAME = "controle-flv-v35";
+const CACHE_NAME = "controle-flv-v36";
 
 const APP_FILES = [
   "./",
