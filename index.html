@@ -788,7 +788,7 @@ function ir(t){
 document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
 const tela=el('tela'+t);
 if(tela)tela.classList.add('active');
-sessionStorage.setItem('telaAtualFLV',String(t));
+localStorage.setItem('telaAtualFLV',String(t));
 }
 
 function telaAtual(){
@@ -798,7 +798,8 @@ return String(ativa.id||'tela0').replace('tela','')||'0';
 }
 
 function salvarTelaAtual(){
-sessionStorage.setItem('telaAtualFLV',telaAtual());
+localStorage.setItem('telaAtualFLV',telaAtual());
+localStorage.setItem('manterTelaAposRefreshFLV','1');
 }
 
 function hojeISO(){
@@ -2674,10 +2675,11 @@ el('btnSimularDia').style.display='none';
 
 }
 
-let telaSalva=sessionStorage.getItem('telaAtualFLV');
+let telaSalva=localStorage.getItem('telaAtualFLV');
+const manterTelaAposRefresh=localStorage.getItem('manterTelaAposRefreshFLV')==='1';
 const telasPremium=['7','10','11','12','13','14'];
 if(telasPremium.includes(telaSalva)&&!premiumAtivo())telaSalva='0';
-if(telaSalva&&telaSalva!=='0'){
+if(manterTelaAposRefresh&&telaSalva&&telaSalva!=='0'){
 atualizarMiniDashboard();
 atualizarGrafico();
 if(telaSalva==='7')atualizarLista();
@@ -2689,6 +2691,7 @@ if(telaSalva==='13')calcularResultadoMensal();
 if(telaSalva==='14')renderDashboard();
 ir(telaSalva);
 }
+localStorage.removeItem('manterTelaAposRefreshFLV');
 el('voltarTratativa').onclick=()=>ir(1);
 el('voltarEnvio').onclick=()=>{fotos={prod:[],bal:[],eti:[]};['prev_prod','prev_bal','prev_eti'].forEach(id=>{const d=el(id);if(d)d.innerHTML='';});ir(2);};
 el('voltarLista').onclick=()=>ir(1);
