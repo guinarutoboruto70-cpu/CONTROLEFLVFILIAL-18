@@ -401,7 +401,7 @@ box-shadow:0 4px 15px rgba(0,0,0,0.5);
 
 <button id="btnAtivarPremium" class="btn">👑 ATIVAR PREMIUM</button>
 
-<button id="btnExportarBackup" class="btn" style="background:linear-gradient(135deg,#00c853,#00e676);color:#000;" onclick="exportarBackupFLV()">⬇️ EXPORTAR BACKUP DOS DADOS</button>
+<button id="btnExportarBackup" class="btn" style="background:linear-gradient(135deg,#00c853,#00e676);color:#000;">⬇️ EXPORTAR BACKUP DOS DADOS</button>
 
 <div id="msgPremium" class="status"></div>
 <div style="text-align:center;margin-top:25px;color:#cccccc;font-size:16px;line-height:1.6;">
@@ -776,6 +776,7 @@ mostrarPrompt();
 mostrarPrompt();
 }
 }
+if(el('btnExportarBackup'))el('btnExportarBackup').onclick=exportarBackupFLV;
 
 function getBanco(){try{return JSON.parse(localStorage.getItem('tratativasFinalizadas')||'[]')}catch{return []}}
 function setBanco(lista){localStorage.setItem('tratativasFinalizadas',JSON.stringify(lista))}
