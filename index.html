@@ -757,29 +757,51 @@ let tratativaOrigemQuebraId=null;
 let textoFinal='';
 let fotos={prod:[],bal:[],eti:[]};
 function exportarBackupFLV(){
-try{
 var keys=['produtos','quebrasDia','vendasFLV','metaMensal','tratativasFinalizadas'];
 var data={};
 keys.forEach(function(k){data[k]=localStorage.getItem(k);});
 var json=JSON.stringify(data,null,2);
-var blob=new Blob([json],{type:'application/json'});
-var url=URL.createObjectURL(blob);
-var a=document.createElement('a');
-a.href=url;
-a.download='backup-flv.json';
-document.body.appendChild(a);
-a.click();
-document.body.removeChild(a);
-setTimeout(function(){URL.revokeObjectURL(url)},2000);
-showToast('Backup baixado! Envie o arquivo backup-flv.json para o suporte.');
-}catch(e){
-var w=window.open('','_blank');
-if(w){
-w.document.write('<textarea style="width:100%;height:90vh;font-size:12px;">'+(e&&e.message||'erro')+'</textarea>');
-}else{
-alert('Não foi possível gerar o backup: '+(e&&e.message||e));
-}
-}
+
+var overlay=document.createElement('div');
+overlay.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.92);z-index:99999;display:flex;flex-direction:column;padding:16px;box-sizing:border-box;';
+
+var titulo=document.createElement('div');
+titulo.style.cssText='color:#ffcc00;font-weight:bold;font-size:16px;margin-bottom:10px;';
+titulo.textContent='📋 Toque na caixa abaixo, selecione tudo e copie. Depois cole no chat.';
+
+var area=document.createElement('textarea');
+area.style.cssText='flex:1;width:100%;background:#111;color:#0f0;font-size:11px;border:1px solid #ffcc00;border-radius:8px;padding:10px;box-sizing:border-box;';
+area.value=json;
+area.readOnly=true;
+
+var btnFechar=document.createElement('button');
+btnFechar.className='btn';
+btnFechar.textContent='FECHAR';
+btnFechar.style.marginTop='10px';
+btnFechar.onclick=function(){document.body.removeChild(overlay);};
+
+var btnSelecionar=document.createElement('button');
+btnSelecionar.className='btn';
+btnSelecionar.textContent='📌 SELECIONAR TUDO';
+btnSelecionar.style.marginTop='10px';
+btnSelecionar.style.background='#00c853';
+btnSelecionar.style.color='#000';
+btnSelecionar.onclick=function(){
+area.focus();
+area.setSelectionRange(0,area.value.length);
+try{document.execCommand('copy');showToast('Texto copiado! Agora cole no chat.');}catch(e){showToast('Selecionado. Copie manualmente.');}
+};
+
+overlay.appendChild(titulo);
+overlay.appendChild(area);
+overlay.appendChild(btnSelecionar);
+overlay.appendChild(btnFechar);
+document.body.appendChild(overlay);
+
+setTimeout(function(){
+area.focus();
+area.setSelectionRange(0,area.value.length);
+},300);
 }
 
 function getBanco(){try{return JSON.parse(localStorage.getItem('tratativasFinalizadas')||'[]')}catch{return []}}
