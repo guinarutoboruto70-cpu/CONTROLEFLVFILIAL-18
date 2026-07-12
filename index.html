@@ -226,7 +226,9 @@ transform:scale(1.01);
 }
 input[disabled]{background:#ddd;color:#333}
 .autocomplete{max-height:220px;overflow:auto}
-.preview img{width:70px;height:70px;object-fit:cover;margin:5px;border-radius:6px}
+.preview img{width:70px;height:70px;object-fit:cover;border-radius:6px;display:block}
+.preview-item{position:relative;display:inline-block;margin:5px}
+.preview-item .del-foto{position:absolute;top:-6px;right:-6px;background:#e53935;color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:14px;line-height:22px;text-align:center;cursor:pointer;padding:0;font-weight:bold}
 .mini{width:80px;height:80px;object-fit:cover;display:block;margin-top:5px;border-radius:6px}
 .status{margin-top:10px;color:#00ff88;text-align:center;font-weight:bold}
 #loading{
@@ -2143,9 +2145,23 @@ Array.from(evento.target.files||[]).forEach(file=>{
 const url=URL.createObjectURL(file);
 fotos[tipo].push({file,url,enviado:false});
 
+const wrapper=document.createElement('div');
+wrapper.className='preview-item';
+
 const img=document.createElement('img');
 img.src=url;
-preview.appendChild(img);
+
+const del=document.createElement('button');
+del.className='del-foto';
+del.textContent='✕';
+del.onclick=()=>{
+  fotos[tipo]=fotos[tipo].filter(f=>f.url!==url);
+  wrapper.remove();
+};
+
+wrapper.appendChild(img);
+wrapper.appendChild(del);
+preview.appendChild(wrapper);
 });
 
 evento.target.value='';
@@ -2744,7 +2760,7 @@ var SYNC_API=(function(){
   if(!h||h==='localhost'||h==='127.0.0.1'||h.includes('replit')||h.includes('repl.co')){
     return '/api/sync';
   }
-  return 'https://cloud-sync-data--williamguilher7.replit.app/api/sync';
+  return 'https://SEU-APP.replit.app/api/sync'; // ← altere para o URL do seu Replit publicado
 })();
 
 // Flag: false durante carga inicial para não sobrescrever dados da nuvem
