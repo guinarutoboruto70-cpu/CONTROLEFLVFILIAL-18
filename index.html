@@ -950,7 +950,11 @@ return isNaN(numero)?0:numero;
 }
 
 function quantidadeAprovadaQuebra(item){
-const numero=numeroBR(item?.qtdAprovada||0);
+// qtdAprovada é sempre salvo pelo app em formato JS (ponto decimal),
+// então usamos parseFloat para não confundir "50.000" com 50 mil.
+const v=item?.qtdAprovada;
+if(v===undefined||v===null||v==='')return 0;
+const numero=typeof v==='number'?v:parseFloat(String(v));
 return isNaN(numero)?0:numero;
 }
 
@@ -1788,7 +1792,7 @@ const restante=Math.max(original-aprovada,0);
 const valorAprovado=!isNaN(custoUnitario)&&custoUnitario>0?aprovada*custoUnitario:numeroBR(item.valorConciliado||0);
 const valorRestante=!isNaN(custoUnitario)&&custoUnitario>0?restante*custoUnitario:valorQuebraLiquida(item);
 
-item.qtdAprovada=aprovada.toFixed(3);
+item.qtdAprovada=aprovada;
 item.valorConciliado=isNaN(valorAprovado)?'0':valorAprovado.toFixed(2);
 item.quebraLiquida=restante<=0?'0':(isNaN(valorRestante)?'0':valorRestante.toFixed(2));
 
@@ -1801,7 +1805,7 @@ function aprovarTratativa(id){
 atualizarItemTratativa(id,function(item){
 item.statusTratativa='APROVADO';
 item.aprovado=true;
-item.qtdAprovada=quantidadeOriginalQuebra(item).toFixed(3);
+item.qtdAprovada=quantidadeOriginalQuebra(item);
 });
 showToast('Tratativa aprovada. Item saiu da quebra.');
 renderListaQuebraDia();
@@ -1880,7 +1884,7 @@ return;
 atualizarItemTratativa(id,function(itemAtualizado){
 itemAtualizado.statusTratativa=qtdAprovada>=qtdOriginal?'APROVADO':'PARCIAL';
 itemAtualizado.aprovado=true;
-itemAtualizado.qtdAprovada=qtdAprovada.toFixed(3);
+itemAtualizado.qtdAprovada=qtdAprovada;
 });
 document.body.removeChild(overlay);
 showToast(qtdAprovada>=qtdOriginal?'Tratativa aprovada. Item saiu da quebra.':'Aprovação parcial registrada. Saldo continua na quebra.');
