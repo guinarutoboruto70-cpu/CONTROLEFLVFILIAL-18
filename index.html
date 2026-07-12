@@ -2288,11 +2288,14 @@ const agora=new Date();
 const dataFormatada=agora.toLocaleDateString('pt-BR');
 const horaFormatada=agora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
 
+const _prodTrat=getProdutos().find(p=>p.cod===cod||p.nome===produto);
+const _tipoTrat=(_prodTrat&&_prodTrat.tipo)||'KG';
+
 textoFinal=`Cód: ${cod}
 ${produto}
-Data: ${dataFormatada} ${horaFormatada}
-Qtd Chegou: ${chegou}
-Qtd Quebra: ${quebraQtd}`;
+Data: ${dataFormatada}
+Qtd Chegou: ${chegou} ${_tipoTrat}
+Qtd Quebra: ${quebraQtd} ${_tipoTrat}`;
 
 el('texto').innerText=textoFinal;
 montarFotosEnvio();
@@ -2322,8 +2325,8 @@ const horaFormatada=agora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-d
 const linhas=textoFinal.split('\n');
 const codLinha=(linhas[0]||'').replace('Cód:','').trim();
 const nomeProduto=(linhas[1]||'').trim();
-const chegouLinha=(linhas[3]||'').replace('Qtd Chegou:','').trim();
-const quebraLinha=(linhas[4]||'').replace('Qtd Quebra:','').trim();
+const chegouLinha=(linhas[3]||'').replace('Qtd Chegou:','').trim().split(' ')[0];
+const quebraLinha=(linhas[4]||'').replace('Qtd Quebra:','').trim().split(' ')[0];
 
 // Buscar produto para pegar custo
 const produtos=getProdutos();
