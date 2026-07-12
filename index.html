@@ -794,12 +794,20 @@ const tela=el('tela'+t);
 if(tela)tela.classList.add('active');
 }
 
+function _dataLocalISO(d){
+const y=d.getFullYear();
+const m=String(d.getMonth()+1).padStart(2,'0');
+const dia=String(d.getDate()).padStart(2,'0');
+return `${y}-${m}-${dia}`;
+}
+
 function hojeISO(){
-return new Date().toISOString().split('T')[0];
+return _dataLocalISO(new Date());
 }
 
 function mesAtualISO(){
-return new Date().toISOString().slice(0,7);
+const d=new Date();
+return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
 }
 
 function mesmoMes(data,mes){
@@ -2307,7 +2315,7 @@ return;
 
 // Montar objeto completo da tratativa
 const agora=new Date();
-const dataISO=agora.toISOString().split('T')[0];
+const dataISO=_dataLocalISO(agora);
 const dataFormatada=agora.toLocaleDateString('pt-BR');
 const horaFormatada=agora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
 
