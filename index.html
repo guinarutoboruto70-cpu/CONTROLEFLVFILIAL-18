@@ -923,7 +923,7 @@ return numeroBR(valor);
 function dinheiroBR(valor){
 const numero=numeroBR(valor);
 if(isNaN(numero))return 'R$ 0,00';
-return numero.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+return 'R$ '+formatarNumeroBR(numero,2);
 }
 
 function valorQuebraLiquida(item){
@@ -996,7 +996,10 @@ return'NA QUEBRA';
 
 function formatarNumeroBR(numero,casas=2){
 if(isNaN(numero))return '';
-return Number(numero).toLocaleString('pt-BR',{minimumFractionDigits:casas,maximumFractionDigits:casas});
+const n=Number(numero).toFixed(casas);
+const partes=n.split('.');
+const inteiro=partes[0].replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+return casas>0?inteiro+','+(partes[1]||'00'.slice(0,casas)):inteiro;
 }
 
 function formatarCampoVenda(){
