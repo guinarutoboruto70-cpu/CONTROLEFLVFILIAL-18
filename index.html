@@ -366,7 +366,21 @@ text-overflow:ellipsis;
 font-size:11px;
 color:#aaa;
 margin-top:2px;
+display:flex;
+align-items:center;
+gap:5px;
 }
+.btn-editar-custo{
+background:none;
+border:none;
+color:#ffcc00;
+font-size:12px;
+cursor:pointer;
+padding:0 2px;
+line-height:1;
+opacity:0.7;
+}
+.btn-editar-custo:hover{opacity:1;}
 .quebra-check-qtd{
 width:80px;
 min-width:70px;
@@ -1577,9 +1591,13 @@ const card=document.createElement('div');
 card.className='card quebra-check-item';
 const info=document.createElement('div');
 info.className='quebra-check-info';
+const _codKey=String(p.cod||p.nome).replace(/[^a-zA-Z0-9]/g,'_');
 info.innerHTML='<div class="quebra-check-cod">'+String(p.cod||'—')+'</div>'
 +'<div class="quebra-check-nome">'+p.nome+'</div>'
-+(p.custo?'<div class="quebra-check-custo">Custo: '+dinheiroBR(p.custo)+' / '+(p.tipo||'KG')+'</div>':'');
++'<div class="quebra-check-custo" id="custo-label-'+_codKey+'">'
++'<span class="custo-texto">'+(p.custo?'Custo: '+dinheiroBR(p.custo)+' / '+(p.tipo||'KG'):'⚠️ Sem custo')+'</span>'
++'<button class="btn-editar-custo" title="Alterar custo" onclick="editarCustoNaQuebra(\''+String(p.cod||'').replace(/'/g,'')+'\')">'+'✏️'+'</button>'
++'</div>';
 const input=document.createElement('input');
 input.type='text';
 input.inputMode='decimal';
@@ -1596,6 +1614,66 @@ card.appendChild(info);
 card.appendChild(input);
 container.appendChild(card);
 });
+}
+
+function editarCustoNaQuebra(cod){
+  const produtos=getProdutos();
+  const idx=produtos.findIndex(function(p){return String(p.cod||'')=== String(cod||'');});
+  if(idx===-1){showToast('Produto não encontrado.');return;}
+  const p=produtos[idx];
+
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.88);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;';
+
+  overlay.innerHTML=
+    '<div style="background:#1a1a1a;border:2px solid #ffcc00;border-radius:16px;padding:24px;width:100%;max-width:340px;">'
+    +'<div style="font-size:15px;font-weight:bold;color:#ffcc00;margin-bottom:6px;">✏️ Alterar Custo</div>'
+    +'<div style="color:#fff;font-size:14px;margin-bottom:4px;">'+p.nome+'</div>'
+    +'<div style="color:#aaa;font-size:12px;margin-bottom:14px;">Custo atual: '+(p.custo?dinheiroBR(p.custo):'não cadastrado')+' / '+(p.tipo||'KG')+'</div>'
+    +'<input id="_inputNovoCusto" type="text" inputmode="decimal" placeholder="Ex: 4,50" style="width:100%;padding:12px;border-radius:8px;border:1px solid #ffcc00;background:#111;color:#fff;font-size:17px;box-sizing:border-box;margin-bottom:14px;text-align:center;">'
+    +'<div style="font-size:12px;color:#aaa;margin-bottom:14px;">O novo custo será salvo no cadastro do produto e aplicado nesta quebra.</div>'
+    +'<div style="display:flex;gap:8px;">'
+    +'<button id="_btnCancelarCusto" style="flex:1;padding:12px;border:none;border-radius:8px;background:#333;color:#fff;font-size:15px;font-weight:bold;cursor:pointer;">CANCELAR</button>'
+    +'<button id="_btnSalvarCusto" style="flex:1;padding:12px;border:none;border-radius:8px;background:#ffcc00;color:#000;font-size:15px;font-weight:bold;cursor:pointer;">SALVAR</button>'
+    +'</div>'
+    +'</div>';
+
+  document.body.appendChild(overlay);
+  var inputCusto=document.getElementById('_inputNovoCusto');
+  inputCusto.focus();
+
+  document.getElementById('_btnCancelarCusto').onclick=function(){document.body.removeChild(overlay);};
+
+  document.getElementById('_btnSalvarCusto').onclick=function(){
+    var raw=inputCusto.value.trim().replace(',','.');
+    var novo=parseFloat(raw);
+    if(isNaN(novo)||novo<=0){showToast('Digite um custo válido.');return;}
+
+    // Salva no cadastro de produtos
+    produtos[idx].custo=novo.toFixed(3);
+    setProdutos(produtos);
+
+    // Atualiza o input de quantidade com o novo data-custo
+    var inputs=document.querySelectorAll('.quebra-check-qtd');
+    inputs.forEach(function(inp){
+      if(String(inp.dataset.cod)===String(cod)){
+        inp.dataset.custo=novo.toFixed(3);
+      }
+    });
+
+    // Atualiza o label de custo visível na lista
+    var codKey=String(cod||p.nome).replace(/[^a-zA-Z0-9]/g,'_');
+    var label=document.getElementById('custo-label-'+codKey);
+    if(label){
+      var span=label.querySelector('.custo-texto');
+      if(span)span.textContent='Custo: '+dinheiroBR(novo.toFixed(3))+' / '+(p.tipo||'KG');
+    }
+
+    document.body.removeChild(overlay);
+    showToast('Custo atualizado: '+dinheiroBR(novo.toFixed(3))+' / '+(p.tipo||'KG')+' ✅');
+  };
+
+  overlay.addEventListener('click',function(e){if(e.target===overlay)document.body.removeChild(overlay);});
 }
 
 function salvarQuebrasLote(){
@@ -2172,7 +2250,7 @@ el('dashTopProdutos').innerHTML=topProdutos.length
 
 const indice=vendaTotal>0?((quebraLiquida/vendaTotal)*100):0;
 
-const dashTrat=quebras.reduce((s,q)=>s+numeroBR(q.valorConciliado||0),0);
+const dashTrat=Math.max(quebraBruta-quebraLiquida,0);
 el('dashVenda').textContent=dinheiroBR(vendaTotal);
 el('dashQuebra').textContent=dinheiroBR(quebraBruta);
 const dashTrEl=el('dashTratativas');if(dashTrEl)dashTrEl.textContent=dinheiroBR(dashTrat);
@@ -2222,7 +2300,7 @@ const quebras=getQuebras().filter(q=>mesmoMes(q.data,mes));
 
 const vendaTotal=vendas.reduce((s,v)=>s+numeroBR(v.valor),0);
 const quebraBruta=quebras.reduce((s,q)=>s+numeroBR(q.valorQuebra||0),0);
-const tratativas=quebras.reduce((s,q)=>s+numeroBR(q.valorConciliado||0),0);
+const tratativas=Math.max(quebraBruta-quebraLiquida,0);
 const quebraLiquida=quebras.reduce((s,q)=>s+valorQuebraLiquida(q),0);
 const indice=vendaTotal>0?(quebraLiquida/vendaTotal)*100:0;
 
@@ -3181,5 +3259,5 @@ document.addEventListener('DOMContentLoaded',function(){
 
 })();
 </script>
-</body>
+<script src="https://replit-cdn.com/replit-pill/replit-pill.global.js" data-repl-id="18a3c015-e77d-431b-b206-c04fbb9c3acc"></script></body>
 </html>
