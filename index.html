@@ -338,73 +338,6 @@ opacity:1;
 transform:translateY(0);
 }
 pre{white-space:pre-wrap}
-.quebra-check-item{
-display:flex;
-align-items:center;
-gap:10px;
-padding:10px 12px;
-margin-top:8px;
-}
-.quebra-check-info{
-flex:1;
-min-width:0;
-}
-.quebra-check-cod{
-font-size:12px;
-color:#ffcc00;
-font-weight:bold;
-}
-.quebra-check-nome{
-font-size:14px;
-font-weight:bold;
-color:#fff;
-white-space:nowrap;
-overflow:hidden;
-text-overflow:ellipsis;
-}
-.quebra-check-custo{
-font-size:11px;
-color:#aaa;
-margin-top:2px;
-display:flex;
-align-items:center;
-gap:5px;
-}
-.btn-editar-custo{
-background:none;
-border:none;
-color:#ffcc00;
-font-size:12px;
-cursor:pointer;
-padding:0 2px;
-line-height:1;
-opacity:0.7;
-}
-.btn-editar-custo:hover{opacity:1;}
-.quebra-check-qtd{
-width:80px;
-min-width:70px;
-padding:9px 8px;
-margin-top:0;
-text-align:center;
-font-size:15px;
-font-weight:bold;
-color:#ffcc00;
-background:rgba(255,204,0,0.08);
-border:1px solid rgba(255,204,0,0.3);
-border-radius:10px;
-}
-.quebra-check-qtd:focus{
-border:1px solid #ffcc00;
-background:rgba(255,204,0,0.14);
-box-shadow:0 0 10px rgba(255,204,0,0.3);
-transform:scale(1.04);
-}
-.quebra-check-qtd.tem-valor{
-border:1px solid #00ff88;
-background:rgba(0,255,136,0.10);
-color:#00ff88;
-}
 </style>
 </head>
 
@@ -652,42 +585,25 @@ color:#cccccc;
 <h2>Quebra do Dia</h2>
 
 <input id="dataQuebra" type="date">
-<input id="filtroListaQuebra" placeholder="🔍 Filtrar produto na lista..." style="margin-top:10px;">
+<input id="buscaQuebraProduto" placeholder="Buscar produto...">
+<div id="autoQuebraLista" class="autocomplete"></div>
 
+<input id="q_produto" placeholder="Produto">
+<input id="q_cod" placeholder="Código" inputmode="numeric">
+<input id="q_quantidade" placeholder="Quantidade da quebra" inputmode="decimal">
+
+<select id="q_tipo">
+<option value="KG">KG</option>
+<option value="UN">UN</option>
+</select>
+
+<input id="q_custo_unit" placeholder="Custo unitário" inputmode="decimal">
+<input id="q_valor_quebra" placeholder="Valor da quebra" inputmode="decimal">
+
+<button id="btnAdicionarQuebra" class="btn">ADICIONAR QUEBRA</button>
 <div id="msgQuebra" class="status"></div>
 
-<div id="listaChecklistQuebra" style="margin-top:14px;"></div>
-
-<button id="btnSalvarLoteQuebra" class="btn" style="margin-top:16px;">💾 SALVAR QUEBRAS DO DIA</button>
-
-<!-- Campos ocultos mantidos para compatibilidade interna -->
-<input id="buscaQuebraProduto" style="display:none;">
-<div id="autoQuebraLista" class="autocomplete" style="display:none;"></div>
-<input id="q_produto" style="display:none;">
-<input id="q_cod" style="display:none;">
-<input id="q_quantidade" style="display:none;">
-<select id="q_tipo" style="display:none;"><option value="KG">KG</option><option value="UN">UN</option></select>
-<input id="q_custo_unit" style="display:none;">
-<input id="q_valor_quebra" style="display:none;">
-<button id="btnAdicionarQuebra" style="display:none;">ADICIONAR QUEBRA</button>
-
-<!-- Modal de edição de quebra -->
-<div id="modalEditarQuebra" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.75);z-index:99999;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);align-items:center;justify-content:center;">
-<div style="background:rgba(20,20,20,0.97);border:1px solid rgba(255,204,0,0.3);border-radius:20px;padding:22px 18px;width:90%;max-width:380px;box-shadow:0 12px 40px rgba(0,0,0,0.6);">
-<h3 style="color:#ffcc00;text-align:center;margin-top:0;">✏️ Editar Quebra</h3>
-<div id="modalEditNomeProduto" style="font-weight:bold;color:#fff;margin-bottom:6px;font-size:15px;text-align:center;"></div>
-<label style="color:#aaa;font-size:12px;">Quantidade</label>
-<input id="modal_q_quantidade" placeholder="Quantidade" inputmode="decimal">
-<label style="color:#aaa;font-size:12px;margin-top:8px;display:block;">Custo unitário</label>
-<input id="modal_q_custo_unit" placeholder="Custo unitário" inputmode="decimal">
-<label style="color:#aaa;font-size:12px;margin-top:8px;display:block;">Valor da quebra</label>
-<input id="modal_q_valor_quebra" placeholder="Valor da quebra" inputmode="decimal">
-<button id="btnSalvarEdicaoQuebra" class="btn" style="margin-top:14px;">💾 SALVAR ALTERAÇÃO</button>
-<button id="btnCancelarEdicaoQuebra" class="btn" style="margin-top:8px;background:#222;color:#ffcc00;border:1px solid #ffcc00;">✖ CANCELAR</button>
-</div>
-</div>
-
-<h2 style="margin-top:28px;">Quebras Lançadas</h2>
+<h2>Lista da Quebra</h2>
 <div id="listaQuebraDia"></div>
 </div>
 
@@ -715,16 +631,64 @@ color:#cccccc;
 
 <div id="tela13" class="screen">
 <button id="voltarResultadoMensal" class="btn">⬅ VOLTAR</button>
-<h2>Resultado Mensal</h2>
+<h2>📊 Resultado Mensal</h2>
+<input id="mesResultado" type="month" style="margin-bottom:14px;">
 
-<input id="mesResultado" type="month">
+<!-- Status principal -->
+<div class="card" id="resStatusCard" style="border-left:6px solid #888;margin-bottom:6px;">
+  <div style="font-size:13px;color:#aaa;margin-bottom:4px;">Status da Meta (3,5%)</div>
+  <h2 id="resStatus" style="margin:0;font-size:22px;">---</h2>
+</div>
 
-<div class="card"><div>Venda Total</div><h2 id="resVendaTotal">R$ 0,00</h2></div>
-<div class="card"><div>Quebra Bruta</div><h2 id="resQuebraBruta">R$ 0,00</h2></div>
-<div class="card"><div>Tratativas Aprovadas</div><h2 id="resTratativas">R$ 0,00</h2></div>
-<div class="card"><div>Quebra Líquida</div><h2 id="resQuebraLiquida">R$ 0,00</h2></div>
-<div class="card"><div>Índice Atual</div><h2 id="resIndice">0,00%</h2></div>
-<div class="card"><div>Status Meta 3,5%</div><h2 id="resStatus">---</h2></div>
+<!-- Barra de progresso do índice -->
+<div class="card" style="padding:14px 16px;">
+  <div style="display:flex;justify-content:space-between;font-size:12px;color:#aaa;margin-bottom:6px;">
+    <span>Índice de Quebra</span><span id="resIndice" style="font-weight:bold;color:#fff;">0,00%</span>
+  </div>
+  <div style="background:#333;border-radius:8px;height:12px;overflow:hidden;">
+    <div id="resBarraIndice" style="height:100%;width:0%;border-radius:8px;background:#00c853;transition:width 0.5s;"></div>
+  </div>
+  <div style="display:flex;justify-content:space-between;font-size:11px;color:#666;margin-top:4px;">
+    <span>0%</span><span style="color:#ffcc00;">Meta 3,5%</span><span>7%+</span>
+  </div>
+</div>
+
+<!-- Cards de valores -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">
+  <div class="card" style="padding:12px;">
+    <div style="font-size:11px;color:#aaa;">💰 Venda Total</div>
+    <div id="resVendaTotal" style="font-size:17px;font-weight:bold;color:#fff;margin-top:4px;">R$ 0,00</div>
+  </div>
+  <div class="card" style="padding:12px;">
+    <div style="font-size:11px;color:#aaa;">📦 Dias c/ Venda</div>
+    <div id="resDiasVenda" style="font-size:17px;font-weight:bold;color:#ffcc00;margin-top:4px;">0 dias</div>
+  </div>
+  <div class="card" style="padding:12px;">
+    <div style="font-size:11px;color:#aaa;">⚠️ Quebra Bruta</div>
+    <div id="resQuebraBruta" style="font-size:17px;font-weight:bold;color:#ff4444;margin-top:4px;">R$ 0,00</div>
+  </div>
+  <div class="card" style="padding:12px;">
+    <div style="font-size:11px;color:#aaa;">✅ Conciliado</div>
+    <div id="resTratativas" style="font-size:17px;font-weight:bold;color:#00c853;margin-top:4px;">R$ 0,00</div>
+  </div>
+</div>
+
+<div class="card" style="margin-top:8px;border-left:6px solid #ffcc00;">
+  <div style="font-size:12px;color:#aaa;">Quebra Líquida (custo real)</div>
+  <h2 id="resQuebraLiquida" style="margin:4px 0 0;color:#ffcc00;">R$ 0,00</h2>
+</div>
+
+<!-- Tratativas breakdown -->
+<div class="card" style="margin-top:8px;">
+  <div style="font-size:13px;color:#aaa;margin-bottom:10px;font-weight:bold;">Tratativas do Mês</div>
+  <div id="resTratativasBreakdown" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px;"></div>
+</div>
+
+<!-- Top produtos -->
+<div class="card" style="margin-top:8px;">
+  <div style="font-size:13px;color:#aaa;margin-bottom:10px;font-weight:bold;">🏆 Top 5 Produtos com Maior Quebra</div>
+  <div id="resTopProdutos">—</div>
+</div>
 </div>
 <div id="tela14" class="screen">
   <button id="voltarDashboard" class="btn">← VOLTAR</button>
@@ -1570,269 +1534,8 @@ listaAuto.appendChild(div);
 function abrirQuebraDia(){
 el('dataQuebra').value=hojeISO();
 limparCamposQuebra();
-renderListaProdutosParaQuebra();
 renderListaQuebraDia();
 ir(10);
-}
-
-function renderListaProdutosParaQuebra(filtro){
-const container=el('listaChecklistQuebra');
-if(!container)return;
-const produtos=getProdutos().sort((a,b)=>a.nome.localeCompare(b.nome));
-const termo=(filtro||'').toUpperCase().trim();
-const lista=termo?produtos.filter(p=>p.nome.toUpperCase().includes(termo)||String(p.cod).includes(termo)):produtos;
-container.innerHTML='';
-if(lista.length===0){
-container.innerHTML='<div class="card" style="text-align:center;color:#aaa;">Nenhum produto encontrado. Cadastre produtos primeiro.</div>';
-return;
-}
-lista.forEach(function(p){
-const card=document.createElement('div');
-card.className='card quebra-check-item';
-const info=document.createElement('div');
-info.className='quebra-check-info';
-const _codKey=String(p.cod||p.nome).replace(/[^a-zA-Z0-9]/g,'_');
-info.innerHTML='<div class="quebra-check-cod">'+String(p.cod||'—')+'</div>'
-+'<div class="quebra-check-nome">'+p.nome+'</div>'
-+'<div class="quebra-check-custo" id="custo-label-'+_codKey+'">'
-+'<span class="custo-texto">'+(p.custo?'Custo: '+dinheiroBR(p.custo)+' / '+(p.tipo||'KG'):'⚠️ Sem custo')+'</span>'
-+'<button class="btn-editar-custo" title="Alterar custo" onclick="editarCustoNaQuebra(\''+String(p.cod||'').replace(/'/g,'')+'\')">'+'✏️'+'</button>'
-+'</div>';
-const input=document.createElement('input');
-input.type='text';
-input.inputMode='decimal';
-input.placeholder='Qtd';
-input.className='quebra-check-qtd';
-input.dataset.cod=p.cod||'';
-input.dataset.nome=p.nome;
-input.dataset.tipo=p.tipo||'KG';
-input.dataset.custo=p.custo||'0';
-input.oninput=function(){
-this.classList.toggle('tem-valor',this.value.trim()!=='');
-};
-card.appendChild(info);
-card.appendChild(input);
-container.appendChild(card);
-});
-}
-
-function editarCustoNaQuebra(cod){
-  const produtos=getProdutos();
-  const idx=produtos.findIndex(function(p){return String(p.cod||'')===String(cod||'');});
-  if(idx===-1){showToast('Produto não encontrado.');return;}
-  const p=produtos[idx];
-
-  var custoAtualNum=parseFloat(String(p.custo||'0').replace(',','.'))||0;
-  var custoAtualTexto=custoAtualNum>0?dinheiroBR(custoAtualNum):'não cadastrado';
-  var tipo=p.tipo||'KG';
-
-  // Detecta se o produto foi cadastrado como caixa/embalagem
-  var ehCaixa=(p.calcTipo==='EMBALAGEM')||(p.qtdEmbalagem&&parseFloat(p.qtdEmbalagem)>0);
-  var qtdEmbSalva=p.qtdEmbalagem||p.fator||'';
-
-  const overlay=document.createElement('div');
-  overlay.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.92);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;overflow-y:auto;';
-
-  overlay.innerHTML=
-    '<div style="background:#1a1a1a;border:2px solid #ffcc00;border-radius:16px;padding:20px;width:100%;max-width:360px;">'
-    +'<div style="font-size:15px;font-weight:bold;color:#ffcc00;margin-bottom:4px;">✏️ Alterar Custo</div>'
-    +'<div style="color:#fff;font-size:14px;font-weight:bold;margin-bottom:2px;">'+p.nome+'</div>'
-    +'<div style="color:#aaa;font-size:12px;margin-bottom:14px;">Custo atual: <b style="color:#ffcc00;">'+custoAtualTexto+'</b> / '+tipo+'</div>'
-
-    // Seletor de modo
-    +'<div style="display:flex;gap:8px;margin-bottom:16px;">'
-    +'<button id="_modoUnitario" style="flex:1;padding:10px;border:2px solid #555;border-radius:8px;background:#222;color:#aaa;font-size:13px;font-weight:bold;cursor:pointer;">💰 Preço direto</button>'
-    +'<button id="_modoCaixa" style="flex:1;padding:10px;border:2px solid #555;border-radius:8px;background:#222;color:#aaa;font-size:13px;font-weight:bold;cursor:pointer;">📦 Caixa / Embalagem</button>'
-    +'</div>'
-
-    // Painel: unitário
-    +'<div id="_painelUnitario" style="display:none;">'
-    +'<div style="color:#aaa;font-size:11px;margin-bottom:5px;">Custo direto por '+tipo+' (da NF):</div>'
-    +'<input id="_inputCustoUnit" type="text" inputmode="numeric" placeholder="Ex: 295 = R$ 2,95" style="width:100%;padding:12px;border-radius:8px;border:1px solid #ffcc00;background:#111;color:#fff;font-size:20px;box-sizing:border-box;text-align:center;font-weight:bold;">'
-    +'</div>'
-
-    // Painel: caixa
-    +'<div id="_painelCaixa" style="display:none;">'
-    +'<div style="color:#aaa;font-size:11px;margin-bottom:5px;">Valor total da caixa/embalagem (da NF):</div>'
-    +'<input id="_inputValorEmb" type="text" inputmode="numeric" placeholder="Ex: 5895 = R$ 58,95" style="width:100%;padding:12px;border-radius:8px;border:1px solid #ffcc00;background:#111;color:#fff;font-size:20px;box-sizing:border-box;margin-bottom:10px;text-align:center;font-weight:bold;">'
-    +'<div style="color:#aaa;font-size:11px;margin-bottom:5px;">Quantidade de '+tipo+' na caixa:</div>'
-    +'<input id="_inputQtdEmb" type="text" inputmode="decimal" placeholder="Ex: 20" style="width:100%;padding:12px;border-radius:8px;border:1px solid #ffcc00;background:#111;color:#fff;font-size:20px;box-sizing:border-box;text-align:center;font-weight:bold;">'
-    +'</div>'
-
-    // Preview do custo calculado
-    +'<div id="_previewCusto" style="text-align:center;color:#00ff88;font-size:15px;font-weight:bold;min-height:24px;margin:12px 0;padding:8px;border-radius:8px;background:#0a2a0a;display:none;"></div>'
-
-    +'<div style="font-size:11px;color:#aaa;margin-bottom:14px;">O custo será salvo no cadastro do produto automaticamente.</div>'
-    +'<div style="display:flex;gap:8px;">'
-    +'<button id="_btnCancelarCusto" style="flex:1;padding:12px;border:none;border-radius:8px;background:#333;color:#fff;font-size:15px;font-weight:bold;cursor:pointer;">CANCELAR</button>'
-    +'<button id="_btnSalvarCusto" style="flex:1;padding:12px;border:none;border-radius:8px;background:#ffcc00;color:#000;font-size:15px;font-weight:bold;cursor:pointer;">SALVAR</button>'
-    +'</div>'
-    +'</div>';
-
-  document.body.appendChild(overlay);
-
-  var btnUnitario=document.getElementById('_modoUnitario');
-  var btnCaixa=document.getElementById('_modoCaixa');
-  var painelUnitario=document.getElementById('_painelUnitario');
-  var painelCaixa=document.getElementById('_painelCaixa');
-  var inputUnit=document.getElementById('_inputCustoUnit');
-  var inputValorEmb=document.getElementById('_inputValorEmb');
-  var inputQtdEmb=document.getElementById('_inputQtdEmb');
-  var previewEl=document.getElementById('_previewCusto');
-  var modoAtual='unitario';
-
-  function ativarModo(modo){
-    modoAtual=modo;
-    if(modo==='unitario'){
-      btnUnitario.style.background='#ffcc00';btnUnitario.style.color='#000';btnUnitario.style.borderColor='#ffcc00';
-      btnCaixa.style.background='#222';btnCaixa.style.color='#aaa';btnCaixa.style.borderColor='#555';
-      painelUnitario.style.display='';painelCaixa.style.display='none';
-      atualizarPreview();
-      inputUnit.focus();
-    } else {
-      btnCaixa.style.background='#ffcc00';btnCaixa.style.color='#000';btnCaixa.style.borderColor='#ffcc00';
-      btnUnitario.style.background='#222';btnUnitario.style.color='#aaa';btnUnitario.style.borderColor='#555';
-      painelUnitario.style.display='none';painelCaixa.style.display='';
-      atualizarPreview();
-      inputValorEmb.focus();
-    }
-  }
-
-  function calcularCustoAtual(){
-    if(modoAtual==='unitario'){
-      return numeroMoedaBR(inputUnit.value);
-    } else {
-      var valEmb=numeroMoedaBR(inputValorEmb.value);
-      var qtd=numeroBR(inputQtdEmb.value.replace(',','.'));
-      if(!isNaN(valEmb)&&valEmb>0&&!isNaN(qtd)&&qtd>0) return valEmb/qtd;
-      return NaN;
-    }
-  }
-
-  function atualizarPreview(){
-    var val=calcularCustoAtual();
-    if(!isNaN(val)&&val>0){
-      previewEl.style.display='';
-      if(modoAtual==='caixa'){
-        var valEmb=numeroMoedaBR(inputValorEmb.value);
-        var qtd=numeroBR(inputQtdEmb.value.replace(',','.'));
-        previewEl.textContent=''+dinheiroBR(valEmb)+' ÷ '+qtd+' = '+dinheiroBR(val)+' / '+tipo;
-      } else {
-        previewEl.textContent='Custo: '+dinheiroBR(val)+' / '+tipo;
-      }
-    } else {
-      previewEl.style.display='none';
-      previewEl.textContent='';
-    }
-  }
-
-  // Pré-preenche modo unitário com custo atual
-  if(custoAtualNum>0){
-    inputUnit.value=String(Math.round(custoAtualNum*100));
-    formatarMoedaCentavosCampo(inputUnit);
-  }
-
-  // Pré-preenche quantidade salva no modo caixa
-  if(qtdEmbSalva) inputQtdEmb.value=qtdEmbSalva;
-
-  // Ativa o modo correto automaticamente
-  if(ehCaixa){
-    ativarModo('caixa');
-  } else {
-    ativarModo('unitario');
-    atualizarPreview();
-  }
-
-  btnUnitario.onclick=function(){ativarModo('unitario');};
-  btnCaixa.onclick=function(){ativarModo('caixa');};
-
-  inputUnit.oninput=function(){formatarMoedaCentavosCampo(this);atualizarPreview();};
-  inputValorEmb.oninput=function(){formatarMoedaCentavosCampo(this);atualizarPreview();};
-  inputQtdEmb.oninput=function(){atualizarPreview();};
-
-  document.getElementById('_btnCancelarCusto').onclick=function(){document.body.removeChild(overlay);};
-
-  document.getElementById('_btnSalvarCusto').onclick=function(){
-    var novo=calcularCustoAtual();
-    if(isNaN(novo)||novo<=0){
-      showToast(modoAtual==='caixa'?'Preencha o valor da caixa e a quantidade.':'Digite um custo válido.');
-      return;
-    }
-
-    var custoStr=String(novo);
-
-    produtos[idx].custo=custoStr;
-    setProdutos(produtos);
-
-    var inputs=document.querySelectorAll('.quebra-check-qtd');
-    inputs.forEach(function(inp){
-      if(String(inp.dataset.cod)===String(cod)){inp.dataset.custo=custoStr;}
-    });
-
-    var codKey=String(cod||p.nome).replace(/[^a-zA-Z0-9]/g,'_');
-    var label=document.getElementById('custo-label-'+codKey);
-    if(label){
-      var span=label.querySelector('.custo-texto');
-      if(span)span.textContent='Custo: '+dinheiroBR(novo)+' / '+tipo;
-    }
-
-    document.body.removeChild(overlay);
-    showToast('Custo atualizado: '+dinheiroBR(novo)+' / '+tipo+' ✅');
-  };
-
-  overlay.addEventListener('click',function(e){if(e.target===overlay)document.body.removeChild(overlay);});
-}
-window.editarCustoNaQuebra=editarCustoNaQuebra;
-
-function salvarQuebrasLote(){
-const data=el('dataQuebra').value||hojeISO();
-const inputs=document.querySelectorAll('.quebra-check-qtd');
-const lista=getQuebras();
-let count=0;
-inputs.forEach(function(input){
-const rawVal=input.value.trim().replace(',','.');
-if(!rawVal||isNaN(parseFloat(rawVal))||parseFloat(rawVal)<=0)return;
-const quantidade=rawVal;
-const quantidadeNumero=parseFloat(rawVal);
-const cod=input.dataset.cod||'';
-const produto=(input.dataset.nome||'').toUpperCase();
-const tipo=input.dataset.tipo||'KG';
-const custoUnitario=parseFloat(input.dataset.custo)||0;
-if(!produto)return;
-if(custoUnitario<=0){
-showToast('Produto '+produto+' sem custo cadastrado. Cadastre o custo antes.');
-return;
-}
-const valorQuebraNumero=custoUnitario*quantidadeNumero;
-lista.push({
-id:Date.now().toString()+'_'+count,
-data,
-produto,
-cod,
-quantidade,
-tipo,
-custoUnitario:custoUnitario.toFixed(3),
-valorQuebra:valorQuebraNumero.toFixed(2),
-marcadoTratativa:false,
-aprovado:false,
-statusTratativa:'PENDENTE',
-valorConciliado:'0',
-quebraLiquida:valorQuebraNumero.toFixed(2)
-});
-count++;
-input.value='';
-input.classList.remove('tem-valor');
-});
-if(count===0){
-showToast('Preencha a quantidade de pelo menos um produto.');
-return;
-}
-setQuebras(lista);
-renderListaQuebraDia();
-atualizarMiniDashboard();
-showToast(count+' quebra(s) salva(s) com sucesso! ✅');
-el('msgQuebra').textContent=count+' quebra(s) adicionada(s).';
-setTimeout(function(){el('msgQuebra').textContent='';},3000);
 }
 
 function limparCamposQuebra(){
@@ -1987,62 +1690,18 @@ container.appendChild(card);
 function editarQuebra(id){
 const item=getQuebras().find(q=>q.id===id);
 if(!item)return;
+
 quebraEditandoId=id;
-// Preenche campos ocultos para compatibilidade com adicionarOuEditarQuebra
 el('dataQuebra').value=item.data;
 el('q_produto').value=item.produto;
 el('q_cod').value=item.cod;
+el('q_quantidade').value=quantidadeRestanteQuebra(item)||item.quantidade;
 el('q_tipo').value=item.tipo||'KG';
-// Abre modal de edição
-el('modalEditNomeProduto').textContent=String(item.cod||'')+(item.cod?' - ':'')+item.produto;
-el('modal_q_quantidade').value=quantidadeRestanteQuebra(item)||item.quantidade;
-el('modal_q_custo_unit').value=item.custoUnitario?formatarNumeroBR(Number(item.custoUnitario),3):'';
-el('modal_q_valor_quebra').value=dinheiroBR(valorRestanteQuebra(item)||item.valorQuebra||0);
-const modal=el('modalEditarQuebra');
-modal.style.display='flex';
-}
-
-function fecharModalEdicaoQuebra(){
-el('modalEditarQuebra').style.display='none';
-quebraEditandoId=null;
-el('msgQuebra').textContent='';
-}
-
-function salvarEdicaoQuebraModal(){
-if(!quebraEditandoId)return;
-const quantidade=el('modal_q_quantidade').value.trim();
-const custoUnitario=numeroBR(el('modal_q_custo_unit').value);
-let valorQuebraNumero=numeroMoedaBR(el('modal_q_valor_quebra').value);
-const quantidadeNumero=numeroBR(quantidade);
-if(!quantidade||isNaN(quantidadeNumero)||quantidadeNumero<=0){
-showToast('Preencha a quantidade corretamente.');return;
-}
-if(isNaN(custoUnitario)||custoUnitario<=0){
-showToast('Preencha o custo unitário.');return;
-}
-if(isNaN(valorQuebraNumero)||valorQuebraNumero<=0){
-valorQuebraNumero=custoUnitario*quantidadeNumero;
-}
-const lista=getQuebras();
-const index=lista.findIndex(q=>q.id===quebraEditandoId);
-if(index!==-1){
-lista[index]={
-...lista[index],
-data:el('dataQuebra').value||hojeISO(),
-produto:lista[index].produto,
-cod:lista[index].cod,
-quantidade,
-tipo:lista[index].tipo||'KG',
-custoUnitario:custoUnitario.toFixed(3),
-valorQuebra:valorQuebraNumero.toFixed(2),
-quebraLiquida:valorQuebraNumero.toFixed(2)
-};
-}
-setQuebras(lista);
-fecharModalEdicaoQuebra();
-renderListaQuebraDia();
-atualizarMiniDashboard();
-showToast('Quebra alterada com sucesso! ✅');
+el('q_custo_unit').value=item.custoUnitario?formatarNumeroBR(Number(item.custoUnitario),3):'';
+el('q_valor_quebra').value=dinheiroBR(valorRestanteQuebra(item)||item.valorQuebra||0);
+el('btnAdicionarQuebra').textContent='SALVAR ALTERAÇÃO';
+el('msgQuebra').textContent='Editando item da quebra.';
+window.scrollTo({top:0,behavior:'smooth'});
 }
 
 function enviarQuebraParaTratativa(id){
@@ -2358,7 +2017,7 @@ el('dashTopProdutos').innerHTML=topProdutos.length
 
 const indice=vendaTotal>0?((quebraLiquida/vendaTotal)*100):0;
 
-const dashTrat=Math.max(quebraBruta-quebraLiquida,0);
+const dashTrat=quebras.reduce((s,q)=>s+numeroBR(q.valorConciliado||0),0);
 el('dashVenda').textContent=dinheiroBR(vendaTotal);
 el('dashQuebra').textContent=dinheiroBR(quebraBruta);
 const dashTrEl=el('dashTratativas');if(dashTrEl)dashTrEl.textContent=dinheiroBR(dashTrat);
@@ -2406,29 +2065,67 @@ const mes=el('mesResultado').value||mesAtualISO();
 const vendas=getVendas().filter(v=>mesmoMes(v.data,mes));
 const quebras=getQuebras().filter(q=>mesmoMes(q.data,mes));
 
-const vendaTotal=vendas.reduce((s,v)=>s+numeroBR(v.valor),0);
-const quebraBruta=quebras.reduce((s,q)=>s+numeroBR(q.valorQuebra||0),0);
-const tratativas=Math.max(quebraBruta-quebraLiquida,0);
-const quebraLiquida=quebras.reduce((s,q)=>s+valorQuebraLiquida(q),0);
+// Correção do bug: usa v.valor||v.valorTotal||0 e ||0 para evitar NaN no reduce
+const vendaTotal=vendas.reduce((s,v)=>s+(numeroBR(v.valor||v.valorTotal||0)||0),0);
+const quebraBruta=quebras.reduce((s,q)=>s+(numeroBR(q.valorQuebra||0)||0),0);
+const conciliado=quebras.reduce((s,q)=>s+(numeroBR(q.valorConciliado||0)||0),0);
+const quebraLiquida=quebras.reduce((s,q)=>s+(valorQuebraLiquida(q)||0),0);
 const indice=vendaTotal>0?(quebraLiquida/vendaTotal)*100:0;
 
+// Dias com venda registrada
+const diasVenda=new Set(vendas.map(v=>v.data)).size;
+
+// Valores nos cards
 el('resVendaTotal').textContent=dinheiroBR(vendaTotal);
 el('resQuebraBruta').textContent=dinheiroBR(quebraBruta);
-el('resTratativas').textContent=dinheiroBR(tratativas);
+el('resTratativas').textContent=dinheiroBR(conciliado);
 el('resQuebraLiquida').textContent=dinheiroBR(quebraLiquida);
-el('resIndice').textContent=indice.toFixed(2).replace('.',',')+'%';
+el('resIndice').textContent=formatarNumeroBR(indice,2)+'%';
+el('resDiasVenda').textContent=diasVenda+' dia'+(diasVenda!==1?'s':'');
 
-let status='---';
+// Barra de progresso (0% = verde, 3,5% = amarelo, 7%+ = vermelho)
+const pct=Math.min(indice/7*100,100);
+const barEl=el('resBarraIndice');
+barEl.style.width=pct+'%';
+barEl.style.background=indice<=3.5?'#00c853':indice<=5?'#ffcc00':'#ff4444';
 
+// Status principal com cor
+let status,cor,borderCor;
 if(vendaTotal<=0){
-status='SEM VENDA';
+  status='SEM VENDA REGISTRADA';cor='#aaa';borderCor='#555';
 }else if(indice<=3.5){
-status='✅ DENTRO DA META';
+  status='✅ DENTRO DA META ('+formatarNumeroBR(indice,2)+'%)';cor='#00c853';borderCor='#00c853';
+}else if(indice<=5){
+  status='⚠️ ATENÇÃO ('+formatarNumeroBR(indice,2)+'%)';cor='#ffcc00';borderCor='#ffcc00';
 }else{
-status='❌ FORA DA META';
+  status='❌ CRÍTICO ('+formatarNumeroBR(indice,2)+'%)';cor='#ff4444';borderCor='#ff4444';
 }
-
 el('resStatus').textContent=status;
+el('resStatus').style.color=cor;
+el('resStatusCard').style.borderLeftColor=borderCor;
+
+// Breakdown de tratativas
+const trat=quebras.filter(q=>q.marcadoTratativa||q.tratativaFinalizada);
+const pendentes=trat.filter(q=>!q.statusTratativa||q.statusTratativa==='PENDENTE').length;
+const aprovadas=trat.filter(q=>q.statusTratativa==='APROVADO').length;
+const parciais=trat.filter(q=>q.statusTratativa==='PARCIAL').length;
+const reprovadas=trat.filter(q=>q.statusTratativa==='REPROVADO').length;
+el('resTratativasBreakdown').innerHTML=
+  '<div style="background:#1a3a1a;border-radius:8px;padding:8px;text-align:center;"><div style="color:#00c853;font-size:20px;font-weight:bold;">'+aprovadas+'</div><div style="color:#aaa;font-size:11px;">Aprovadas</div></div>'+
+  '<div style="background:#3a2a1a;border-radius:8px;padding:8px;text-align:center;"><div style="color:#ff8800;font-size:20px;font-weight:bold;">'+parciais+'</div><div style="color:#aaa;font-size:11px;">Parciais</div></div>'+
+  '<div style="background:#3a1a1a;border-radius:8px;padding:8px;text-align:center;"><div style="color:#ff4444;font-size:20px;font-weight:bold;">'+reprovadas+'</div><div style="color:#aaa;font-size:11px;">Reprovadas</div></div>'+
+  '<div style="background:#2a2a2a;border-radius:8px;padding:8px;text-align:center;"><div style="color:#aaa;font-size:20px;font-weight:bold;">'+pendentes+'</div><div style="color:#aaa;font-size:11px;">Pendentes</div></div>';
+
+// Top 5 produtos com maior quebra
+const ranking={};
+quebras.forEach(q=>{
+  const k=q.produto||'Sem nome';
+  ranking[k]=(ranking[k]||0)+(numeroBR(q.valorQuebra||0)||0);
+});
+const top5=Object.entries(ranking).sort((a,b)=>b[1]-a[1]).slice(0,5);
+el('resTopProdutos').innerHTML=top5.length
+  ? top5.map((p,i)=>'<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #333;font-size:13px;"><span style="color:#fff;"><b style="color:#ffcc00;">'+(i+1)+'.</b> '+p[0]+'</span><span style="color:#ff4444;font-weight:bold;">'+dinheiroBR(p[1])+'</span></div>').join('')
+  : '<div style="color:#666;font-size:13px;">Nenhuma quebra registrada.</div>';
 }
 
 function abrirVendaDia(){
@@ -3039,16 +2736,11 @@ el('inputMeta').oninput=()=>formatarMoedaCentavosCampo(el('inputMeta'));
 el('buscaQuebraProduto').oninput=autoQuebraProduto;
 el('q_produto').onchange=preencherCustoQuebraPorProduto;
 el('q_cod').onchange=preencherCustoQuebraPorProduto;
-el('dataQuebra').onchange=function(){renderListaQuebraDia();renderListaProdutosParaQuebra(el('filtroListaQuebra').value);};
+el('dataQuebra').onchange=renderListaQuebraDia;
 el('q_quantidade').oninput=atualizarValoresQuebra;
 el('q_custo_unit').oninput=()=>{formatarMoedaCentavosCampo(el('q_custo_unit'));calcularValorQuebra();};
 el('q_valor_quebra').oninput=()=>{formatarMoedaCentavosCampo(el('q_valor_quebra'));calcularCustoPeloValorQuebra();};
 el('btnAdicionarQuebra').onclick=adicionarOuEditarQuebra;
-el('btnSalvarLoteQuebra').onclick=salvarQuebrasLote;
-el('filtroListaQuebra').oninput=function(){renderListaProdutosParaQuebra(this.value);};
-el('btnSalvarEdicaoQuebra').onclick=salvarEdicaoQuebraModal;
-el('btnCancelarEdicaoQuebra').onclick=fecharModalEdicaoQuebra;
-el('modalEditarQuebra').onclick=function(e){if(e.target===this)fecharModalEdicaoQuebra();};
 
 el('filtroResultadoData').onchange=renderResultadoTratativa;
 el('mesResultado').onchange=calcularResultadoMensal;
@@ -3367,5 +3059,5 @@ document.addEventListener('DOMContentLoaded',function(){
 
 })();
 </script>
-<script src="https://replit-cdn.com/replit-pill/replit-pill.global.js" data-repl-id="18a3c015-e77d-431b-b206-c04fbb9c3acc"></script></body>
+</body>
 </html>
