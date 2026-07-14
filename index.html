@@ -491,8 +491,24 @@ color:#cccccc;
 </div>
 <div id="metaDiariaInfo" style="margin-top:10px;font-size:12px;color:#aaa;display:none;">
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px;">
-    <div style="background:#1a2a1a;border-radius:6px;padding:6px 8px;"><div style="color:#aaa;font-size:10px;">Tolerância hoje</div><div id="metaDiarTolerance" style="color:#00c853;font-weight:bold;font-size:13px;">—</div></div>
-    <div style="background:#2a1a1a;border-radius:6px;padding:6px 8px;"><div style="color:#aaa;font-size:10px;">Quebra hoje</div><div id="metaDiarQuebra" style="color:#ff4444;font-weight:bold;font-size:13px;">—</div></div>
+    <div style="background:#1a2a1a;border-radius:6px;padding:6px 8px;">
+      <div style="color:#aaa;font-size:10px;">⚡ Tolerância (3,5%)</div>
+      <div id="metaDiarTolerance" style="color:#00c853;font-weight:bold;font-size:13px;">—</div>
+    </div>
+    <div style="background:#2a1a1a;border-radius:6px;padding:6px 8px;">
+      <div style="color:#aaa;font-size:10px;">📦 Quebra bruta</div>
+      <div id="metaDiarQuebra" style="color:#ff4444;font-weight:bold;font-size:13px;">—</div>
+    </div>
+  </div>
+  <div id="metaDiarTratRow" style="display:none;display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px;">
+    <div style="background:#1a2a2a;border-radius:6px;padding:6px 8px;">
+      <div style="color:#aaa;font-size:10px;">✅ Redução tratativas</div>
+      <div id="metaDiarReducao" style="color:#00c853;font-weight:bold;font-size:13px;">—</div>
+    </div>
+    <div id="metaDiarLiqCard" style="border-radius:6px;padding:6px 8px;">
+      <div style="color:#aaa;font-size:10px;">📉 Quebra líquida</div>
+      <div id="metaDiarLiq" style="font-weight:bold;font-size:15px;">—</div>
+    </div>
   </div>
   <div id="alertaDiario" class="alert-banner" style="display:none;margin-top:6px;"></div>
 </div>
@@ -967,18 +983,41 @@ const tolerEl=el('metaDiarTolerance');
 const quebraEl=el('metaDiarQuebra');
 const alertaEl=el('alertaDiario');
 const infoBox=el('metaDiariaInfo');
+const reducaoEl=el('metaDiarReducao');
+const liqEl=el('metaDiarLiq');
+const liqCard=el('metaDiarLiqCard');
+const tratRow=el('metaDiarTratRow');
 if(vendaHoje>0&&tolerEl&&quebraEl&&alertaEl&&infoBox){
   infoBox.style.display='block';
+  // Calcula líquida do dia: exclui APROVADO, usa saldo de PARCIAL
+  const quebrasHoje=quebras.filter(q=>q.data===hoje);
+  const quebraLiqHoje=quebrasHoje.reduce((s,q)=>s+valorQuebraLiquida(q),0);
+  const reducao=quebraHoje-quebraLiqHoje;
   const tolerancia=vendaHoje*0.035;
-  const indiceHoje=vendaHoje>0?(quebraHoje/vendaHoje)*100:0;
-  const saldo=tolerancia-quebraHoje;
+  const indiceHoje=vendaHoje>0?(quebraLiqHoje/vendaHoje)*100:0;
+  const saldo=tolerancia-quebraLiqHoje;
+  // Linha 1: tolerância e bruta
   tolerEl.textContent=dinheiroBR(tolerancia);
   quebraEl.textContent=dinheiroBR(quebraHoje);
-  quebraEl.style.color=quebraHoje>tolerancia?'#ff4444':'#00c853';
+  quebraEl.style.color='#ff8800';
+  // Linha 2: redução e líquida (só exibe se há tratativas)
+  if(reducao>0.005&&tratRow&&reducaoEl&&liqEl&&liqCard){
+    tratRow.style.display='grid';
+    reducaoEl.textContent='− '+dinheiroBR(reducao);
+    liqEl.textContent=dinheiroBR(quebraLiqHoje);
+    const dentro=quebraLiqHoje<=tolerancia;
+    liqEl.style.color=dentro?'#00c853':'#ff4444';
+    liqCard.style.background=dentro?'#1a3a1a':'#3a1a1a';
+  }else if(tratRow){
+    tratRow.style.display='none';
+    // sem tratativas: bruta = líquida, colorir bruta
+    quebraEl.style.color=quebraHoje<=tolerancia?'#00c853':'#ff4444';
+  }
+  // Alerta usa índice líquido
   if(indiceHoje>3.5){
     alertaEl.style.display='block';
     alertaEl.style.background=indiceHoje>5?'#c62828':'#e65100';
-    alertaEl.textContent=(indiceHoje>5?'❌ CRÍTICO':'⚠️ ATENÇÃO')+' — Quebra hoje: '+formatarNumeroBR(indiceHoje,2)+'% (meta: 3,5%) · Excedeu em '+dinheiroBR(Math.abs(saldo));
+    alertaEl.textContent=(indiceHoje>5?'❌ CRÍTICO':'⚠️ ATENÇÃO')+' — Índice líquido: '+formatarNumeroBR(indiceHoje,2)+'% · '+(saldo<0?'Excedeu '+dinheiroBR(Math.abs(saldo)):'Saldo '+dinheiroBR(saldo));
   }else{
     alertaEl.style.display='none';
   }
