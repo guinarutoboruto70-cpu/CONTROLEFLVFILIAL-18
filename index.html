@@ -750,15 +750,15 @@ color:#cccccc;
 <div class="modal-rel-inner">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
     <div id="modalRelTitulo" style="color:#ffcc00;font-weight:bold;font-size:16px;"></div>
-    <button onclick="el('modalRelatorio').style.display='none'" style="background:none;border:none;color:#aaa;font-size:22px;cursor:pointer;padding:0;">✕</button>
+    <button id="btnModalRelFecharX" style="background:none;border:none;color:#aaa;font-size:22px;cursor:pointer;padding:0;">✕</button>
   </div>
   <pre id="modalRelTexto"></pre>
   <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;">
-    <button onclick="_whatsappRelatorio()" class="btn" style="background:#25D366;padding:10px;font-size:13px;">📱 WhatsApp</button>
-    <button onclick="_copiarRelatorio()" class="btn" style="background:#333;padding:10px;font-size:13px;">📋 Copiar</button>
-    <button onclick="_imprimirRelatorio()" class="btn" style="background:#1565c0;padding:10px;font-size:13px;">🖨️ Imprimir</button>
+    <button id="btnRelWhatsapp" class="btn" style="background:#25D366;padding:10px;font-size:13px;">📱 WhatsApp</button>
+    <button id="btnRelCopiar" class="btn" style="background:#333;padding:10px;font-size:13px;">📋 Copiar</button>
+    <button id="btnRelImprimir" class="btn" style="background:#1565c0;padding:10px;font-size:13px;">🖨️ Imprimir</button>
   </div>
-  <button onclick="el('modalRelatorio').style.display='none'" class="btn" style="background:#444;width:100%;">Fechar</button>
+  <button id="btnModalRelFechar" class="btn" style="background:#444;width:100%;">Fechar</button>
 </div>
 </div>
 
@@ -770,19 +770,19 @@ color:#cccccc;
 <div class="card" style="margin-bottom:12px;">
   <div style="font-weight:bold;color:#ffcc00;margin-bottom:10px;">📦 Quebra do Dia</div>
   <input id="relDataQuebra" type="date" style="margin-bottom:10px;">
-  <button onclick="abrirRelatorioQuebraDia()" class="btn rel-btn" style="background:#0277bd;">📊 Gerar Relatório</button>
+  <button id="btnGerarQuebraDia" class="btn rel-btn" style="background:#0277bd;">📊 Gerar Relatório</button>
 </div>
 
 <div class="card" style="margin-bottom:12px;">
   <div style="font-weight:bold;color:#ffcc00;margin-bottom:10px;">📊 Resultado Mensal</div>
   <input id="relMesResultado" type="month" style="margin-bottom:10px;">
-  <button onclick="abrirRelatorioMensalRel()" class="btn rel-btn" style="background:#6a1b9a;">📊 Gerar Relatório</button>
+  <button id="btnGerarMensalRel" class="btn rel-btn" style="background:#6a1b9a;">📊 Gerar Relatório</button>
 </div>
 
 <div class="card" style="margin-bottom:12px;">
   <div style="font-weight:bold;color:#ffcc00;margin-bottom:10px;">📋 Tratativas do Mês</div>
   <input id="relMesTratativas" type="month" style="margin-bottom:10px;">
-  <button onclick="abrirRelatorioTratativas()" class="btn rel-btn" style="background:#bf360c;">📋 Gerar Relatório</button>
+  <button id="btnGerarTratativas" class="btn rel-btn" style="background:#bf360c;">📋 Gerar Relatório</button>
 </div>
 </div>
 
@@ -2989,6 +2989,17 @@ el('voltarRelatorios').onclick=voltarMenu;
 el('btnRelatorios').onclick=abrirRelatorios;
 el('btnCompartilharMensal').onclick=compartilharResultadoMensal;
 el('mesResultado').onchange=calcularResultadoMensal;
+// modal relatório
+var _fecharModal=function(){el('modalRelatorio').style.display='none';};
+el('btnModalRelFecharX').onclick=_fecharModal;
+el('btnModalRelFechar').onclick=_fecharModal;
+el('btnRelWhatsapp').onclick=_whatsappRelatorio;
+el('btnRelCopiar').onclick=_copiarRelatorio;
+el('btnRelImprimir').onclick=_imprimirRelatorio;
+// tela15 gerar
+el('btnGerarQuebraDia').onclick=abrirRelatorioQuebraDia;
+el('btnGerarMensalRel').onclick=abrirRelatorioMensalRel;
+el('btnGerarTratativas').onclick=abrirRelatorioTratativas;
 el('dashMes').onchange=renderDashboard;
 el('buscaProduto').oninput=autoProduto;
 el('produto').oninput=autoPorNome;
