@@ -770,7 +770,10 @@ color:#cccccc;
 <div class="card" style="margin-bottom:12px;">
   <div style="font-weight:bold;color:#ffcc00;margin-bottom:10px;">📦 Quebra do Dia</div>
   <input id="relDataQuebra" type="date" style="margin-bottom:10px;">
-  <button id="btnGerarQuebraDia" class="btn rel-btn" style="background:#0277bd;">📊 Gerar Relatório</button>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+    <button id="btnGerarQuebraDia" class="btn rel-btn" style="background:#0277bd;font-size:13px;">📊 Bruta</button>
+    <button id="btnGerarQuebraDiaLiq" class="btn rel-btn" style="background:#1b5e20;font-size:13px;">📉 Líquida</button>
+  </div>
 </div>
 
 <div class="card" style="margin-bottom:12px;">
@@ -788,7 +791,10 @@ color:#cccccc;
 <div class="card" style="margin-bottom:12px;">
   <div style="font-weight:bold;color:#ffcc00;margin-bottom:10px;">📦 Quebra do Mês (completo)</div>
   <input id="relMesQuebraMes" type="month" style="margin-bottom:10px;">
-  <button id="btnGerarQuebraMes" class="btn rel-btn" style="background:#00695c;">📦 Gerar Relatório</button>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+    <button id="btnGerarQuebraMes" class="btn rel-btn" style="background:#00695c;font-size:13px;">📊 Bruta</button>
+    <button id="btnGerarQuebraMesLiq" class="btn rel-btn" style="background:#1b5e20;font-size:13px;">📉 Líquida</button>
+  </div>
 </div>
 </div>
 
@@ -2803,7 +2809,12 @@ function _htmlPrint(titulo, conteudo){
     'Gerado em '+dataGer+' · Controle FLV</div></body></html>';
 }
 
-// --- Relatório Quebra do Dia ---
+// --- helpers compartilhados de relatório ---
+function _stIcon(q){var s=q.statusTratativa||'';return s==='APROVADO'?'✅':s==='PARCIAL'?'⚠️':s==='REPROVADO'?'❌':'';}
+function _stBgRow(q){var s=q.statusTratativa||'';return s==='APROVADO'?'background:#f1f8e9;':s==='PARCIAL'?'background:#fff8e1;':s==='REPROVADO'?'background:#ffebee;':'';}
+function _stLabel(q){var s=q.statusTratativa||'';return s==='APROVADO'?'Aprovado':s==='PARCIAL'?'Parcial':s==='REPROVADO'?'Reprovado':s==='PENDENTE'?'Pendente':'';}
+
+// --- Relatório Quebra do Dia — BRUTA (todos os itens, com status tratativa) ---
 function abrirRelatorioQuebraDia(){
   var data=el('relDataQuebra').value||hojeISO();
   var quebras=getQuebras().filter(function(q){return q.data===data;});
@@ -2811,34 +2822,96 @@ function abrirRelatorioQuebraDia(){
   if(quebras.length===0){showToast('Nenhuma quebra nesta data.');return;}
   var dataFmt=data.split('-').reverse().join('/');
   var vendaTotal=vendas.reduce(function(s,v){return s+(numeroBR(v.valor||v.valorTotal||0)||0);},0);
-  var quebraTotal=quebras.reduce(function(s,q){return s+(numeroBR(q.valorQuebra||0)||0);},0);
-  var indice=vendaTotal>0?(quebraTotal/vendaTotal)*100:0;
+  var quebraBruta=quebras.reduce(function(s,q){return s+(numeroBR(q.valorQuebra||0)||0);},0);
+  var conciliado=quebras.reduce(function(s,q){return s+(numeroBR(q.valorConciliado||0)||0);},0);
+  var quebraLiq=quebras.reduce(function(s,q){return s+valorQuebraLiquida(q);},0);
+  var indice=vendaTotal>0?(quebraLiq/vendaTotal)*100:0;
   var statusTxt=vendaTotal<=0?'—':indice<=3.5?'✅ DENTRO DA META':indice<=5?'⚠️ ATENÇÃO':'❌ CRÍTICO';
   var sep='━━━━━━━━━━━━━━━━━━━━';
-  var txt='📊 *RELATÓRIO DE QUEBRA - FLV*\n📅 *Data:* '+dataFmt+'\n'+sep+'\n';
+  var txt='📊 *QUEBRA BRUTA — FLV*\n📅 *Data:* '+dataFmt+'\n'+sep+'\n';
   quebras.forEach(function(q){
-    txt+='• *'+( q.produto||'—')+'*\n  '+formatarNumeroBR(numeroBR(q.quantidade||0),3)+' '+(q.tipo||'KG')+' — '+dinheiroBR(q.valorQuebra||0)+'\n';
+    var st=_stIcon(q);
+    txt+=(st?st+' ':'')+' *'+(q.produto||'—')+'*\n  '+formatarNumeroBR(numeroBR(q.quantidade||0),3)+' '+(q.tipo||'KG')+' — '+dinheiroBR(q.valorQuebra||0)+(q.statusTratativa?' ['+_stLabel(q)+']':'')+'\n';
   });
-  txt+=sep+'\n📦 *Total Quebra:* '+dinheiroBR(quebraTotal)+'\n';
+  txt+=sep+'\n📦 *Quebra Bruta:* '+dinheiroBR(quebraBruta)+'\n';
+  if(conciliado>0)txt+='✅ *Conciliado:* '+dinheiroBR(conciliado)+'\n';
+  txt+='📉 *Quebra Líquida:* '+dinheiroBR(quebraLiq)+'\n';
+  txt+='💰 *Venda do Dia:* '+dinheiroBR(vendaTotal)+'\n';
+  if(vendaTotal>0)txt+='📊 *Índice Líq.:* '+formatarNumeroBR(indice,2)+'%\n';
+  txt+='🏷️ *Status:* '+statusTxt;
+  var linhas=quebras.map(function(q){
+    return '<tr style="'+_stBgRow(q)+'"><td>'+(q.cod||'—')+'</td><td><b>'+(q.produto||'—')+'</b></td>'+
+      '<td style="text-align:right;">'+formatarNumeroBR(numeroBR(q.quantidade||0),3)+'</td>'+
+      '<td style="text-align:center;">'+(q.tipo||'KG')+'</td>'+
+      '<td style="text-align:right;">'+dinheiroBR(q.valorQuebra||0)+'</td>'+
+      '<td style="text-align:center;">'+(_stIcon(q)?_stIcon(q)+' '+_stLabel(q):'—')+'</td></tr>';
+  }).join('');
+  var rodape='<tr style="background:#fff3cd;font-weight:bold;"><td colspan="5">Quebra Bruta</td><td style="text-align:right;">'+dinheiroBR(quebraBruta)+'</td></tr>'+
+    (conciliado>0?'<tr style="background:#e8f5e9;"><td colspan="5">Conciliado (tratativas)</td><td style="text-align:right;">−'+dinheiroBR(conciliado)+'</td></tr>':'')+
+    '<tr style="background:#e3f2fd;font-weight:bold;"><td colspan="5">Quebra Líquida</td><td style="text-align:right;">'+dinheiroBR(quebraLiq)+'</td></tr>';
+  var sumario='<div style="margin-top:14px;padding:12px;background:#fffbf0;border-radius:8px;font-size:13px;line-height:2;">'+
+    '<b>Quebra Bruta:</b> '+dinheiroBR(quebraBruta)+'<br>'+
+    (conciliado>0?'<b>Conciliado:</b> '+dinheiroBR(conciliado)+'<br>':'')+
+    '<b>Quebra Líquida:</b> '+dinheiroBR(quebraLiq)+'<br>'+
+    '<b>Venda do Dia:</b> '+dinheiroBR(vendaTotal)+'<br>'+
+    (vendaTotal>0?'<b>Índice Líquido:</b> '+formatarNumeroBR(indice,2)+'%<br>':'')+
+    '<b>Status:</b> '+statusTxt+'</div>';
+  var html=_htmlPrint('Quebra Bruta — '+dataFmt,
+    '<p style="font-size:12px;color:#777;margin:0 0 8px;">Todos os itens · itens aprovados em tratativa destacados em verde</p>'+
+    '<table><thead><tr><th>COD</th><th>Produto</th><th style="text-align:right;">Qtd</th><th>Tipo</th><th style="text-align:right;">Valor Bruto</th><th>Tratativa</th></tr></thead>'+
+    '<tbody>'+linhas+'</tbody><tfoot>'+rodape+'</tfoot></table>'+sumario);
+  _mostrarRel('Quebra Bruta — '+dataFmt, txt, html);
+}
+
+// --- Relatório Quebra do Dia — LÍQUIDA (exclui APROVADO, usa residual p/ PARCIAL) ---
+function abrirRelatorioQuebraDiaLiq(){
+  var data=el('relDataQuebra').value||hojeISO();
+  var todasQuebras=getQuebras().filter(function(q){return q.data===data;});
+  var vendas=getVendas().filter(function(v){return v.data===data;});
+  if(todasQuebras.length===0){showToast('Nenhuma quebra nesta data.');return;}
+  // exclui APROVADO (saiu da quebra totalmente)
+  var quebras=todasQuebras.filter(function(q){return q.statusTratativa!=='APROVADO';});
+  var excluidos=todasQuebras.length-quebras.length;
+  var dataFmt=data.split('-').reverse().join('/');
+  var vendaTotal=vendas.reduce(function(s,v){return s+(numeroBR(v.valor||v.valorTotal||0)||0);},0);
+  var quebraLiq=quebras.reduce(function(s,q){return s+valorQuebraLiquida(q);},0);
+  var indice=vendaTotal>0?(quebraLiq/vendaTotal)*100:0;
+  var statusTxt=vendaTotal<=0?'—':indice<=3.5?'✅ DENTRO DA META':indice<=5?'⚠️ ATENÇÃO':'❌ CRÍTICO';
+  var sep='━━━━━━━━━━━━━━━━━━━━';
+  var txt='📉 *QUEBRA LÍQUIDA — FLV*\n📅 *Data:* '+dataFmt+'\n'+sep+'\n';
+  if(excluidos>0)txt+='_('+excluidos+' produto(s) aprovado(s) em tratativa excluído(s))_\n'+sep+'\n';
+  if(quebras.length===0){
+    txt+='Nenhum item de quebra restante após tratativas aprovadas.';
+    _mostrarRel('Quebra Líquida — '+dataFmt, txt, _htmlPrint('Quebra Líquida — '+dataFmt,'<p>Nenhum item restante. Todos aprovados em tratativas.</p>'));
+    return;
+  }
+  quebras.forEach(function(q){
+    var vliq=valorQuebraLiquida(q);
+    var st=_stIcon(q);
+    txt+=(st?st+' ':'')+' *'+(q.produto||'—')+'*\n  '+formatarNumeroBR(quantidadeRestanteQuebra(q),3)+' '+(q.tipo||'KG')+' — '+dinheiroBR(vliq)+(q.statusTratativa?' ['+_stLabel(q)+']':'')+'\n';
+  });
+  txt+=sep+'\n📉 *Total Líquido:* '+dinheiroBR(quebraLiq)+'\n';
   txt+='💰 *Venda do Dia:* '+dinheiroBR(vendaTotal)+'\n';
   if(vendaTotal>0)txt+='📊 *Índice:* '+formatarNumeroBR(indice,2)+'%\n';
   txt+='🏷️ *Status:* '+statusTxt;
   var linhas=quebras.map(function(q){
-    return '<tr><td>'+( q.cod||'—')+'</td><td><b>'+(q.produto||'—')+'</b></td>'+
-      '<td style="text-align:right;">'+formatarNumeroBR(numeroBR(q.quantidade||0),3)+'</td>'+
+    var vliq=valorQuebraLiquida(q);
+    return '<tr style="'+_stBgRow(q)+'"><td>'+(q.cod||'—')+'</td><td><b>'+(q.produto||'—')+'</b></td>'+
+      '<td style="text-align:right;">'+formatarNumeroBR(quantidadeRestanteQuebra(q),3)+'</td>'+
       '<td style="text-align:center;">'+(q.tipo||'KG')+'</td>'+
-      '<td style="text-align:right;">'+dinheiroBR(q.valorQuebra||0)+'</td></tr>';
+      '<td style="text-align:right;">'+dinheiroBR(vliq)+'</td>'+
+      '<td style="text-align:center;">'+(_stIcon(q)?_stIcon(q)+' '+_stLabel(q):'—')+'</td></tr>';
   }).join('');
-  var sumario='<div style="margin-top:14px;padding:12px;background:#fffbf0;border-radius:8px;font-size:14px;line-height:2;">'+
-    '<b>Total de Quebra:</b> '+dinheiroBR(quebraTotal)+'<br>'+
-    '<b>Venda do Dia:</b> '+dinheiroBR(vendaTotal)+'<br>'+
-    (vendaTotal>0?'<b>Índice:</b> '+formatarNumeroBR(indice,2)+'%<br>':'')+
-    '<b>Status:</b> '+statusTxt+'</div>';
-  var html=_htmlPrint('Relatório de Quebra — '+dataFmt,
-    '<table><thead><tr><th>COD</th><th>Produto</th><th style="text-align:right;">Qtd</th><th>Tipo</th><th style="text-align:right;">Valor</th></tr></thead>'+
+  var obs=excluidos>0?'<p style="font-size:12px;color:#2e7d32;margin:0 0 8px;">✅ '+excluidos+' produto(s) APROVADO(s) em tratativa excluído(s) desta lista.</p>':'';
+  var html=_htmlPrint('Quebra Líquida — '+dataFmt,
+    obs+'<table><thead><tr><th>COD</th><th>Produto</th><th style="text-align:right;">Qtd Restante</th><th>Tipo</th><th style="text-align:right;">Valor Líquido</th><th>Status</th></tr></thead>'+
     '<tbody>'+linhas+'</tbody>'+
-    '<tfoot><tr style="background:#fff3cd;font-weight:bold;"><td colspan="4">TOTAL</td><td style="text-align:right;">'+dinheiroBR(quebraTotal)+'</td></tr></tfoot></table>'+sumario);
-  _mostrarRel('Quebra — '+dataFmt, txt, html);
+    '<tfoot><tr style="background:#e3f2fd;font-weight:bold;"><td colspan="4">TOTAL LÍQUIDO</td><td style="text-align:right;">'+dinheiroBR(quebraLiq)+'</td><td></td></tr></tfoot></table>'+
+    '<div style="margin-top:14px;padding:12px;background:#fffbf0;border-radius:8px;font-size:13px;line-height:2;">'+
+    '<b>Quebra Líquida:</b> '+dinheiroBR(quebraLiq)+'<br><b>Venda:</b> '+dinheiroBR(vendaTotal)+'<br>'+
+    (vendaTotal>0?'<b>Índice:</b> '+formatarNumeroBR(indice,2)+'%<br>':'')+
+    '<b>Status:</b> '+statusTxt+'</div>');
+  _mostrarRel('Quebra Líquida — '+dataFmt, txt, html);
 }
 
 // --- Relatório Mensal (compartilhar do Resultado Mensal) ---
@@ -2950,53 +3023,79 @@ function abrirRelatorioTratativas(){
   _mostrarRel('Tratativas — '+mesFmt, txt, html);
 }
 
-// --- Relatório Quebra do Mês (lista completa) ---
+// --- helper: agrupa quebras por data e gera txt+html ---
+function _relQuebraMesCore(quebras, mesFmt, titulo, usarLiquida){
+  var porData={};
+  quebras.forEach(function(q){var d=q.data||'';if(!porData[d])porData[d]=[];porData[d].push(q);});
+  var datas=Object.keys(porData).sort();
+  var totalGeral=quebras.reduce(function(s,q){return s+(usarLiquida?valorQuebraLiquida(q):(numeroBR(q.valorQuebra||0)||0));},0);
+  var sep='━━━━━━━━━━━━━━━━━━━━';
+  var txt=(usarLiquida?'📉':'📦')+' *'+titulo.toUpperCase()+'*\n'+sep+'\n';
+  datas.forEach(function(d){
+    var dfmt=d.split('-').reverse().join('/');
+    txt+='📅 *'+dfmt+'*\n';
+    porData[d].forEach(function(q){
+      var val=usarLiquida?valorQuebraLiquida(q):(numeroBR(q.valorQuebra||0)||0);
+      var st=_stIcon(q);
+      txt+='  '+(st?st+' ':'')+''+(q.produto||'—')+' — '+formatarNumeroBR(usarLiquida?quantidadeRestanteQuebra(q):numeroBR(q.quantidade||0),3)+' '+(q.tipo||'KG')+' — '+dinheiroBR(val)+(q.statusTratativa?' ['+_stLabel(q)+']':'')+'\n';
+    });
+    var sub=porData[d].reduce(function(s,q){return s+(usarLiquida?valorQuebraLiquida(q):(numeroBR(q.valorQuebra||0)||0));},0);
+    txt+='  Subtotal: '+dinheiroBR(sub)+'\n\n';
+  });
+  txt+=sep+'\n📊 *Total de itens:* '+quebras.length+'\n💰 *Total '+(usarLiquida?'Líquido':'Quebra')+':* '+dinheiroBR(totalGeral);
+  var linhas='';
+  datas.forEach(function(d){
+    var dfmt=d.split('-').reverse().join('/');
+    var sub=porData[d].reduce(function(s,q){return s+(usarLiquida?valorQuebraLiquida(q):(numeroBR(q.valorQuebra||0)||0));},0);
+    linhas+='<tr style="background:#f0f0f0;"><td colspan="6" style="font-weight:bold;padding:8px;">📅 '+dfmt+'</td></tr>';
+    porData[d].forEach(function(q){
+      var val=usarLiquida?valorQuebraLiquida(q):(numeroBR(q.valorQuebra||0)||0);
+      var qtd=usarLiquida?quantidadeRestanteQuebra(q):numeroBR(q.quantidade||0);
+      linhas+='<tr style="'+_stBgRow(q)+'"><td>'+(q.cod||'—')+'</td><td>'+(q.produto||'—')+'</td>'+
+        '<td style="text-align:right;">'+formatarNumeroBR(qtd,3)+'</td>'+
+        '<td style="text-align:center;">'+(q.tipo||'KG')+'</td>'+
+        '<td style="text-align:right;">'+dinheiroBR(val)+'</td>'+
+        '<td style="text-align:center;">'+(_stIcon(q)?_stIcon(q)+' '+_stLabel(q):'—')+'</td></tr>';
+    });
+    linhas+='<tr style="background:#fffbf0;font-style:italic;"><td colspan="5" style="padding-left:16px;">Subtotal '+dfmt+'</td><td style="text-align:right;font-weight:bold;">'+dinheiroBR(sub)+'</td></tr>';
+  });
+  var html=_htmlPrint(titulo,
+    '<p style="font-size:12px;color:#777;margin:0 0 8px;">'+(usarLiquida?'Itens APROVADO excluídos · PARCIAL mostra saldo residual':'Todos os itens · aprovados em tratativa destacados em verde')+'</p>'+
+    '<table><thead><tr><th>COD</th><th>Produto</th><th style="text-align:right;">Qtd</th><th>Tipo</th><th style="text-align:right;">'+(usarLiquida?'Valor Líquido':'Valor Bruto')+'</th><th>Tratativa</th></tr></thead>'+
+    '<tbody>'+linhas+'</tbody>'+
+    '<tfoot><tr style="background:'+(usarLiquida?'#e3f2fd':'#fff3cd')+';font-weight:bold;"><td colspan="4">TOTAL ('+quebras.length+' itens)</td><td style="text-align:right;">'+dinheiroBR(totalGeral)+'</td><td></td></tr></tfoot></table>');
+  return {txt:txt, html:html};
+}
+
+// --- Relatório Quebra do Mês — BRUTA ---
 function abrirRelatorioQuebraMes(){
   var mes=el('relMesQuebraMes').value||mesAtualISO();
   var mParts=mes.split('-');
   var mesFmt=_nomesMes()[parseInt(mParts[1])]+'/'+mParts[0];
   var quebras=getQuebras().filter(function(q){return mesmoMes(q.data,mes);});
   if(quebras.length===0){showToast('Nenhuma quebra neste mês.');return;}
-  // agrupar por data
-  var porData={};
-  quebras.forEach(function(q){
-    var d=q.data||'';
-    if(!porData[d])porData[d]=[];
-    porData[d].push(q);
-  });
-  var datas=Object.keys(porData).sort();
-  var quebraTotal=quebras.reduce(function(s,q){return s+(numeroBR(q.valorQuebra||0)||0);},0);
-  var sep='━━━━━━━━━━━━━━━━━━━━';
-  var txt='📦 *QUEBRA DO MÊS — '+mesFmt+'*\n'+sep+'\n';
-  datas.forEach(function(d){
-    var dfmt=d.split('-').reverse().join('/');
-    txt+='📅 *'+dfmt+'*\n';
-    porData[d].forEach(function(q){
-      txt+='  • '+(q.produto||'—')+' — '+formatarNumeroBR(numeroBR(q.quantidade||0),3)+' '+(q.tipo||'KG')+' — '+dinheiroBR(q.valorQuebra||0)+'\n';
-    });
-    var subtotal=porData[d].reduce(function(s,q){return s+(numeroBR(q.valorQuebra||0)||0);},0);
-    txt+='  Subtotal: '+dinheiroBR(subtotal)+'\n\n';
-  });
-  txt+=sep+'\n📊 *Total de itens:* '+quebras.length+'\n💰 *Total Quebra:* '+dinheiroBR(quebraTotal);
-  // HTML com tabela agrupada por data
-  var linhas='';
-  datas.forEach(function(d){
-    var dfmt=d.split('-').reverse().join('/');
-    var subtotal=porData[d].reduce(function(s,q){return s+(numeroBR(q.valorQuebra||0)||0);},0);
-    linhas+='<tr style="background:#f5f5f5;"><td colspan="5" style="font-weight:bold;padding:8px;">📅 '+dfmt+'</td></tr>';
-    porData[d].forEach(function(q){
-      linhas+='<tr><td>'+(q.cod||'—')+'</td><td>'+(q.produto||'—')+'</td>'+
-        '<td style="text-align:right;">'+formatarNumeroBR(numeroBR(q.quantidade||0),3)+'</td>'+
-        '<td style="text-align:center;">'+(q.tipo||'KG')+'</td>'+
-        '<td style="text-align:right;">'+dinheiroBR(q.valorQuebra||0)+'</td></tr>';
-    });
-    linhas+='<tr style="background:#fffbf0;font-style:italic;"><td colspan="4" style="padding-left:16px;">Subtotal '+dfmt+'</td><td style="text-align:right;font-weight:bold;">'+dinheiroBR(subtotal)+'</td></tr>';
-  });
-  var html=_htmlPrint('Quebra do Mês — '+mesFmt,
-    '<table><thead><tr><th>COD</th><th>Produto</th><th style="text-align:right;">Qtd</th><th>Tipo</th><th style="text-align:right;">Valor</th></tr></thead>'+
-    '<tbody>'+linhas+'</tbody>'+
-    '<tfoot><tr style="background:#fff3cd;font-weight:bold;"><td colspan="4">TOTAL ('+quebras.length+' itens)</td><td style="text-align:right;">'+dinheiroBR(quebraTotal)+'</td></tr></tfoot></table>');
-  _mostrarRel('Quebra do Mês — '+mesFmt, txt, html);
+  var r=_relQuebraMesCore(quebras, mesFmt, 'Quebra Bruta do Mês — '+mesFmt, false);
+  _mostrarRel('Quebra Bruta — '+mesFmt, r.txt, r.html);
+}
+
+// --- Relatório Quebra do Mês — LÍQUIDA ---
+function abrirRelatorioQuebraMesLiq(){
+  var mes=el('relMesQuebraMes').value||mesAtualISO();
+  var mParts=mes.split('-');
+  var mesFmt=_nomesMes()[parseInt(mParts[1])]+'/'+mParts[0];
+  var todasQuebras=getQuebras().filter(function(q){return mesmoMes(q.data,mes);});
+  if(todasQuebras.length===0){showToast('Nenhuma quebra neste mês.');return;}
+  var quebras=todasQuebras.filter(function(q){return q.statusTratativa!=='APROVADO';});
+  var excluidos=todasQuebras.length-quebras.length;
+  if(quebras.length===0){
+    var msg='Todos os itens do mês foram aprovados em tratativas. Quebra Líquida = R$ 0,00';
+    showToast('Quebra Líquida zero — tudo aprovado!');
+    _mostrarRel('Quebra Líquida — '+mesFmt, msg, _htmlPrint('Quebra Líquida — '+mesFmt,'<p style="font-size:18px;color:#2e7d32;font-weight:bold;">✅ Todos os itens aprovados em tratativas. Quebra Líquida = R$ 0,00</p>'));
+    return;
+  }
+  var r=_relQuebraMesCore(quebras, mesFmt, 'Quebra Líquida do Mês — '+mesFmt, true);
+  var obs=excluidos>0?'\n_('+excluidos+' produto(s) APROVADO(s) em tratativa não incluído(s))_':'';
+  _mostrarRel('Quebra Líquida — '+mesFmt, r.txt+obs, r.html);
 }
 
 function abrirRelatorios(){
@@ -3052,9 +3151,11 @@ el('btnRelCopiar').onclick=_copiarRelatorio;
 el('btnRelImprimir').onclick=_imprimirRelatorio;
 // tela15 gerar
 el('btnGerarQuebraDia').onclick=abrirRelatorioQuebraDia;
+el('btnGerarQuebraDiaLiq').onclick=abrirRelatorioQuebraDiaLiq;
 el('btnGerarMensalRel').onclick=abrirRelatorioMensalRel;
 el('btnGerarTratativas').onclick=abrirRelatorioTratativas;
 el('btnGerarQuebraMes').onclick=abrirRelatorioQuebraMes;
+el('btnGerarQuebraMesLiq').onclick=abrirRelatorioQuebraMesLiq;
 el('dashMes').onchange=renderDashboard;
 el('buscaProduto').oninput=autoProduto;
 el('produto').oninput=autoPorNome;
