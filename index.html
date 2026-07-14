@@ -784,6 +784,12 @@ color:#cccccc;
   <input id="relMesTratativas" type="month" style="margin-bottom:10px;">
   <button id="btnGerarTratativas" class="btn rel-btn" style="background:#bf360c;">📋 Gerar Relatório</button>
 </div>
+
+<div class="card" style="margin-bottom:12px;">
+  <div style="font-weight:bold;color:#ffcc00;margin-bottom:10px;">📦 Quebra do Mês (completo)</div>
+  <input id="relMesQuebraMes" type="month" style="margin-bottom:10px;">
+  <button id="btnGerarQuebraMes" class="btn rel-btn" style="background:#00695c;">📦 Gerar Relatório</button>
+</div>
 </div>
 
 <script>
@@ -2909,10 +2915,8 @@ function abrirRelatorioTratativas(){
   var mes=el('relMesTratativas').value||mesAtualISO();
   var mParts=mes.split('-');
   var mesFmt=_nomesMes()[parseInt(mParts[1])]+'/'+mParts[0];
-  var banco=getBanco().filter(function(t){return mesmoMes(t.data,mes);});
-  var quebras=getQuebras().filter(function(q){return mesmoMes(q.data,mes)&&(q.marcadoTratativa||q.tratativaFinalizada);});
-  if(banco.length===0){showToast('Nenhuma tratativa neste mês.');return;}
-  var items=banco.map(function(t){var q=quebras.find(function(x){return x.id===t.id;})||{};return Object.assign({},t,q);});
+  var items=getQuebras().filter(function(q){return mesmoMes(q.data,mes)&&q.marcadoTratativa;});
+  if(items.length===0){showToast('Nenhuma tratativa neste mês.');return;}
   var stIcon=function(s){return s==='APROVADO'?'✅':s==='PARCIAL'?'⚠️':s==='REPROVADO'?'❌':'⏳';};
   var sep='━━━━━━━━━━━━━━━━━━━━';
   var txt='📋 *TRATATIVAS FLV — '+mesFmt+'*\n'+sep+'\n';
@@ -2946,10 +2950,60 @@ function abrirRelatorioTratativas(){
   _mostrarRel('Tratativas — '+mesFmt, txt, html);
 }
 
+// --- Relatório Quebra do Mês (lista completa) ---
+function abrirRelatorioQuebraMes(){
+  var mes=el('relMesQuebraMes').value||mesAtualISO();
+  var mParts=mes.split('-');
+  var mesFmt=_nomesMes()[parseInt(mParts[1])]+'/'+mParts[0];
+  var quebras=getQuebras().filter(function(q){return mesmoMes(q.data,mes);});
+  if(quebras.length===0){showToast('Nenhuma quebra neste mês.');return;}
+  // agrupar por data
+  var porData={};
+  quebras.forEach(function(q){
+    var d=q.data||'';
+    if(!porData[d])porData[d]=[];
+    porData[d].push(q);
+  });
+  var datas=Object.keys(porData).sort();
+  var quebraTotal=quebras.reduce(function(s,q){return s+(numeroBR(q.valorQuebra||0)||0);},0);
+  var sep='━━━━━━━━━━━━━━━━━━━━';
+  var txt='📦 *QUEBRA DO MÊS — '+mesFmt+'*\n'+sep+'\n';
+  datas.forEach(function(d){
+    var dfmt=d.split('-').reverse().join('/');
+    txt+='📅 *'+dfmt+'*\n';
+    porData[d].forEach(function(q){
+      txt+='  • '+(q.produto||'—')+' — '+formatarNumeroBR(numeroBR(q.quantidade||0),3)+' '+(q.tipo||'KG')+' — '+dinheiroBR(q.valorQuebra||0)+'\n';
+    });
+    var subtotal=porData[d].reduce(function(s,q){return s+(numeroBR(q.valorQuebra||0)||0);},0);
+    txt+='  Subtotal: '+dinheiroBR(subtotal)+'\n\n';
+  });
+  txt+=sep+'\n📊 *Total de itens:* '+quebras.length+'\n💰 *Total Quebra:* '+dinheiroBR(quebraTotal);
+  // HTML com tabela agrupada por data
+  var linhas='';
+  datas.forEach(function(d){
+    var dfmt=d.split('-').reverse().join('/');
+    var subtotal=porData[d].reduce(function(s,q){return s+(numeroBR(q.valorQuebra||0)||0);},0);
+    linhas+='<tr style="background:#f5f5f5;"><td colspan="5" style="font-weight:bold;padding:8px;">📅 '+dfmt+'</td></tr>';
+    porData[d].forEach(function(q){
+      linhas+='<tr><td>'+(q.cod||'—')+'</td><td>'+(q.produto||'—')+'</td>'+
+        '<td style="text-align:right;">'+formatarNumeroBR(numeroBR(q.quantidade||0),3)+'</td>'+
+        '<td style="text-align:center;">'+(q.tipo||'KG')+'</td>'+
+        '<td style="text-align:right;">'+dinheiroBR(q.valorQuebra||0)+'</td></tr>';
+    });
+    linhas+='<tr style="background:#fffbf0;font-style:italic;"><td colspan="4" style="padding-left:16px;">Subtotal '+dfmt+'</td><td style="text-align:right;font-weight:bold;">'+dinheiroBR(subtotal)+'</td></tr>';
+  });
+  var html=_htmlPrint('Quebra do Mês — '+mesFmt,
+    '<table><thead><tr><th>COD</th><th>Produto</th><th style="text-align:right;">Qtd</th><th>Tipo</th><th style="text-align:right;">Valor</th></tr></thead>'+
+    '<tbody>'+linhas+'</tbody>'+
+    '<tfoot><tr style="background:#fff3cd;font-weight:bold;"><td colspan="4">TOTAL ('+quebras.length+' itens)</td><td style="text-align:right;">'+dinheiroBR(quebraTotal)+'</td></tr></tfoot></table>');
+  _mostrarRel('Quebra do Mês — '+mesFmt, txt, html);
+}
+
 function abrirRelatorios(){
   el('relDataQuebra').value=hojeISO();
   el('relMesResultado').value=mesAtualISO();
   el('relMesTratativas').value=mesAtualISO();
+  el('relMesQuebraMes').value=mesAtualISO();
   ir(15);
 }
 // ========== FIM RELATÓRIOS ==========
@@ -3000,6 +3054,7 @@ el('btnRelImprimir').onclick=_imprimirRelatorio;
 el('btnGerarQuebraDia').onclick=abrirRelatorioQuebraDia;
 el('btnGerarMensalRel').onclick=abrirRelatorioMensalRel;
 el('btnGerarTratativas').onclick=abrirRelatorioTratativas;
+el('btnGerarQuebraMes').onclick=abrirRelatorioQuebraMes;
 el('dashMes').onchange=renderDashboard;
 el('buscaProduto').oninput=autoProduto;
 el('produto').oninput=autoPorNome;
