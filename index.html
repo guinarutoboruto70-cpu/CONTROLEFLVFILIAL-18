@@ -626,6 +626,8 @@ color:#cccccc;
 <button id="btnNovoProduto" class="btn" style="background:#222;color:#ffcc00;border:1px solid #ffcc00;margin-top:6px;">🧹 LIMPAR CAMPOS / NOVO PRODUTO</button>
 </div>
 
+<button id="btnListaPadrao" class="btn" style="background:linear-gradient(135deg,#1a5276,#154360);margin-top:10px;font-size:13px;">📋 CARREGAR LISTA PADRÃO FLV (51 produtos)</button>
+
 <div id="msgProduto" class="status"></div>
 <div id="listaProdutos"></div>
 </div>
@@ -1595,6 +1597,91 @@ limparCamposProduto();
 el('msgProduto').textContent='✅ Novo produto cadastrado: '+nome;
 }
 
+
+function carregarListaPadraoFLV(){
+  var padrao=[
+    {cod:'1124',nome:'ABACATE',tipo:'KG'},
+    {cod:'1125',nome:'ABACAXI',tipo:'UN'},
+    {cod:'1129',nome:'ABOBORA ITALIA',tipo:'KG'},
+    {cod:'1130',nome:'ABOBORA JAPONESA',tipo:'KG'},
+    {cod:'1134',nome:'ABOBORA MORANGA',tipo:'KG'},
+    {cod:'242', nome:'ALHO',tipo:'KG'},
+    {cod:'739', nome:'AMEIXA',tipo:'KG'},
+    {cod:'538', nome:'BANANA NANICA',tipo:'KG'},
+    {cod:'537', nome:'BANANA MACA',tipo:'KG'},
+    {cod:'541', nome:'BANANA PRATA',tipo:'KG'},
+    {cod:'543', nome:'BANANA DA TERRA',tipo:'KG'},
+    {cod:'688', nome:'BATATA',tipo:'KG'},
+    {cod:'681', nome:'BATATA DOCE',tipo:'KG'},
+    {cod:'7714',nome:'BETERRABA',tipo:'KG'},
+    {cod:'8461',nome:'CARA',tipo:'KG'},
+    {cod:'8572',nome:'CEBOLA',tipo:'KG'},
+    {cod:'8574',nome:'CEBOLA ROXA',tipo:'KG'},
+    {cod:'8589',nome:'CENOURA',tipo:'KG'},
+    {cod:'7547',nome:'CHUCHU',tipo:'KG'},
+    {cod:'7620',nome:'COCO SECO',tipo:'KG'},
+    {cod:'7622',nome:'COCO VERDE',tipo:'KG'},
+    {cod:'5022',nome:'GENGIBRE',tipo:'KG'},
+    {cod:'5053',nome:'GOIABA',tipo:'KG'},
+    {cod:'5213',nome:'INHAME',tipo:'KG'},
+    {cod:'5556',nome:'LARANJA BAHIA',tipo:'KG'},
+    {cod:'5558',nome:'LARANJA PERA',tipo:'KG'},
+    {cod:'4352',nome:'LIMAO',tipo:'KG'},
+    {cod:'3284',nome:'MACA PACOTE',tipo:'UN'},
+    {cod:'3280',nome:'MACA GALA NACIONAL',tipo:'KG'},
+    {cod:'3343',nome:'MAMAO FORMOSA',tipo:'KG'},
+    {cod:'3346',nome:'MAMAO PAPAYA',tipo:'KG'},
+    {cod:'3422',nome:'MANGA TOMMY',tipo:'KG'},
+    {cod:'3369',nome:'MANGA PALMER',tipo:'KG'},
+    {cod:'3370',nome:'MARACUJA',tipo:'KG'},
+    {cod:'3560',nome:'MELANCIA',tipo:'KG'},
+    {cod:'3543',nome:'MELAO PINGO DOCE',tipo:'KG'},
+    {cod:'3565',nome:'MELAO AMARELO',tipo:'KG'},
+    {cod:'3572',nome:'MELAO REI',tipo:'KG'},
+    {cod:'3592',nome:'MEXERICA POKAN',tipo:'KG'},
+    {cod:'3555',nome:'MILHO VERDE',tipo:'UN'},
+    {cod:'17408',nome:'NECTARINA',tipo:'KG'},
+    {cod:'1766',nome:'PEPINO COMUM',tipo:'KG'},
+    {cod:'1768',nome:'PEPINO JAPONES',tipo:'KG'},
+    {cod:'1778',nome:'PERA',tipo:'KG'},
+    {cod:'1895',nome:'PIMENTAO',tipo:'KG'},
+    {cod:'1327',nome:'REPOLHO BRANCO',tipo:'KG'},
+    {cod:'1329',nome:'REPOLHO ROXO',tipo:'KG'},
+    {cod:'7028',nome:'TOMATE',tipo:'KG'},
+    {cod:'7021',nome:'TOMATE GRAPE',tipo:'KG'},
+    {cod:'7027',nome:'TOMATE ITALIANO',tipo:'KG'},
+    {cod:'7175',nome:'PIMENTAO VERDE',tipo:'KG'}
+  ];
+  var lista=getProdutos();
+  var adicionados=0;
+  var ignorados=0;
+  padrao.forEach(function(p){
+    var jaExiste=lista.some(function(x){
+      return String(x.cod||'').trim()===String(p.cod).trim()||gerarId(x.nome)===gerarId(p.nome);
+    });
+    if(jaExiste){ignorados++;return;}
+    lista.push({
+      id:gerarId(p.nome),
+      nome:p.nome,
+      cod:p.cod,
+      tipo:p.tipo,
+      calcTipo:'UNITARIO',
+      fator:'',
+      valorEmbalagem:'',
+      qtdEmbalagem:'',
+      custo:'0.000'
+    });
+    adicionados++;
+  });
+  if(!adicionados){
+    showToast('Todos os produtos já estão cadastrados! ('+ignorados+' existentes)');
+    return;
+  }
+  setProdutos(lista.sort(function(a,b){return a.nome.localeCompare(b.nome);}));
+  renderListaProdutos();
+  el('msgProduto').textContent='✅ '+adicionados+' produto(s) adicionado(s)'+(ignorados?' · '+ignorados+' já existiam.':'.');
+  showToast('✅ '+adicionados+' produtos carregados! Agora adicione os custos de cada um.');
+}
 
 function excluirProduto(id){
 const lista=getProdutos();
@@ -3677,6 +3764,7 @@ finalizarTratativa();
 };
 })();
 el('btnSalvarProduto').onclick=salvarProduto;
+el('btnListaPadrao').onclick=carregarListaPadraoFLV;
 }
 
 function showToast(msg){
