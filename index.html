@@ -1064,7 +1064,7 @@ function renderListaProdutosParaQuebra(filtro){
     const input=document.createElement('input');
     input.type='text';input.inputMode='decimal';input.placeholder='Qtd';input.className='quebra-check-qtd';
     input.dataset.cod=p.cod||'';input.dataset.nome=p.nome;input.dataset.tipo=p.tipo||'KG';input.dataset.custo=p.custo||'0';
-    input.addEventListener('input',function(){formatarQtdCentavosCampo(this);this.classList.toggle('tem-valor',this.value.trim()!=='');});
+    input.addEventListener('input',function(){this.classList.toggle('tem-valor',this.value.trim()!=='');});
     btnCusto.addEventListener('click',function(e){e.stopPropagation();editarCustoNaQuebra(p.cod,custoSpan,input);});
     custoLabel.appendChild(custoSpan);custoLabel.appendChild(btnCusto);
     info.innerHTML='<div class="quebra-check-cod">'+String(p.cod||'—')+'</div><div class="quebra-check-nome">'+p.nome+'</div>';
@@ -1126,7 +1126,7 @@ function salvarQuebrasLote(){
     const cod=input.dataset.cod||'';
     const produto=(input.dataset.nome||'').toUpperCase();
     const tipo=input.dataset.tipo||'KG';
-    const custoUnitario=parseFloat(input.dataset.custo)||0;
+    const custoUnitario=numeroBR(input.dataset.custo)||0;
     if(!produto)return;
     if(custoUnitario<=0){showToast('Produto '+produto+' sem custo cadastrado. Cadastre o custo antes.');return;}
     const valorQuebraNumero=custoUnitario*quantidadeNumero;
@@ -1334,7 +1334,6 @@ function aprovarParcial(id){
   var qtdOriginalNum=numeroBR(item.quantidade||0);var custoUnitarioNum=numeroBR(item.custoUnitario||0);
   inputParcial.focus();
   inputParcial.addEventListener('input',function(){
-    formatarQtdCentavosCampo(this);
     var qtdAprov=numeroBR(this.value);
     if(isNaN(qtdAprov)||qtdAprov<=0){previewParcial.innerHTML='Digite a quantidade aprovada para ver o resultado.';return;}
     var restante=Math.max(qtdOriginalNum-qtdAprov,0);var valorAprov=custoUnitarioNum>0?qtdAprov*custoUnitarioNum:0;var valorRest=custoUnitarioNum>0?restante*custoUnitarioNum:0;
@@ -1975,11 +1974,9 @@ function bind(){
   // Cadastro
   el('btnNovoProduto').addEventListener('click',novoProducto);
   el('p_valor_emb').addEventListener('input',()=>{formatarMoedaCentavosCampo(el('p_valor_emb'));calcularCustoProduto();});
-  el('p_qtd_emb').addEventListener('input',()=>{formatarQtdCentavosCampo(el('p_qtd_emb'));calcularCustoProduto();});
+  el('p_qtd_emb').addEventListener('input',calcularCustoProduto);
   el('p_calc_tipo').addEventListener('change',calcularCustoProduto);
   el('inputMeta').addEventListener('input',()=>formatarMoedaCentavosCampo(el('inputMeta')));
-  el('chegou').addEventListener('input',()=>formatarQtdCentavosCampo(el('chegou')));
-  el('quebra').addEventListener('input',()=>formatarQtdCentavosCampo(el('quebra')));
 
   // Quebra
   el('buscaQuebraProduto').addEventListener('input',autoQuebraProduto);
@@ -1995,7 +1992,6 @@ function bind(){
   el('btnSalvarEdicaoQuebra').addEventListener('click',salvarEdicaoQuebraModal);
   el('btnCancelarEdicaoQuebra').addEventListener('click',fecharModalEdicaoQuebra);
   el('modalEditarQuebra').addEventListener('click',function(e){if(e.target===this)fecharModalEdicaoQuebra();});
-  el('modal_q_quantidade').addEventListener('input',()=>formatarQtdCentavosCampo(el('modal_q_quantidade')));
   el('modal_q_custo_unit').addEventListener('input',()=>formatarMoedaCentavosCampo(el('modal_q_custo_unit')));
   el('modal_q_valor_quebra').addEventListener('input',()=>formatarMoedaCentavosCampo(el('modal_q_valor_quebra')));
 
