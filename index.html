@@ -2074,8 +2074,44 @@ function registrarServiceWorker(){
     .catch(err=>console.warn('SW:',err));
 }
 
+function migrarCustosQuebra(){
+  const produtos=getProdutos();
+  const quebras=getQuebras();
+  let corrigidos=0;
+  quebras.forEach(function(q){
+    // 1. Corrige quantidade afetada pela máscara de centavos (padrão "0,xxx")
+    const qtdStr=String(q.quantidade||'');
+    let qtdNum=numeroBR(qtdStr);
+    if(!isNaN(qtdNum)&&qtdNum>0&&qtdNum<1&&/^0[,.]\d{3}$/.test(qtdStr)){
+      qtdNum=qtdNum*1000;
+      q.quantidade=formatarNumeroBR(qtdNum,3);
+    }
+    // 2. Busca custo atual do produto
+    const prod=produtos.find(function(p){
+      return (q.cod&&String(p.cod)===String(q.cod))||(q.produto&&gerarId(p.nome)===gerarId(q.produto||''));
+    });
+    const custoAtual=prod&&prod.custo?numeroBR(prod.custo):NaN;
+    const custoAntigo=numeroBR(q.custoUnitario||'0');
+    // 3. Recalcula se custo mudou mais de 10% ou quantidade foi corrigida
+    if(!isNaN(custoAtual)&&custoAtual>0&&!isNaN(qtdNum)&&qtdNum>0){
+      const ratio=isNaN(custoAntigo)||custoAntigo===0?Infinity:Math.max(custoAtual,custoAntigo)/Math.min(custoAtual,custoAntigo);
+      if(ratio>1.1){
+        const novoValor=(custoAtual*qtdNum).toFixed(2);
+        q.custoUnitario=custoAtual.toFixed(2);
+        q.valorQuebra=novoValor;
+        if(!q.aprovado&&!saiuDaQuebra(q))q.quebraLiquida=novoValor;
+        corrigidos++;
+      }
+    }
+  });
+  if(corrigidos>0){
+    setQuebras(quebras);
+    setTimeout(function(){showToast('\u2705 '+corrigidos+' quebra(s) recalculada(s) com custo atualizado.');},2200);
+  }
+}
+
 document.addEventListener('DOMContentLoaded',()=>{
-  carregarBase();bind();registrarServiceWorker();
+  carregarBase();bind();registrarServiceWorker();migrarCustosQuebra();
   if(premiumAtivo()){el('statusPremiumTopo').textContent='Premium Ativo';}
 });
 
