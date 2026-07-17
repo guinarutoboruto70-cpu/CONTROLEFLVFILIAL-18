@@ -1801,12 +1801,16 @@ function salvarTratativa(){
   const agora=new Date();const dataFormatada=agora.toLocaleDateString('pt-BR');const horaFormatada=agora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
   const _prodTrat=getProdutos().find(p=>p.cod===cod||p.nome===produto);const _tipoTrat=(_prodTrat&&_prodTrat.tipo)||'KG';
   textoFinal=`Cód: ${cod}\n${produto}\nData: ${dataFormatada}\nQtd Chegou: ${chegou} ${_tipoTrat}\nQtd Quebra: ${quebraQtd} ${_tipoTrat}`;
-  el('texto').innerText=textoFinal;montarFotosEnvio();ir(3);
+  el('texto').innerText=textoFinal;montarFotosEnvio();
+  const _btnEnv=el('btnEnviarTexto');_btnEnv.textContent='ENVIAR TEXTO';_btnEnv.classList.remove('enviado');_btnEnv.disabled=false;
+  ir(3);
 }
 
 function enviarTexto(){
   if(!textoFinal){showToast('Nenhum texto para enviar.');return;}
   window.open('https://wa.me/?text='+encodeURIComponent(textoFinal),'_blank');
+  const btn=el('btnEnviarTexto');
+  btn.textContent='ENVIADO ✔';btn.classList.add('enviado');btn.disabled=true;
 }
 
 function finalizarTratativa(){
@@ -1833,7 +1837,7 @@ function finalizarTratativa(){
   ['prev_prod','prev_bal','prev_eti'].forEach(function(rid){var d=el(rid);if(d)d.innerHTML='';});
   ['buscaProduto','produto','cod','chegou','quebra'].forEach(function(rid){var c=el(rid);if(c)c.value='';});
   textoFinal='';tratativaOrigemQuebraId=null;el('texto').innerText='';
-  atualizarLista();showToast('Tratativa salva! Status: PENDENTE');ir(7);
+  atualizarLista();migrarCustosQuebra();showToast('Tratativa salva! ✅ Nova tratativa pronta.');ir(2);
 }
 
 // ===== LISTA =====
