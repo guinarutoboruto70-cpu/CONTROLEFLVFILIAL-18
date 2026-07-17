@@ -77,6 +77,13 @@ pre{white-space:pre-wrap}
 /* Ranking */
 .rank-bar-wrap{background:rgba(255,255,255,0.07);border-radius:6px;height:8px;margin-top:5px;overflow:hidden;}
 .rank-bar{height:100%;border-radius:6px;background:linear-gradient(90deg,#ff4444,#ffcc00);}
+/* Produto já lançado hoje */
+.ja-lancado{border-left:4px solid #ff8800!important;background:rgba(255,136,0,0.07)!important;}
+.ja-lancado-badge{display:inline-block;font-size:10px;font-weight:bold;color:#ff8800;background:rgba(255,136,0,0.15);border-radius:6px;padding:2px 7px;margin-left:6px;vertical-align:middle;}
+/* Total preview quebra */
+.total-preview-box{background:rgba(255,204,0,0.08);border:1px solid rgba(255,204,0,0.28);border-radius:14px;padding:12px 16px;margin-top:10px;text-align:center;display:none;animation:cardEntry .35s ease;}
+/* Badge pendentes */
+.badge-pendentes{display:inline-block;background:#ff4444;color:#fff;font-size:11px;font-weight:bold;border-radius:999px;padding:2px 7px;margin-left:6px;vertical-align:middle;animation:pulsePremium 1.5s infinite;}
 /* Relatório */
 .rel-btn{flex:1;padding:13px;border:none;border-radius:10px;font-weight:bold;font-size:14px;cursor:pointer;transition:all .2s;}
 .rel-tipo-btn{width:100%;padding:11px;margin-top:8px;border:1px solid rgba(255,204,0,0.3);border-radius:10px;background:rgba(20,20,20,0.7);color:#fff;font-weight:bold;cursor:pointer;text-align:left;}
@@ -130,6 +137,12 @@ pre{white-space:pre-wrap}
   <div class="mini-card"><div class="mini-title">💰 Vendas</div><div class="mini-value" id="miniVenda">R$ 0,00</div></div>
   <div class="mini-card"><div class="mini-title">📦 Quebra Hoje</div><div class="mini-value" id="miniQuebra">0</div></div>
   <div class="mini-card"><div class="mini-title">📈 Índice</div><div class="mini-value" id="miniProd">0,0%</div></div>
+</div>
+<!-- Badge pendentes -->
+<div id="cardPendentes" class="card" style="display:none;margin-bottom:4px;border-left:4px solid #ff8800;">
+  <div style="font-weight:bold;color:#ff8800;font-size:13px;">⚠️ Quebras aguardando tratativa</div>
+  <div id="pendentesValor" style="font-size:22px;font-weight:bold;color:#ffcc00;margin-top:4px;">0 item(s)</div>
+  <div id="pendentesInfo" style="font-size:11px;color:#aaa;margin-top:2px;"></div>
 </div>
 <!-- Meta diária -->
 <div class="card" id="cardMetaDiaria" style="border-left:4px solid #00ff88;margin-bottom:4px;">
@@ -220,7 +233,8 @@ pre{white-space:pre-wrap}
 <!-- TELA 7: Lista -->
 <div id="tela7" class="screen">
 <h2>Lista</h2>
-<button id="btnLimparLista" style="width:100%;padding:12px;border:none;border-radius:8px;background:#7b241c;color:#fff;font-size:15px;font-weight:bold;cursor:pointer;margin-bottom:14px;">🗑️ APAGAR LISTA COMPLETA</button>
+<button id="btnLimparLista" style="width:100%;padding:12px;border:none;border-radius:8px;background:#7b241c;color:#fff;font-size:15px;font-weight:bold;cursor:pointer;margin-bottom:10px;">🗑️ APAGAR LISTA COMPLETA</button>
+<input id="buscaLista" placeholder="🔍 Buscar por produto ou código..." style="margin-bottom:4px;">
 <div id="lista"></div>
 <button id="voltarLista" class="btn">⬅ VOLTAR</button>
 </div>
@@ -255,6 +269,11 @@ pre{white-space:pre-wrap}
 <input id="filtroListaQuebra" placeholder="🔍 Filtrar produto na lista..." style="margin-top:10px;">
 <div id="msgQuebra" class="status"></div>
 <div id="listaChecklistQuebra" style="margin-top:14px;"></div>
+<div id="totalPreviewQuebra" class="total-preview-box">
+  <div style="font-size:12px;color:#aaa;margin-bottom:4px;">Total a salvar agora</div>
+  <div id="totalPreviewValor" style="font-size:24px;font-weight:bold;color:#ffcc00;">R$ 0,00</div>
+  <div id="totalPreviewQtd" style="font-size:11px;color:#aaa;margin-top:3px;"></div>
+</div>
 <button id="btnSalvarLoteQuebra" class="btn" style="margin-top:16px;">💾 SALVAR QUEBRAS DO DIA</button>
 <input id="buscaQuebraProduto" style="display:none;">
 <div id="autoQuebraLista" class="autocomplete" style="display:none;"></div>
@@ -627,14 +646,6 @@ function formatarMoedaCentavosCampo(campo){
   campo.value=formatarNumeroBR(numero,2);
 }
 
-function formatarQtdCentavosCampo(campo,casas){
-  casas=(casas===undefined)?3:casas;
-  let digitos=String(campo.value||'').replace(/\D/g,'');
-  if(!digitos){campo.value='';return;}
-  const numero=Number(digitos)/Math.pow(10,casas);
-  campo.value=formatarNumeroBR(numero,casas);
-}
-
 function formatarCampoVenda(){
   const campo=el('valorVenda');
   const numero=numeroMoedaBR(campo.value);
@@ -742,6 +753,17 @@ function atualizarMiniDashboard(){
   if(qEl)qEl.textContent=dinheiroBR(quebraHoje);
   if(pEl)pEl.textContent=formatarNumeroBR(indice,1)+'%';
   atualizarMetaDiariaCard();
+  // Badge de quebras aguardando tratativa
+  const pendentes=quebras.filter(q=>q.marcadoTratativa&&!tratativaFinalizada(q)&&!saiuDaQuebra(q));
+  const cardP=el('cardPendentes');const valP=el('pendentesValor');const infP=el('pendentesInfo');
+  if(cardP&&valP&&infP){
+    if(pendentes.length>0){
+      const totalR=pendentes.reduce((s,q)=>s+numeroBR(q.valorQuebra||0),0);
+      cardP.style.display='block';
+      valP.textContent=pendentes.length+' item(s) — '+dinheiroBR(totalR);
+      infP.textContent='Foram enviadas para tratativa mas ainda não finalizadas. Acesse Nova Tratativa para concluir.';
+    }else{cardP.style.display='none';}
+  }
 }
 
 // ===== EXPORT / IMPORT =====
@@ -1046,6 +1068,23 @@ function abrirQuebraDia(){
   el('dataQuebra').value=hojeISO();limparCamposQuebra();renderListaProdutosParaQuebra();renderListaQuebraDia();ir(10);
 }
 
+function atualizarTotalPreviewQuebra(){
+  const inputs=document.querySelectorAll('.quebra-check-qtd');
+  let totalR=0;let countItens=0;
+  inputs.forEach(function(input){
+    const raw=input.value.trim();if(!raw)return;
+    const qtd=numeroBR(raw);const custo=numeroBR(input.dataset.custo||'0');
+    if(!isNaN(qtd)&&qtd>0&&!isNaN(custo)&&custo>0){totalR+=qtd*custo;countItens++;}
+  });
+  const box=el('totalPreviewQuebra');const val=el('totalPreviewValor');const qtd=el('totalPreviewQtd');
+  if(!box)return;
+  if(countItens>0){
+    box.style.display='block';
+    val.textContent=dinheiroBR(totalR);
+    qtd.textContent=countItens+' produto(s) preenchido(s)';
+  }else{box.style.display='none';}
+}
+
 function renderListaProdutosParaQuebra(filtro){
   const container=el('listaChecklistQuebra');if(!container)return;
   const produtos=getProdutos().sort((a,b)=>a.nome.localeCompare(b.nome));
@@ -1053,8 +1092,14 @@ function renderListaProdutosParaQuebra(filtro){
   const lista=termo?produtos.filter(p=>p.nome.toUpperCase().includes(termo)||String(p.cod).includes(termo)):produtos;
   container.innerHTML='';
   if(lista.length===0){container.innerHTML='<div class="card" style="text-align:center;color:#aaa;">Nenhum produto encontrado.</div>';return;}
+  // Produtos já lançados hoje
+  const dataAtual=el('dataQuebra').value||hojeISO();
+  const quebrasDoDia=getQuebras().filter(function(q){return q.data===dataAtual&&!saiuDaQuebra(q);});
+  const jaLancadosCod=new Set(quebrasDoDia.map(function(q){return String(q.cod||'').trim();}).filter(Boolean));
+  const jaLancadosNome=new Set(quebrasDoDia.map(function(q){return gerarId(q.produto||'');}).filter(Boolean));
   lista.forEach(function(p){
-    const card=document.createElement('div');card.className='card quebra-check-item';
+    const jaLancado=jaLancadosCod.has(String(p.cod||'').trim())||jaLancadosNome.has(gerarId(p.nome));
+    const card=document.createElement('div');card.className='card quebra-check-item'+(jaLancado?' ja-lancado':'');
     const info=document.createElement('div');info.className='quebra-check-info';
     const _codKey=String(p.cod||p.nome).replace(/[^a-zA-Z0-9]/g,'_');
     const custoLabel=document.createElement('div');custoLabel.className='quebra-check-custo';custoLabel.id='custo-label-'+_codKey;
@@ -1064,10 +1109,13 @@ function renderListaProdutosParaQuebra(filtro){
     const input=document.createElement('input');
     input.type='text';input.inputMode='decimal';input.placeholder='Qtd';input.className='quebra-check-qtd';
     input.dataset.cod=p.cod||'';input.dataset.nome=p.nome;input.dataset.tipo=p.tipo||'KG';input.dataset.custo=p.custo||'0';
-    input.addEventListener('input',function(){this.classList.toggle('tem-valor',this.value.trim()!=='');});
+    input.addEventListener('input',function(){this.classList.toggle('tem-valor',this.value.trim()!=='');atualizarTotalPreviewQuebra();});
     btnCusto.addEventListener('click',function(e){e.stopPropagation();editarCustoNaQuebra(p.cod,custoSpan,input);});
     custoLabel.appendChild(custoSpan);custoLabel.appendChild(btnCusto);
-    info.innerHTML='<div class="quebra-check-cod">'+String(p.cod||'—')+'</div><div class="quebra-check-nome">'+p.nome+'</div>';
+    const nomeDiv=document.createElement('div');nomeDiv.className='quebra-check-nome';nomeDiv.textContent=p.nome;
+    if(jaLancado){const badge=document.createElement('span');badge.className='ja-lancado-badge';badge.textContent='já lançado';nomeDiv.appendChild(badge);}
+    info.innerHTML='<div class="quebra-check-cod">'+String(p.cod||'—')+'</div>';
+    info.appendChild(nomeDiv);
     info.appendChild(custoLabel);
     card.appendChild(info);card.appendChild(input);container.appendChild(card);
   });
@@ -1141,6 +1189,8 @@ function salvarQuebrasLote(){
   });
   if(count===0){showToast('Preencha a quantidade de pelo menos um produto.');return;}
   setQuebras(lista);renderListaQuebraDia();atualizarMiniDashboard();
+  renderListaProdutosParaQuebra(el('filtroListaQuebra').value);
+  const boxPreview=el('totalPreviewQuebra');if(boxPreview)boxPreview.style.display='none';
   showToast(count+' quebra(s) salva(s) com sucesso! ✅');
   el('msgQuebra').textContent=count+' quebra(s) adicionada(s).';
   setTimeout(function(){el('msgQuebra').textContent='';},3000);
@@ -1754,17 +1804,41 @@ function excluirVenda(id){
 }
 
 // ===== FOTOS =====
-function addFotos(evento,tipo){
-  const preview=el('prev_'+tipo);if(!preview)return;
-  Array.from(evento.target.files||[]).forEach(file=>{
-    const url=URL.createObjectURL(file);fotos[tipo].push({file,url,enviado:false});
-    const wrapper=document.createElement('div');wrapper.className='preview-item';
-    const img=document.createElement('img');img.src=url;
-    const del=document.createElement('button');del.className='del-foto';del.textContent='✕';
-    del.addEventListener('click',()=>{fotos[tipo]=fotos[tipo].filter(f=>f.url!==url);wrapper.remove();});
-    wrapper.appendChild(img);wrapper.appendChild(del);preview.appendChild(wrapper);
+function comprimirFoto(file,maxWidth,quality){
+  maxWidth=maxWidth||1280;quality=quality||0.78;
+  return new Promise(function(resolve){
+    var img=new Image();var blobUrl=URL.createObjectURL(file);
+    img.onload=function(){
+      var w=img.width,h=img.height;
+      if(w>maxWidth){h=Math.round(h*maxWidth/w);w=maxWidth;}
+      var canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      URL.revokeObjectURL(blobUrl);
+      canvas.toBlob(function(blob){
+        if(!blob){resolve({file:file,url:URL.createObjectURL(file),enviado:false});return;}
+        var compressed=new File([blob],file.name.replace(/\.[^.]+$/,'.jpg'),{type:'image/jpeg'});
+        resolve({file:compressed,url:URL.createObjectURL(blob),enviado:false});
+      },'image/jpeg',quality);
+    };
+    img.onerror=function(){URL.revokeObjectURL(blobUrl);resolve({file:file,url:URL.createObjectURL(file),enviado:false});};
+    img.src=blobUrl;
   });
+}
+
+async function addFotos(evento,tipo){
+  const preview=el('prev_'+tipo);if(!preview)return;
+  const arquivos=Array.from(evento.target.files||[]);
   evento.target.value='';
+  for(const file of arquivos){
+    const obj=await comprimirFoto(file);
+    fotos[tipo].push(obj);
+    const wrapper=document.createElement('div');wrapper.className='preview-item';
+    const img=document.createElement('img');img.src=obj.url;
+    const del=document.createElement('button');del.className='del-foto';del.textContent='✕';
+    const urlRef=obj.url;
+    del.addEventListener('click',()=>{fotos[tipo]=fotos[tipo].filter(f=>f.url!==urlRef);wrapper.remove();});
+    wrapper.appendChild(img);wrapper.appendChild(del);preview.appendChild(wrapper);
+  }
 }
 
 function montarFotosEnvio(){
@@ -1843,8 +1917,18 @@ function finalizarTratativa(){
 // ===== LISTA =====
 function atualizarLista(){
   var div=el('lista');if(!div)return;banco=getBanco();div.innerHTML='';
-  if(banco.length===0){var vazio=document.createElement('div');vazio.className='card';vazio.style.cssText='text-align:center;color:#aaa;padding:20px;';vazio.textContent='Nenhuma tratativa finalizada.';div.appendChild(vazio);return;}
-  banco.forEach(function(item,idx){
+  var busca=(el('buscaLista')&&el('buscaLista').value||'').toUpperCase().trim();
+  var listaFiltrada=busca?banco.filter(function(item){
+    return(String(item.produto||'').toUpperCase().includes(busca))||
+           (String(item.cod||'').includes(busca))||
+           (String(item.texto||'').toUpperCase().includes(busca));
+  }):banco;
+  if(listaFiltrada.length===0){
+    var vazio=document.createElement('div');vazio.className='card';vazio.style.cssText='text-align:center;color:#aaa;padding:20px;';
+    vazio.textContent=busca?'Nenhuma tratativa encontrada para "'+busca+'"':'Nenhuma tratativa finalizada.';
+    div.appendChild(vazio);return;
+  }
+  listaFiltrada.forEach(function(item,idx){
     var card=document.createElement('div');card.className='card';card.style.marginTop='12px';
     var dataEl=document.createElement('div');dataEl.style.cssText='font-size:12px;color:#ffcc00;font-weight:bold;margin-bottom:6px;';dataEl.textContent='Data: '+(item.data||'');card.appendChild(dataEl);
     var pre=document.createElement('pre');pre.style.cssText='margin:0;white-space:pre-wrap;word-break:break-word;';pre.textContent=item.texto||'';card.appendChild(pre);
@@ -1854,13 +1938,13 @@ function atualizarLista(){
       var saldoEl=document.createElement('div');saldoEl.style.cssText='margin-top:4px;font-size:12px;color:#ccc;';saldoEl.textContent='Saldo atual na quebra: '+quantidadeBR(quantidadeRestanteQuebra(quebraVinculada),quebraVinculada.tipo)+' '+(quebraVinculada.tipo||'KG')+' / '+dinheiroBR(valorRestanteQuebra(quebraVinculada));card.appendChild(saldoEl);
     }
     var nota=document.createElement('div');nota.style.cssText='margin-top:6px;font-size:12px;color:#aaa;';nota.textContent='Fotos enviadas via WhatsApp.';card.appendChild(nota);
-    var btn=document.createElement('button');btn.textContent='EXCLUIR ESTA TRATATIVA';btn.style.cssText='display:block;margin-top:12px;width:100%;padding:14px;border:none;border-radius:8px;background:#c0392b;color:#fff;font-size:16px;font-weight:bold;cursor:pointer;';btn.setAttribute('data-idx',String(idx));card.appendChild(btn);div.appendChild(card);
+    var btn=document.createElement('button');btn.textContent='EXCLUIR ESTA TRATATIVA';btn.style.cssText='display:block;margin-top:12px;width:100%;padding:14px;border:none;border-radius:8px;background:#c0392b;color:#fff;font-size:16px;font-weight:bold;cursor:pointer;';btn.setAttribute('data-id',String(item.id));card.appendChild(btn);div.appendChild(card);
   });
   div.addEventListener('click',function(e){
     var btn=e.target;if(btn.tagName!=='BUTTON')return;
-    var idx=parseInt(btn.getAttribute('data-idx'),10);if(isNaN(idx))return;
+    var itemId=btn.getAttribute('data-id');if(!itemId)return;
     if(btn.getAttribute('data-confirming')){
-      var lista=getBanco();lista.splice(idx,1);setBanco(lista);banco=lista;atualizarLista();showToast('Tratativa excluida.');
+      var lista=getBanco();setBanco(lista.filter(function(x){return String(x.id)!==itemId;}));banco=getBanco();atualizarLista();showToast('Tratativa excluída.');
     }else{
       btn.textContent='Tem certeza? Toque novamente para confirmar.';btn.style.background='#922b21';btn.setAttribute('data-confirming','1');
       setTimeout(function(){if(btn.getAttribute('data-confirming')){btn.textContent='EXCLUIR ESTA TRATATIVA';btn.style.background='#c0392b';btn.removeAttribute('data-confirming');}},3000);
@@ -1913,7 +1997,7 @@ function bind(){
   el('btnComparativo').addEventListener('click',abrirComparativo);
   el('btnRankingProdutos').addEventListener('click',abrirRankingProdutos);
   el('btnRelatorios').addEventListener('click',abrirRelatorios);
-  el('btnLista').addEventListener('click',()=>{atualizarLista();ir(7);});
+  el('btnLista').addEventListener('click',()=>{if(el('buscaLista'))el('buscaLista').value='';atualizarLista();ir(7);});
   el('btnCadastro').addEventListener('click',abrirCadastro);
 
   // Export/Import
@@ -1957,6 +2041,7 @@ function bind(){
   el('voltarTratativa').addEventListener('click',voltarMenu);
   el('voltarEnvio').addEventListener('click',()=>{fotos={prod:[],bal:[],eti:[]};['prev_prod','prev_bal','prev_eti'].forEach(id=>{const d=el(id);if(d)d.innerHTML='';});ir(2);});
   el('voltarLista').addEventListener('click',voltarMenu);
+  if(el('buscaLista'))el('buscaLista').addEventListener('input',function(){atualizarLista();});
   el('voltarCadastro').addEventListener('click',voltarMenu);
   el('voltarQuebraDia').addEventListener('click',voltarMenu);
   el('voltarVendaDia').addEventListener('click',voltarMenu);
@@ -1986,13 +2071,13 @@ function bind(){
   el('buscaQuebraProduto').addEventListener('input',autoQuebraProduto);
   el('q_produto').addEventListener('change',preencherCustoQuebraPorProduto);
   el('q_cod').addEventListener('change',preencherCustoQuebraPorProduto);
-  el('dataQuebra').addEventListener('change',function(){renderListaQuebraDia();renderListaProdutosParaQuebra(el('filtroListaQuebra').value);});
+  el('dataQuebra').addEventListener('change',function(){renderListaQuebraDia();renderListaProdutosParaQuebra(el('filtroListaQuebra').value);atualizarTotalPreviewQuebra();});
   el('q_quantidade').addEventListener('input',atualizarValoresQuebra);
   el('q_custo_unit').addEventListener('input',()=>{formatarMoedaCentavosCampo(el('q_custo_unit'));calcularValorQuebra();});
   el('q_valor_quebra').addEventListener('input',()=>{formatarMoedaCentavosCampo(el('q_valor_quebra'));calcularCustoPeloValorQuebra();});
   el('btnAdicionarQuebra').addEventListener('click',adicionarOuEditarQuebra);
   el('btnSalvarLoteQuebra').addEventListener('click',salvarQuebrasLote);
-  el('filtroListaQuebra').addEventListener('input',function(){renderListaProdutosParaQuebra(this.value);});
+  el('filtroListaQuebra').addEventListener('input',function(){renderListaProdutosParaQuebra(this.value);atualizarTotalPreviewQuebra();});
   el('btnSalvarEdicaoQuebra').addEventListener('click',salvarEdicaoQuebraModal);
   el('btnCancelarEdicaoQuebra').addEventListener('click',fecharModalEdicaoQuebra);
   el('modalEditarQuebra').addEventListener('click',function(e){if(e.target===this)fecharModalEdicaoQuebra();});
