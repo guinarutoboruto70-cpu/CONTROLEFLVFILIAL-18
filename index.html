@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Controle FLV</title>
 <link rel="manifest" href="manifest.json">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
 <meta name="theme-color" content="#ffcc00">
 <style>
 :root{--gold:#ffcc00;--gold-soft:rgba(255,204,0,0.35);--bg-dark:#080808;--card-dark:rgba(25,25,25,0.78);--text-light:#ffffff;}
@@ -1753,6 +1754,50 @@ function baixarRelatorioTXT(){
   showToast('TXT baixado!');
 }
 
+function gerarPDFRelatorio(){
+  const jsPDFLib=window.jspdf&&window.jspdf.jsPDF;
+  if(!jsPDFLib){showToast('Aguarde o PDF carregar e tente novamente.');return;}
+  const texto=gerarTextoRelatorio();
+  if(!texto.trim()){showToast('Nenhum dado para gerar PDF.');return;}
+  // Limpa emojis e substitui caracteres especiais não suportados pela fonte
+  const limpar=s=>s.replace(/[^\x00-\x7E\u00C0-\u024F]/g,'').replace(/[─━═]/g,'-');
+  const linhas=texto.split('\n').map(limpar);
+  const doc=new jsPDFLib({orientation:'portrait',unit:'mm',format:'a4'});
+  // Cabeçalho
+  doc.setFillColor(18,18,18);
+  doc.rect(0,0,210,22,'F');
+  doc.setTextColor(255,204,0);
+  doc.setFont('courier','bold');
+  doc.setFontSize(15);
+  doc.text('CONTROLE FLV',10,14);
+  doc.setFont('courier','normal');
+  doc.setFontSize(9);
+  doc.setTextColor(180,180,180);
+  const emitido='Emitido: '+new Date().toLocaleString('pt-BR');
+  doc.text(emitido,210-10-doc.getTextWidth(emitido),14);
+  // Corpo
+  doc.setTextColor(20,20,20);
+  doc.setFont('courier','normal');
+  doc.setFontSize(10);
+  let y=32;
+  linhas.forEach(linha=>{
+    if(y>280){doc.addPage();y=15;}
+    if(linha.startsWith('---')||linha.startsWith('==='))linha='-'.repeat(40);
+    doc.text(linha||' ',10,y);
+    y+=5.2;
+  });
+  // Rodapé em todas as páginas
+  const total=doc.getNumberOfPages();
+  for(let p=1;p<=total;p++){
+    doc.setPage(p);
+    doc.setFontSize(8);doc.setTextColor(150,150,150);
+    doc.text('Controle FLV — pag '+p+'/'+total,10,292);
+    doc.text(hojeISO(),200-10,292,{align:'right'});
+  }
+  doc.save('relatorio-flv-'+hojeISO()+'.pdf');
+  showToast('PDF gerado e baixado!');
+}
+
 // ===== VENDA DO DIA =====
 function abrirVendaDia(){el('dataVenda').value=hojeISO();limparCamposVenda();renderListaVendas();ir(11);}
 function limparCamposVenda(){vendaEditandoId=null;el('valorVenda').value='';el('btnSalvarVenda').textContent='SALVAR VENDA';el('msgVenda').textContent='';}
@@ -2133,7 +2178,7 @@ function bind(){
     });
   });
   el('btnRelPrint').addEventListener('click',imprimirRelatorio);
-  el('btnRelPDF').addEventListener('click',imprimirRelatorio);
+  el('btnRelPDF').addEventListener('click',gerarPDFRelatorio);
   el('btnRelWhatsApp').addEventListener('click',enviarRelatorioWhatsApp);
   el('btnRelTXT').addEventListener('click',baixarRelatorioTXT);
   if(el('relData'))el('relData').addEventListener('change',gerarPreviewRelatorio);

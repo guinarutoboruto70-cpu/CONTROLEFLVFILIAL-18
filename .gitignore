@@ -1,2 +1,4 @@
 .env
 export-bookmarklet.txt
+node_modules/
+data/
