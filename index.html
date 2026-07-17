@@ -2271,11 +2271,17 @@ document.addEventListener('DOMContentLoaded',()=>{
 'use strict';
 var _origSetItem=localStorage.setItem.bind(localStorage);
 var _origGetItem=localStorage.getItem.bind(localStorage);
-var SYNC_API=(function(){
-  var h=window.location.hostname;
-  if(!h||h==='localhost'||h==='127.0.0.1'||h.includes('replit')||h.includes('repl.co'))return'/api/sync';
-  return'https://SEU-APP.replit.app/api/sync';
-})();
+var SYNC_API='https://54df9d8a-2219-424b-9c81-d864e426ae37-00-1xnuvd7m2la9k.kirk.replit.dev/api/sync';
+// Usar URL relativa apenas quando rodando dentro do próprio Replit (dev)
+if(window.location.hostname.includes('replit.dev')||window.location.hostname==='localhost'||window.location.hostname==='127.0.0.1'){SYNC_API='/api/sync';}
+// Função fetch com timeout (suporta cold start de ~5s do servidor)
+function fetchComTimeout(url,opcoes,timeoutMs){
+  timeoutMs=timeoutMs||12000;
+  return new Promise(function(resolve,reject){
+    var timer=setTimeout(function(){reject(new Error('timeout'));},timeoutMs);
+    fetch(url,opcoes).then(function(r){clearTimeout(timer);resolve(r);}).catch(function(e){clearTimeout(timer);reject(e);});
+  });
+}
 var _syncReady=false;
 
 function gerarCodigoSync(){var chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';var code='FLV';for(var i=0;i<5;i++)code+=chars[Math.floor(Math.random()*chars.length)];return code;}
@@ -2303,7 +2309,7 @@ function applySyncPayload(payload){
 var _syncTimer=null;
 function scheduleAutoSync(){
   if(!_syncReady)return;clearTimeout(_syncTimer);
-  _syncTimer=setTimeout(function(){var code=getCodigoSync();if(!code)return;fetch(SYNC_API+'/'+code,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({payload:getSyncPayload()})}).catch(function(){});},6000);
+  _syncTimer=setTimeout(function(){var code=getCodigoSync();if(!code)return;fetchComTimeout(SYNC_API+'/'+code,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({payload:getSyncPayload()})},12000).catch(function(){});},6000);
 }
 localStorage.setItem=function(key,value){_origSetItem(key,value);var syncKeys=['tratativasFinalizadas','quebrasDia','vendasFLV','metaMensal','produtos'];if(syncKeys.indexOf(key)>=0)scheduleAutoSync();};
 
@@ -2316,15 +2322,15 @@ window.copiarCodigoSync=function(){
 window.sincronizarComOutroDispositivo=async function(){
   var input=document.getElementById('inputOutroCode');var outroCode=(input?input.value.trim():'').toUpperCase().replace(/\s/g,'');
   if(!outroCode||outroCode.length<5){if(typeof showToast==='function')showToast('Digite o código do outro dispositivo');return;}
-  setSyncStatus('🔄 Buscando dados...','#ffcc00');
+  setSyncStatus('🔄 Conectando ao servidor... (aguarde até 12s)','#ffcc00');
   try{
-    var r=await fetch(SYNC_API+'/'+outroCode);
+    var r=await fetchComTimeout(SYNC_API+'/'+outroCode,{},12000);
     if(!r.ok){if(typeof showToast==='function')showToast('Código não encontrado. Verifique e tente novamente.');setSyncStatus('❌ Código não encontrado','#ff4444');return;}
     var data=await r.json();
     if(!data||!data.payload){setSyncStatus('❌ Sem dados para importar','#ff4444');return;}
     applySyncPayload(data.payload);
     var myCode=getCodigoSync();
-    fetch(SYNC_API+'/'+myCode,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({payload:getSyncPayload()})}).catch(function(){});
+    fetchComTimeout(SYNC_API+'/'+myCode,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({payload:getSyncPayload()})},12000).catch(function(){});
     if(typeof atualizarMiniDashboard==='function')atualizarMiniDashboard();
     if(input)input.value='';
     if(typeof showToast==='function')showToast('✅ Dados importados com sucesso!');setSyncStatus('✅ Importado com sucesso!','#00ff88');
@@ -2333,11 +2339,11 @@ window.sincronizarComOutroDispositivo=async function(){
 
 window.iniciarSync=async function(){
   var code=getCodigoSync();var elCode=document.getElementById('syncCodeDisplay');if(elCode)elCode.textContent=code;
-  setSyncStatus('🔄 Conectando à nuvem...','#ffcc00');
+  setSyncStatus('🔄 Conectando à nuvem... (1ª vez pode demorar ~10s)','#ffcc00');
   try{
-    var r=await fetch(SYNC_API+'/'+code);
+    var r=await fetchComTimeout(SYNC_API+'/'+code,{},15000);
     if(r.ok){var data=await r.json();if(data&&data.payload){applySyncPayload(data.payload);_syncReady=true;if(typeof atualizarMiniDashboard==='function')atualizarMiniDashboard();var hora=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});setSyncStatus('✅ Nuvem carregada às '+hora,'#00ff88');return;}}
-    _syncReady=true;var pr=await fetch(SYNC_API+'/'+code,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({payload:getSyncPayload()})});
+    _syncReady=true;var pr=await fetchComTimeout(SYNC_API+'/'+code,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({payload:getSyncPayload()})},15000);
     setSyncStatus(pr.ok?'☁️ Dados salvos na nuvem':'📵 Sem conexão — modo local',pr.ok?'#00ff88':'#aaa');
   }catch(e){_syncReady=true;setSyncStatus('📵 Sem conexão — modo local','#aaa');}
 };
